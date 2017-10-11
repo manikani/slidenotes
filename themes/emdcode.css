@@ -1,0 +1,13 @@
+.emdcode .emdcodesymbol {
+	color:blue;
+}
+
+.emdcode code ol{
+	background:grey;
+	color:black;
+}
+.emdcode code li{
+	border-bottom: 1px solid black;
+	margin-bottom: 2px;
+	background:lightgrey;
+}

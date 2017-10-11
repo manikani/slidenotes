@@ -1,0 +1,235 @@
+.texteditor{
+	background:white;
+	position:initial;
+	height:410px;
+	padding:15px;
+}
+#texteditorerrorlayer{
+	color:red;
+	overflow-y:auto;
+	overflow-x:none;
+	z-Index:1;
+	/*font-weight:bolder;*/
+}
+#texteditorerrorlayer, #quelltext {
+    font-family: monospace;
+	font-size: 1em;
+	position:absolute;
+	border: 1px solid;
+    margin: 1px;
+    padding: 1px;
+	width: 500px;
+	height:300px;
+}
+#quelltext{
+	z-Index:2;
+	background:none;
+}
+#texteditor{
+	height:400px;
+}
+.linenr {
+    color: grey;
+	display:none;
+}
+.error{
+	background:red;
+}
+#texteditorerrorlayer .error{
+	color: red;
+}
+.proposedsymbol{
+	color:grey;
+	background:white;
+	margin-left: 5px;
+}
+.errordescription{
+	background:rgba(0,255,255,0.8);
+	float: right;
+	color: red;
+}
+.ppage{
+	display:none;
+	max-width:80%;
+}
+.ppage.active{
+	display:block;
+}
+.procontra{
+	width:100%;
+	float:none;
+}
+.procontra .listblock{
+	float:left;
+	margin-left: 5%;
+	width:40%;
+}
+.procontra::after {
+    clear: both;
+    content: "";
+    display: block;
+    width: 100%;
+}
+#praesentationrahmen{
+	display:none;
+}
+#praesentationrahmen.fullscreen{
+	display: block;
+	background: #e0f3fb none repeat scroll 0 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+	height:100vh;
+	overflow: scroll;
+	padding:5%;
+}
+#praesentationrahmen.fullscreen .praesentationsteuerung{
+	position: fixed;
+	bottom:0;
+}
+h1{
+	text-align: center;
+}
+.listblock ol{
+	width:100%;
+}
+#texteditorbuttons input {
+	width:unset;
+}
+.text {
+
+}
+
+#fehlercoderahmen{
+ 	background: snow none repeat scroll 0 0;
+    display: none;
+    height: 100%;
+    overflow-y: auto;
+    position: absolute;
+    top: 0;
+    z-index: 200;
+}
+
+#fehlercoderahmen.active{
+	display:block;
+}
+#fehlercoderahmen > input {
+    position: fixed;
+    right: 18px;
+    top: 0;
+}
+
+/* vorschau neben texteditor: */
+#texteditorrahmen {
+    float: left;
+    height: 50vh;
+    width: 45%;
+}
+#wysiwygrahmen {
+    float: right;
+   // height: 50vh;
+    width: 45%;
+
+}
+/*wysiwyg-vollbildmodus */
+#wysiwygrahmen.vollbild{
+	background: white none repeat scroll 0 0;
+    position: fixed;
+    top: 00;
+    width: 90%;
+    z-index: 1000;
+	height:100vh;
+	overflow: none;
+	padding:1%;
+}
+
+
+#wysiwygrahmen::after {
+    clear:both;
+    width: 100%;
+	content:".";
+}
+#zieltext{
+	height: 80vh;
+	overflow-y:auto;
+	background:rgba(200,250,0,0.8);
+}
+#editorblock {
+    clear: both;
+    float: none;
+    height: 200%;
+    position: initial;
+    width: 100%;
+}
+#editorblock::after{
+	clear:both;
+	content:".";
+}
+
+/*wysiwyg*/
+#wysiwygarea {
+    height: 80vh;
+	overflow:scroll;
+	outline:none;
+	padding:10px;
+
+}
+/*test ob mitgezählt wird:*/
+/*wird nicht :)
+#wysiwygarea h1:before{
+	content:'#';
+	color:grey;
+}
+#wysiwygarea b:before, b:after{
+	content:"**";
+	color:grey;
+}
+*/
+#wysiwygarea code{
+
+}
+#wysiwygarea img{
+	height:100px;
+}
+
+#wysiwygarea .wysiwygselection{
+	color:white;
+	background-color:lightblue;
+
+}
+/*background-flickern wegmachen:*/
+#wysiwygrahmen ::selection{
+	color:white;
+	background:lightblue;
+}
+#wysiwygrahmen ::-moz-selection{
+	color:white;
+	background:lightblue;
+}
+#wysiwygarea:focus .wysiwygselection{
+	background-color:white;
+	color:black;
+}
+/* cursor faken: */
+@-webkit-keyframes blink {from , to { border-color:black}
+50%{border-color:transparent}
+}
+@-moz-keyframes blink {from , to { border-color:black}
+50%{border-color:transparent}}
+.cursor {
+	border-right: 1px solid black;
+	-webkit-animation: 1s blink step-end infinite;
+	-moz-animation: 1s blink step-end infinite;
+	margin-right:-1px;
+}
+
+
+body {
+//background-color: black;
+//color:white;
+}
+
+#imagecontainer {
+	display:none;
+}
