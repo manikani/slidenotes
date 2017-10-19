@@ -7,7 +7,7 @@
 <script language="javascript" src="slidenotes.js"></script>
 <script language="javascript"><!--
 var slidenote;
-var presentation;
+var presentation; //TODO: sollte noch entfernt werden. nur noch slidenote-objekt global
 /* = new slidenotes(document.getElementById("quelltext"),
 							document.getElementById("texteditorerrorlayer"),
 							document.getElementById("wysiwygarea"),
@@ -36,8 +36,8 @@ function initeditor(){
 			slidenote = new slidenotes(texted, texterr, wys, errordet, slideshow );
 			presentation = slidenote.presentation;
 			texted.onresize= function(){slidenote.parseneu();};
-			texted.onkeydown= function(event){slidenote.keypressdown(event, texted);};
-			texted.onkeypress= function(event){slidenote.keypresswebkit(event, texted);};
+			texted.onkeydown= function(event){if(slidenote.wysiwygactivated)slidenote.keypressdown(event, texted);};
+			texted.onkeypress= function(event){if(slidenote.wysiwygactivated)slidenote.keypresswebkit(event, texted);};
 			texted.onkeyup=function(event){slidenote.keypressup(event, texted);};
 			texted.onpaste=function(){setTimeout('slidenote.parseneu()',150)};
 			texted.oncut=function(){setTimeout('slidenote.parseneu()',150)};
@@ -105,41 +105,7 @@ function initeditor(){
 function insertbutton(code){
 	if(slidenote!=null)slidenote.insertbutton(code);
 }
-/*
-var cursorspantestpos;
-function cursorspantest(){
-	var textarea = document.getElementById("quelltext");
-	cursorspantestpos = textarea.selectionEnd;
-	var cursor = slidenote.wysiwyg.Cursor();
-	if(cursor!=null){
-		slidenote.wysiwygarea.contentEditable=false;
-		cursor.contentEditable = true;
-		cursor.innerHTML = "";
-		console.log("cursortest - contenteditable?"+cursor.isContentEditable);
-		cursor.focus();
-		cursor.onkeypress=function(event){cursorspantest2(event);};
-	}
-}
-var lkp = 0;
-function cursorspantest2 (event){
-	console.log(event.key);
-	if(event.key.length>1)cursorspantestact();
-	else {
-		lkp = new Date().getTime;
-		setTimeout("cursorspantestloop()",500);
-	}
-}
-function cursorspantestloop (zeitstempel){
-	if(new Date().getTime - lkp < 500)cursorspantestact();
-}
-function cursorspantestact(){
-	var textarea = document.getElementById("quelltext");
-	var cursor = slidenote.wysiwyg.Cursor();
-	textarea.innerHTML = textarea.innerHTML.substring(0,cursorspantestpos)+
-												cursor.innerHTML +
-												textarea.innerHTML.substring(cursorspantestpos);
-	textarea.focus();
-}*/
+
 --></script>
 </head>
 <body>
@@ -158,11 +124,14 @@ function cursorspantestact(){
 					<input type="button" onclick="insertbutton('%quote')" value="quote">
 					<input type="button" onclick="insertbutton('%link')" value="link">
 					<input type="button" onclick="insertbutton('%image')" value="image">
-					<input type="button" onclick="insertbutton('%table')" value="table">
 					<input type="button" onclick="insertbutton('%code')" value="code">
 					<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
 					<input type="button" onclick="slidenote.showErrorDetails()" value="show parseerrors">
 					<input type="button" onclick="document.getElementById('wysiwygrahmen').classList.add('vollbild');document.getElementById('quelltext').focus();" value="wysiwyg-vollbild">
+					<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
+						<option value="wysiwyg">Wysiwyg-Editor</option>
+						<option value="md-texteditor">MD-Code Editor</option>
+					</select>
 				</div>
 				<div id="texteditor" class="texteditor">
 					<div id="texteditorerrorlayer"></div>
@@ -173,20 +142,11 @@ function cursorspantestact(){
 					onscroll="slidenotes.editorscroll(this)"> -->
 					<textarea spellcheck="false" id="quelltext" onload="initeditor()" autofocus onfocus="initeditor();"></textarea>
 	      </div>
-	      <!-- alles direkt über den editor :)
-	      <input type="button" value="parse it baby" onclick="testparse(document.getElementById('quelltext').value)">
-	      <input type="button" value="parse nach zeilen" onclick="testparsenachzeilen(document.getElementById('quelltext').value)">
-	      <input type="button" value="zeig mir die präses" onclick="initpraese(document.getElementById('praesentation'));">
-	      -->
     	</form>
   	</div>
     <div id="wysiwygrahmen">
       	<h1>quasi-wysiwyg:</h1>
 				<div class="buttonarea">
-					<input type="button" onclick="document.getElementById('quelltext').execCommand('copy')" value="copy">
-					<input type="button" onclick="document.getElementById('quelltext').execCommand('cut')" value="cut">
-
-					<input type="button" onclick="document.getElementById('quelltext').execCommand('paste')" value="paste">
 					<input type="button" onclick="insertbutton('**')" value="**bold**">
 					<input type="button" onclick="insertbutton('*')" value="*italics*">
 					<input type="button" onclick="insertbutton('~~')" value="~~stroke~~">
@@ -196,10 +156,8 @@ function cursorspantestact(){
 					<input type="button" onclick="insertbutton('%quote')" value="quote">
 					<input type="button" onclick="insertbutton('%link')" value="link">
 					<input type="button" onclick="insertbutton('%image')" value="image">
-					<input type="button" onclick="insertbutton('%table')" value="table">
 					<input type="button" onclick="insertbutton('%code')" value="code">
 					<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
-
 					<input type="button" onclick="document.getElementById('wysiwygrahmen').classList.remove('vollbild');document.getElementById('quelltext').focus();" value="exit fullscreen">
 				</div>
       	<div id="wysiwygarea" contenteditable="true"></div>
@@ -212,7 +170,7 @@ function cursorspantestact(){
 		-->
 		<div id="fehlercoderahmen">
 			<div id="fehlercode"></div>
-			<input type="button" onclick="fehlercodeverstecken()" value="close">
+			<input type="button" onclick="this.parentNode.classList.remove('active')" value="close">
 		</div>
 
 		<!--<h1>Praesentation nach pages:</h1>-->
@@ -226,7 +184,7 @@ function cursorspantestact(){
 		</div>
 	</div>
 	<div id="imagecontainer">
-		<img src="../lapa.jpg">
+		<img src="images/lapa.jpg">
 	</div>
 </body>
 </html>
