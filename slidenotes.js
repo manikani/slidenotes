@@ -666,6 +666,7 @@ emdparser.prototype.parseerrorsourcebackground = function(){
 	if(lines[x].length<1)leerzeichen="&nbsp;";
 	temptext +='<span class="linenr">'+x+'</span><span class="backgroundline">'+this.replace(lines[x],"  ","&nbsp; ")+leerzeichen+'</span><br>\n';
 
+
 	}
 	temptext +="&nbsp;";
 	//temptext += "</ol>";
@@ -1814,6 +1815,25 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 	this.texteditorerroractivated = true;
 }
 
+slidenotes.prototype.choseEditor=function(editor){
+	if(editor=="wysiwyg"){
+		this.wysiwygactivated=true;
+		this.texteditorerroractivated=false;
+		this.wysiwygarea.classList.remove("hidden");
+		this.texteditorerrorlayer.classList.add("hidden");
+	}else if(editor=="md-texteditor"){
+		this.wysiwygactivated=false;
+		this.texteditorerroractivated = true;
+		this.wysiwygarea.classList.add("hidden");
+		this.texteditorerrorlayer.classList.remove("hidden");
+	} else {
+		this.wysiwygactivated=false;
+		this.texteditorerroractivated = false;
+	}
+	this.parseneu();
+	this.textarea.focus();
+}
+
 slidenotes.prototype.texteditorrahmensetzen= function(){
 	//setzt den rahmen vom errorlayer auf textarea-größe:
 	var texteditorrahmen = document.getElementById("texteditor");
@@ -1821,8 +1841,10 @@ slidenotes.prototype.texteditorrahmensetzen= function(){
 	var texteditorfehlerlayer = this.texteditorerrorlayer;
 	texteditorrahmen.style.width = eingabeblock.offsetWidth + "px";
 	texteditorrahmen.style.height = eingabeblock.clientHeight+"px";
-	texteditorfehlerlayer.style.width = eingabeblock.offsetWidth + "px";
-	texteditorfehlerlayer.style.height = eingabeblock.offsetHeight+"px";
+	texteditorfehlerlayer.style.width = (eingabeblock.offsetWidth-4) + "px";
+	texteditorfehlerlayer.style.height = (eingabeblock.offsetHeight-4)+"px";
+	//frag mich nicht warum 4px abgezogen werden müssen, aber dann passts.
+	//vermutung ist der focus-rahmen vom texteditor...
 };
 
 slidenotes.prototype.parseneu = function(){
