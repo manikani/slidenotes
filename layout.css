@@ -38,6 +38,9 @@
 #texteditorerrorlayer .error{
 	color: red;
 }
+.backgroundline{
+	white-space: pre-wrap;
+}
 .proposedsymbol{
 	color:grey;
 	background:white;
@@ -130,7 +133,9 @@ h1{
     float: right;
    // height: 50vh;
     width: 45%;
-
+}
+.hidden {
+	display:none;
 }
 /*wysiwyg-vollbildmodus */
 #wysiwygrahmen.vollbild{
