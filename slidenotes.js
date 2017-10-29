@@ -2458,6 +2458,23 @@ function getKeyOfKeyCode(keycode){
   if(keycodes[keycode]==null)return "webkitbug"+keycode;
   return keycodes[keycode];
 }
+
+wysiwygcontroller.prototype.hideorshowcursor = function(){
+	//console.log("hideorshow:");
+	//console.log(document.activeElement);
+	var cursor = this.Cursor();
+	if(cursor != null){
+		var active = document.activeElement;
+		if(active == this.textarea || active == this.wysiwygarea){
+			//console.log("show cursor");
+			cursor.style.display="unset";
+		} else {
+			//console.log("hide cursor");
+			cursor.style.display="none";
+		}
+
+	}
+}
 /*
 wird scheinbar doch nicht gebraucht
 function cutcurrentselection(){
