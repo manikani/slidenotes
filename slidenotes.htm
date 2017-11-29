@@ -35,6 +35,7 @@ function initeditor(){
 		} else{
 			slidenote = new slidenotes(texted, texterr, wys, errordet, slideshow );
 			presentation = slidenote.presentation;
+			//texted.onresize = slidenote.parseneu;
 			texted.onresize= function(){slidenote.parseneu();};
 			texted.onkeydown= function(event){if(slidenote.wysiwygactivated)slidenote.keypressdown(event, texted);};
 			texted.onkeypress= function(event){if(slidenote.wysiwygactivated)slidenote.keypresswebkit(event, texted);};
@@ -163,6 +164,12 @@ function insertbutton(code){
 				</div>
       	<div id="wysiwygarea" contenteditable="true"></div>
     </div>
+		<div id="options">
+			<div id="themeselectiontab">
+			</div>
+			<div id="globaloptionstab">
+			</div>
+		</div>
 	</div>
 	<div>
 		<!--
