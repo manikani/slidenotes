@@ -58,21 +58,7 @@
 .ppage.active{
 	display:block;
 }
-.procontra{
-	width:100%;
-	float:none;
-}
-.procontra .listblock{
-	float:left;
-	margin-left: 5%;
-	width:40%;
-}
-.procontra::after {
-    clear: both;
-    content: "";
-    display: block;
-    width: 100%;
-}
+
 #praesentationrahmen{
 	display:none;
 }
