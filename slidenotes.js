@@ -1403,7 +1403,9 @@ stylepager.prototype.find = function(pagetaglines, startline){
 	if(musterpos<this.muster.length)found=false; //muster nicht bis zum ende prüfen können
 	if(foundendpos<foundstartpos)found=false; //kein ende gefunden, eigentlich das selbe wie oben oder?
 	if(found)console.log("muster "+ this.muster+" found at:"+foundstartpos+","+foundendpos)
-	if(found)return [foundstartpos,foundendpos]; else return [-1,-1];
+	//if(found)return [foundstartpos,foundendpos]; else return [-1,-1];
+	//besser objektorientiert:
+	if(found)return {start:foundstartpos, end:foundendpos}; else return {start:-1,end:-1};
 }
 /* stylepager.encapsuleHtml(pagelines, pagetaglines)
  * sucht in den pagelines mittels der find-methode (s.o.) nach dem muster des styles und ummantelt diese mit dem html-code des styles
@@ -1419,13 +1421,14 @@ stylepager.prototype.encapsuleHtml = function(pagelines,pagetaglines){
 	//alert(pagetaglines.toString() + "\n" +startend.toString());
 	//alert(pagetaglines==null);
 	var aktline=0;
-	while(startend[0]>-1&&startend[1]>-1){
+	//while(startend[0]>-1&&startend[1]>-1){
+	while(startend.start>-1&&startend.end>-1){
 	//if(startend[0]>-1&&startend[1]>-1){
-	//console.log("encapsulehtml treffer:"+this.starthtml);
-	pagelines[startend[0]]=this.starthtml + pagelines[startend[0]];
-	pagelines[startend[1]]+=this.endhtml;
-	aktline=startend[1]+1;
-	startend = this.find(pagetaglines,aktline);
+		console.log("encapsulehtml treffer:"+this.starthtml + " on line"+ startend.start);
+		pagelines[startend.start]=this.starthtml + pagelines[startend.start];
+		pagelines[startend.end]+=this.endhtml;
+		aktline=startend.end+1;
+		startend = this.find(pagetaglines,aktline);
 	}
 	return pagelines;
 
@@ -1472,6 +1475,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.init();
 	//Grundthemes laden:
 	this.loadTheme("emdcode");
+	this.loadTheme("procontra");
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 	var pagec = 0;
@@ -1514,7 +1518,7 @@ pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 	this.pagestyles = new Array(); //pagestyles löschen
 	this.pagestyles.push(new stylepager(new Array("h2","ol"),'<div class="listblock">','</div>'));
 	this.pagestyles.push(new stylepager(new Array("h2","ul"),'<div class="listblock">','</div>'));
-	this.pagestyles.push(new stylepager(new Array("h2","ol","h2","ol"),'<div class="procontra">',"</div>"));
+	//this.pagestyles.push(new stylepager(new Array("h2","ol","h2","ol"),'<div class="procontra">',"</div>"));
 	this.pagestyles.push(new stylepager(new Array("h2","text"),'<div class="textblock">','</div>'));
 	//this.pagestyles.push(new stylepager(new Array("h2","text"),'<div class="textblockliste">','</div>',"multiple")); komplexere muster erlauben: alle einschließen
 
@@ -1586,7 +1590,8 @@ pagegenerator.prototype.stylePages = function(){
 	}
 	//jetzt theme-styles ausführen:
 	for(var x=0;x<this.themes.length;x++){
-		console.log("theme-styles von theme "+this.themes[x].classname+": "+this.themes[x].length);
+		console.log("theme-styles von theme "+this.themes[x].classname+": "+this.themes[x].styles.length);
+		console.log(this.themes[x]);
 		for(var y=0;y<this.themes[x].styles.length;y++){
 			if(this.themes[x].styles[y]!=null)for(var pg=0;pg<this.pagesperline.length;pg++){
 				this.pagesperline[pg] = this.themes[x].styles[y].encapsuleHtml(this.pagesperline[pg],this.pagestaggedlines[pg]);
@@ -1653,16 +1658,17 @@ pagegenerator.prototype.showPage = function(page){
 themeobjekts = "";
 pagegenerator.prototype.loadTheme = function(themename){
 	if(themeobjekts.indexOf(themename)==-1){
-	var jsfile =document.createElement('script');
-    jsfile.setAttribute("type","text/javascript");
-	jsfile.setAttribute("src", this.jsfilepath + themename +".js");
-	var cssfile=document.createElement("link");
-	cssfile.setAttribute("rel", "stylesheet");
-	cssfile.setAttribute("type", "text/css");
-    cssfile.setAttribute("href", this.cssfilepath + themename + ".css");
-	document.getElementsByTagName("head")[0].appendChild(jsfile);
-	document.getElementsByTagName("head")[0].appendChild(cssfile);
-	themeobjekts+=themename;
+		console.log("load Theme "+themename);
+		var jsfile = document.createElement('script');
+  	jsfile.setAttribute("type","text/javascript");
+		jsfile.setAttribute("src", this.jsfilepath + themename +".js");
+		var cssfile = document.createElement("link");
+		cssfile.setAttribute("rel", "stylesheet");
+		cssfile.setAttribute("type", "text/css");
+  	cssfile.setAttribute("href", this.cssfilepath + themename + ".css");
+		document.getElementsByTagName("head")[0].appendChild(jsfile);
+		document.getElementsByTagName("head")[0].appendChild(cssfile);
+		themeobjekts+=themename;
 	}
 }
 /* pagegenerator.addTheme(theme)
@@ -1757,19 +1763,42 @@ function Theme(nombre, weight){
 //	console.log("Theme "+this.classname+" found "+this.htmlelements.length + " of "+htmlelement);
 }
 
+/* Theme.addStyle erwartet ein zeilenmuster, nach welchem gescannt wird
+* sowie ein start und ein end html-tag mit welchem gefundene muster ummantelt werden
+* muster ist ein Array mit zeilencode, bspw: text, h2, code etc.
+*/
 Theme.prototype.addStyle = function(muster, start, end){
 	this.styles.push(new stylepager(muster,start,end));
 }
 
+/* Theme.specialStylePerElement ist eine Hook-Funktion, welche
+* dazu gedacht ist überschrieben zu werden in einem angepassten
+* theme. sie wird aus der funktion cycleThroughHtmlElements aufgerufen
+* und bearbeitet das fertige innerHTML des betreffenden HTML-Elements
+*/
+
 Theme.prototype.specialStylePerElement = function(text){
 	return text;
 }
+
+/* Theme.HtmlElements erwartet htmlelement-css-code für eine query
+* und liefert alle gefundenen elemente innerhalb der präsentation zurück
+*/
+
 Theme.prototype.HtmlElements = function (htmlelement){
 	var elements;
 	if(htmlelement!=null)elements =  document.querySelectorAll(this.querycode + htmlelement);
 		//else return document.querySelectorAll(this.querycode);
 	return elements;
 }
+
+/* Theme.cycleThroughHtmlElements wird aufgerufen mit dem querycode
+* nach welchem html-elemente durchlaufen werden sollen.
+* es sucht die betreffenden html-elemente innerhalb der präsentation raus
+* und führt anschließend für jedes gefundene html-element die
+* specialStylePerElement-Hook-Funktion aus
+*/
+
 Theme.prototype.cycleThroughHtmlElements = function(htmlelement){
 	var querycode = "#praesentation .ppage "+htmlelement;
 	var elements;
@@ -2086,6 +2115,10 @@ slidenotes.prototype.showErrorDetails = function(){
 	rahmen.classList.add("active");
 	rahmen.scrollTop = this.texteditorerrorlayer.scrollTop;
 };
+
+slidenotes.prototype.addTheme = function(theme){
+	this.presentation.addTheme(theme);
+}
 
 function wysiwygcontroller(textarea, wysiwyfield, ersteller){
 	this.textarea = textarea;
