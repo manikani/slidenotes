@@ -1,0 +1,13 @@
+.azul {
+	backgroundcolor: darkblue;
+	color: snowwhite;
+}
+
+.azul code {
+	backgroundcolor: lightblue;
+	color: black;
+
+	padding: 2px;
+}
+
+

@@ -1476,6 +1476,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	//Grundthemes laden:
 	this.loadTheme("emdcode");
 	this.loadTheme("procontra");
+	this.loadTheme("azul");
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 	var pagec = 0;
@@ -1527,6 +1528,7 @@ pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 
 /* Pagegenerator.finalizeHtml()
  * Erstellt den finalen HTML-Code nach Seiten und pflegt ihn ins ausgabediv ein
+ + Hier finden keine Hooks statt
 */
 pagegenerator.prototype.finalizeHtml = function(){
 	//jetzt stylen: - findet hier nicht statt
@@ -1575,6 +1577,7 @@ pagegenerator.prototype.resetStyler = function(){
  * 3. durch den Aufruf von finalizeHtml das endgültige HTML-Objekt der Präsentation erstellt und ans ausgabediv übergeben
  * 4. durch den Aufruf der styleThemeSpecials()-Funktion zusätzliche Styles der jeweiligen Themes eingeführt (Hook-Funktion)
  * 5. dem Präsentations-HTML-Objekt (ausgabediv) werden die Klassen der aktivierten Themes angehängt um CSS des jew. Themes zu aktivieren
+ * Hier finden Hooks statt
 */
 pagegenerator.prototype.stylePages = function(){
 	//alert(this.pagesperline[0].toString());
@@ -1588,15 +1591,17 @@ pagegenerator.prototype.stylePages = function(){
 			//console.log("after:"+this.pagesperline[pg]);
 		}
 	}
-	//jetzt theme-styles ausführen:
+	//jetzt theme-styles ausführen: (Hook)
 	for(var x=0;x<this.themes.length;x++){
+	if(this.themes[x].active){ //nur ausführen falls theme aktiv ist
 		console.log("theme-styles von theme "+this.themes[x].classname+": "+this.themes[x].styles.length);
 		console.log(this.themes[x]);
 		for(var y=0;y<this.themes[x].styles.length;y++){
 			if(this.themes[x].styles[y]!=null)for(var pg=0;pg<this.pagesperline.length;pg++){
-				this.pagesperline[pg] = this.themes[x].styles[y].encapsuleHtml(this.pagesperline[pg],this.pagestaggedlines[pg]);
+				this.pagesperline[pg] = this.themes[x].styles[y].encapsuleHtml(this.pagesperline[pg],this.pagestaggedlines[pg]); //Hook-Funktion
 			}
 		}
+	}
 	}
 	//html ist vorgestyled. jetzt html finalisieren:
 	this.finalizeHtml();
@@ -1605,11 +1610,15 @@ pagegenerator.prototype.stylePages = function(){
 	console.log(this.themes.length+" Themes");
 	//console.log(document.
 	for(var x=0;x<this.themes.length;x++){
-		this.themes[x].styleThemeSpecials();
+		if(this.themes[x].active)this.themes[x].styleThemeSpecials(); //Hook-Funktion
 	}
 	//alles gestyled: klassen anhängen:
 	for(var x=0;x<this.themes.length;x++){
-		this.presentation.classList.add(this.themes[x].classname);
+		if(this.themes[x].active){
+			this.presentation.classList.add(this.themes[x].classname);
+		}else{
+			this.presentation.classList.remove(this.themes[x].classname);
+		}
 	}
 	this.presentationhtml = this.presentation.innerHTML;
 
@@ -1686,6 +1695,28 @@ pagegenerator.prototype.addTheme = function (theme){
 	console.log("neues Theme geladen: "+theme.classname);
 	//this.stylePages();
 }
+	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
+	*/
+pagegenerator.prototype.showThemes = function(){
+	var anfangstext = "";
+	var endtext = "";
+	var breaktext = "<br>";
+	var gesamttext = anfangstext;
+	for(var x=0;x<this.themes.length;x++){
+		var acttheme = this.themes[x];
+		var acttext = '<input type="checkbox" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
+		acttext +='checked="'+acttheme.active+'">';
+		acttext += '<label>'+acttheme.classname+'</label>';
+		gesamttext += acttext + breaktext;
+	}
+	gesamttext+=endtext;
+	var seltab = document.getElementById("themeselectiontab");
+	seltab.innerHTML = gesamttext;
+}
+//changeThemeStatus erwartet eine themenr und ändert das entsprechende theme
+pagegenerator.prototype.changeThemeStatus = function(themenr, status){
+	this.themes[themenr].active = status;
+}
 
 /* pagegenerator.showpresentation() startet und beendet die präsentation
  * startet die eigentliche präsentation durch aufruf von
@@ -1760,6 +1791,8 @@ function Theme(nombre, weight){
 	if(weight !=null)this.weight = weight; else this.weight = 0; //gewicht der klasse: höheres gewicht wird später ausgeführt, niedrigeres früher
 	this.htmlelements;
 	this.querycode = "#praesentation .ppage ";
+	this.themetype = "extension";
+	this.descriptiontext = "";
 //	console.log("Theme "+this.classname+" found "+this.htmlelements.length + " of "+htmlelement);
 }
 
@@ -2116,8 +2149,12 @@ slidenotes.prototype.showErrorDetails = function(){
 	rahmen.scrollTop = this.texteditorerrorlayer.scrollTop;
 };
 
+/* Theme-Controll:
+*/
 slidenotes.prototype.addTheme = function(theme){
 	this.presentation.addTheme(theme);
+	//hier könnte auch noch unterschieden werden nach theme-art, also bspw. n plugin,
+	//welches auch den parser beeinflusst o.ä.
 }
 
 function wysiwygcontroller(textarea, wysiwyfield, ersteller){

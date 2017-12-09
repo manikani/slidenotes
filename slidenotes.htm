@@ -134,6 +134,7 @@ function insertbutton(code){
 						<option value="wysiwyg">Wysiwyg-Editor</option>
 						<option value="md-texteditor">MD-Code Editor</option>
 					</select>
+					<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
 				</div>
 				<div id="texteditor" class="texteditor">
 					<div id="texteditorerrorlayer"></div>
@@ -161,6 +162,7 @@ function insertbutton(code){
 					<input type="button" onclick="insertbutton('%code')" value="code">
 					<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
 					<input type="button" onclick="document.getElementById('wysiwygrahmen').classList.remove('vollbild');document.getElementById('quelltext').focus();" value="exit fullscreen">
+					<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
 				</div>
       	<div id="wysiwygarea" contenteditable="true"></div>
     </div>
