@@ -4,7 +4,7 @@
 *  zunächst wird ein neues theme erstellt.
 */
 var themeprocontra = new Theme("procontra");
-
+themeprocontra.description = "Create Pro-Contra-Style Blocks";
 /* anschließend wird dem theme ein spezieller style zugewiesen:
 * er besteht aus einem suchmuster (array mit zeilencodes) sowie einem start und end-html-tag
 */

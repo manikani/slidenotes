@@ -1477,6 +1477,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.loadTheme("emdcode");
 	this.loadTheme("procontra");
 	this.loadTheme("azul");
+	this.loadTheme("redalert");
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 	var pagec = 0;
@@ -1698,24 +1699,52 @@ pagegenerator.prototype.addTheme = function (theme){
 	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
 	*/
 pagegenerator.prototype.showThemes = function(){
-	var anfangstext = "";
-	var endtext = "";
 	var breaktext = "<br>";
-	var gesamttext = anfangstext;
+	var themetabtext = '';
+	var designtabtext = '';
+	var globaloptionstext = '';
 	for(var x=0;x<this.themes.length;x++){
 		var acttheme = this.themes[x];
-		var acttext = '<input type="checkbox" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
-		acttext +='checked="'+acttheme.active+'">';
-		acttext += '<label>'+acttheme.classname+'</label>';
-		gesamttext += acttext + breaktext;
+		if(acttheme.themetype == "css"){
+			var acttext = '<input type="radio" name="design" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
+			if(acttheme.active)acttext +=' checked>';
+			acttext += '<label>';
+			acttext += acttheme.classname + ": ";
+			acttext+= acttheme.description;
+			acttext +='</label>';
+			designtabtext += acttext + breaktext;
+		}else{
+			var acttext = '<input type="checkbox" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
+			acttext +='checked="'+acttheme.active+'">';
+			acttext += '<label>';
+			if(acttheme.description==null)acttext += acttheme.classname; else acttext+= acttheme.description;
+			acttext +='</label>';
+			themetabtext += acttext + breaktext;
+		}
 	}
-	gesamttext+=endtext;
 	var seltab = document.getElementById("themeselectiontab");
-	seltab.innerHTML = gesamttext;
+	var destab = document.getElementById("designoptionstab");
+	var gloptab= document.getElementById("globaloptionstab");
+	var options = document.getElementById("options");
+	seltab.innerHTML = themetabtext;
+	destab.innerHTML = designtabtext;
+	gloptab.innerHTML = globaloptionstext;
+	options.classList.add("visible");
+
+}
+
+//hideThemes versteckt die Theme-auswahl bei klick auf close
+pagegenerator.prototype.hideThemes = function(){
+	document.getElementById("options").classList.remove("visible");
 }
 //changeThemeStatus erwartet eine themenr und ändert das entsprechende theme
 pagegenerator.prototype.changeThemeStatus = function(themenr, status){
+	if(this.themes[themenr].themetype=="css"){
+		//es darf nur ein css ausgewählt werden?
+		for(var x=0;x<this.themes.length;x++)if(this.themes[x].themetype=="css")this.themes[x].active=false;
+	}
 	this.themes[themenr].active = status;
+	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
 }
 
 /* pagegenerator.showpresentation() startet und beendet die präsentation

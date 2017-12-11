@@ -1,4 +1,5 @@
 var newtheme = new Theme("emdcode", 1);
+newtheme.description = "Higlightning of EMD-Code in Codeblock";
 newtheme.styleThemeSpecials = function(){
 	console.log("emd-code styleThemeSpecials wird ausgeführt");
 	this.cycleThroughHtmlElements("code");

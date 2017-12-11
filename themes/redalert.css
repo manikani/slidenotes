@@ -1,0 +1,14 @@
+.redalert {
+	background: darkred;
+	color: black;
+}
+.redalert h1{
+	background: chocolate;	
+}
+
+.redalert code {
+	background: lightblue;
+	color: black;
+
+	padding: 2px;
+}

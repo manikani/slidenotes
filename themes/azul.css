@@ -1,13 +1,11 @@
 .azul {
-	backgroundcolor: darkblue;
-	color: snowwhite;
+	background: darkblue;
+	color: white;
 }
 
 .azul code {
-	backgroundcolor: lightblue;
+	background: lightblue;
 	color: black;
 
 	padding: 2px;
 }
-
-

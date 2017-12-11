@@ -41,7 +41,8 @@ Ein Bild von lapa: ![](images/lapa.jpg) eol
 Ein [**fetter link**](images/lapa.jpg) zu lapas bild
 Ein Bildlink?: [![](images/lapa.jpg)](images/lapa.jpg) 
 Ein Bischen Text drunter zum Testen...
-
+#Titel mit Bild ![](images/lapa.jpg)
+testtext
 -----
 #Letzte Seite
 Mehr fällt mir grad nicht ein zum Testen...
