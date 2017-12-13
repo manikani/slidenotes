@@ -111,43 +111,78 @@ function insertbutton(code){
 --></script>
 </head>
 <body>
+<div id="slidenotediv">
+	<h1>Welcome to the Slidenote-Editor</h1>
+	<div id="slidenotebuttons">
+		<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
+		<input type="button" onclick="slidenote.showErrorDetails()" value="show parseerrors">
+		<!--<input type="button" onclick="document.getElementById('slidenotediv').classList.add('vollbild');document.getElementById('quelltext').focus();" value="wysiwyg-vollbild">-->
+		<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
+			<option value="wysiwyg">Wysiwyg-Editor</option>
+			<option value="wysiwygfullscreen">Wysiwyg-Editor Fullscreen</option>
+			<option value="md-texteditor">MD-Code Editor</option>
+			<option value="wysiwygdebugmode">Wysiwyg-debug mode</option>
+		</select>
+		<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
+	</div>
+	<div id="editorblock">
+		<div id="texteditorbuttons">
+			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
+			<input type="button" onclick="insertbutton('**')" value="**bold**">
+			<input type="button" onclick="insertbutton('*')" value="*italics*">
+			<input type="button" onclick="insertbutton('~~')" value="~~stroke~~">
+			<input type="button" onclick="insertbutton('%head')" value="title">
+			<input type="button" onclick="insertbutton('%list')" value="unordered list">
+			<input type="button" onclick="insertbutton('%nrlist')" value="ordered list">
+			<input type="button" onclick="insertbutton('%quote')" value="quote">
+			<input type="button" onclick="insertbutton('%link')" value="link">
+			<input type="button" onclick="insertbutton('%image')" value="image">
+			<input type="button" onclick="insertbutton('%code')" value="code">
+		</div>
+		<div id="texteditor" class="texteditor">
+			<div id="texteditorerrorlayer"></div>
+			<textarea spellcheck="false" id="quelltext" onload="initeditor()" autofocus onfocus="initeditor();"></textarea>
+			<div id="wysiwygarea" contenteditable="true"></div>
+		</div>
+
+	</div>
+	<div id="praesentationrahmen">
+		<div id="praesentation"></div>
+		<div class="praesentationsteuerung">
+				<input type="button" value="last page please" onclick="presentation.lastPage()">
+				<input type="button" value="next page please" onclick="presentation.nextPage()">
+				<input type="button" onclick="presentation.showpresentation()" value="hide presentation">
+		</div>
+	</div>
+	<div id="options">
+		<h1>Options<button onclick="slidenote.presentation.hideThemes()" value="close">close</button></h1>
+		<ul>
+			<li>Extensions</li>
+			<li>Design-Options</li>
+			<li>Global-Options</li>
+		</ul>
+		<div id="themeselectiontab">
+		</div>
+		<div id="designoptionstab"></div>
+		<div id="globaloptionstab">
+		</div>
+	</div>
+	<div id="fehlercoderahmen">
+		<div id="fehlercode"></div>
+		<input type="button" onclick="this.parentNode.classList.remove('active')" value="close">
+	</div>
+</div>
+
+<!--
 	<div id="editorblock">
 		<div id="texteditorrahmen">
 			<h1>Testform zum Text eingeben - ohne wysiwyg</h1>
 			<form name="testform">
-				<div id="texteditorbuttons">
-					<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
-					<input type="button" onclick="insertbutton('**')" value="**bold**">
-					<input type="button" onclick="insertbutton('*')" value="*italics*">
-					<input type="button" onclick="insertbutton('~~')" value="~~stroke~~">
-					<input type="button" onclick="insertbutton('%head')" value="title">
-					<input type="button" onclick="insertbutton('%list')" value="unordered list">
-					<input type="button" onclick="insertbutton('%nrlist')" value="ordered list">
-					<input type="button" onclick="insertbutton('%quote')" value="quote">
-					<input type="button" onclick="insertbutton('%link')" value="link">
-					<input type="button" onclick="insertbutton('%image')" value="image">
-					<input type="button" onclick="insertbutton('%code')" value="code">
-					<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
-					<input type="button" onclick="slidenote.showErrorDetails()" value="show parseerrors">
-					<input type="button" onclick="document.getElementById('wysiwygrahmen').classList.add('vollbild');document.getElementById('quelltext').focus();" value="wysiwyg-vollbild">
-					<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
-						<option value="wysiwyg">Wysiwyg-Editor</option>
-						<option value="md-texteditor">MD-Code Editor</option>
-					</select>
-					<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
-				</div>
-				<div id="texteditor" class="texteditor">
-					<div id="texteditorerrorlayer"></div>
-					<!-- onresize="slidenotes.parseneu()"
-					onkeydown="slidenotes.keypressdown(event, this)"
-					onkeyup="slidenotes.keypressup(event, this)"
-					autofocus onfocus="initeditor(this.value)"
-					onscroll="slidenotes.editorscroll(this)"> -->
-					<textarea spellcheck="false" id="quelltext" onload="initeditor()" autofocus onfocus="initeditor();"></textarea>
-	      </div>
+
+
     	</form>
   	</div>
-    <div id="wysiwygrahmen">
+
       	<h1>quasi-wysiwyg:</h1>
 				<div class="buttonarea">
 					<input type="button" onclick="insertbutton('**')" value="**bold**">
@@ -164,44 +199,24 @@ function insertbutton(code){
 					<input type="button" onclick="document.getElementById('wysiwygrahmen').classList.remove('vollbild');document.getElementById('quelltext').focus();" value="exit fullscreen">
 					<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
 				</div>
-      	<div id="wysiwygarea" contenteditable="true"></div>
-    </div>
-		<div id="options">
-			<h1>Options<button onclick="slidenote.presentation.hideThemes()" value="close">close</button></h1>
-			<ul>
-				<li>Extensions</li>
-				<li>Design-Options</li>
-				<li>Global-Options</li>
-			</ul>
-			<div id="themeselectiontab">
-			</div>
-			<div id="designoptionstab"></div>
-			<div id="globaloptionstab">
-			</div>
-		</div>
+
+
+
 	</div>
+-->
 	<div>
 		<!--
 			<h1>geparster html-code</h1>
 			<div id="zieltextrahmen"><div id="zieltext"></div></div>
 		-->
-		<div id="fehlercoderahmen">
-			<div id="fehlercode"></div>
-			<input type="button" onclick="this.parentNode.classList.remove('active')" value="close">
-		</div>
+
 
 		<!--<h1>Praesentation nach pages:</h1>-->
-		<div id="praesentationrahmen">
-			<div id="praesentation"></div>
-			<div class="praesentationsteuerung">
-					<input type="button" value="last page please" onclick="presentation.lastPage()">
-					<input type="button" value="next page please" onclick="presentation.nextPage()">
-					<input type="button" onclick="presentation.showpresentation()" value="hide presentation">
-			</div>
-		</div>
+
 	</div>
 	<div id="imagecontainer">
 		<img src="images/lapa.jpg">
 	</div>
+
 </body>
 </html>

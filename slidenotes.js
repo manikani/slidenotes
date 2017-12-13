@@ -1912,14 +1912,31 @@ slidenotes.prototype.choseEditor=function(editor){
 		this.texteditorerroractivated=false;
 		this.wysiwygarea.classList.remove("hidden");
 		this.texteditorerrorlayer.classList.add("hidden");
+		document.getElementById("slidenotediv").classList.remove("vollbild");
 	}else if(editor=="md-texteditor"){
 		this.wysiwygactivated=false;
 		this.texteditorerroractivated = true;
 		this.wysiwygarea.classList.add("hidden");
 		this.texteditorerrorlayer.classList.remove("hidden");
+		document.getElementById("slidenotediv").classList.remove("vollbild");
+	}else if(editor=="wysiwygfullscreen"){
+		this.wysiwygactivated=true;
+		this.texteditorerroractivated=false;
+		this.wysiwygarea.classList.remove("hidden");
+		this.texteditorerrorlayer.classList.add("hidden");
+		document.getElementById("slidenotediv").classList.add("vollbild");
 	} else {
 		this.wysiwygactivated=false;
 		this.texteditorerroractivated = false;
+	}
+	if(editor=="wysiwygdebugmode"){
+		this.wysiwygactivated=true;
+		this.wysiwygarea.classList.remove("hidden");
+		this.texteditorerrorlayer.classList.add("hidden");
+		document.getElementById("slidenotediv").classList.remove("vollbild");
+		this.wysiwygarea.classList.add("debugmode");
+	}else{
+		this.wysiwygarea.classList.remove("debugmode");
 	}
 	this.parseneu();
 	this.textarea.focus();
