@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8"/>
-<title>zweiter ansatz - aufgeräumt und javascript in extra datei</title>
+<title>Slidenote-Editor</title>
 <link rel="stylesheet" href="layout.css">
 <script language="javascript" src="slidenotes.js"></script>
 <script language="javascript"><!--
@@ -20,7 +20,7 @@ dubbidu
 var editorinit=false; //wird nicht mehr gebraucht?
 
 function initeditor(){
-	//console.log("initeditor:"+editorinit + "slidenote:"+(slidenote==null));
+	console.log("initeditor:"+editorinit + "slidenote:"+(slidenote==null));
 	//console.log(slidenote);
 	if(slidenote==null){
 		var texted = 		document.getElementById("quelltext");
@@ -44,7 +44,7 @@ function initeditor(){
 			texted.oncut=function(){setTimeout('slidenote.parseneu()',150)};
 			//autofocus tonfocus="initeditor(this.value);
 			texted.onscroll=function(){slidenote.scroll(texted);};
-			wys.onmouseup=function(event){slidenote.wysiwyg.copyCursorToTextarea(event);};
+			wys.onmouseup=function(event){slidenote.wysiwyg.copyCursorToTextarea(event); console.log("onmouseupend");};
 			wys.onmousedown=function(event){slidenote.wysiwyg.mousedown(event);};
 			wys.onpaste=function(event){
 				console.log(event.clipboardData.getData('Text'));
@@ -142,7 +142,7 @@ function insertbutton(code){
 		<div id="texteditor" class="texteditor">
 			<div id="texteditorerrorlayer"></div>
 			<textarea spellcheck="false" id="quelltext" onload="initeditor()" autofocus onfocus="initeditor();"></textarea>
-			<div id="wysiwygarea" contenteditable="true"></div>
+			<div id="wysiwygarea" contenteditable="true" spellcheck="false"></div>
 		</div>
 
 	</div>

@@ -142,21 +142,21 @@ mapping.prototype.WystextToSource = function(position){
 		veraenderungen.push(this.angezeigtezeichen[x]);
 	}
 	veraenderungen.sort(function(a, b){return a.posinall - b.posinall});
-	console.log("veraenderungen:");
-	console.log(veraenderungen);
+	//console.log("veraenderungen:");
+	//console.log(veraenderungen);
 	//veraenderungen sind jetzt sortiert und enthalten alle insertedhtmls und angezeigte zeichen
 	var aktpos=position;
 	var onlink=false;
 	for(x=0;x<veraenderungen.length;x++){
 		//jetzt veraenderungen durchlaufen:
 		if(veraenderungen[x].posinall<aktpos){
-			console.log("aktposalt:"+aktpos);
+		//console.log("aktposalt:"+aktpos);
 			aktpos+=veraenderungen[x].wystextveraenderung;
-			console.log("veränderung gefunden:"+veraenderungen[x].mdcode + " -> "+veraenderungen[x].wystextveraenderung);
-			console.log("aktpos:"+aktpos);
+		//console.log("veränderung gefunden:"+veraenderungen[x].mdcode + " -> "+veraenderungen[x].wystextveraenderung);
+		//console.log("aktpos:"+aktpos);
 		}
-		console.log("posinall:"+veraenderungen[x].posinall);
-		console.log(veraenderungen[x]);
+		//console.log("posinall:"+veraenderungen[x].posinall);
+		//console.log(veraenderungen[x]);
 		if(aktpos>veraenderungen[x].posinall &&
 			aktpos<veraenderungen[x].posinall+veraenderungen[x].mdcode.length  &&
 			veraenderungen[x].typ=="link" && !veraenderungen[x].angezeigteszeichen){
@@ -173,28 +173,28 @@ mapping.prototype.WystextToSource = function(position){
 					}
 				}
 
-				console.log("auf link gelandet an "+aktpos + " verinlink:"+verinlink);
-				console.log(veraenderungen[x]);
-				console.log("wirklich auf link gelandet?");
+				//console.log("auf link gelandet an "+aktpos + " verinlink:"+verinlink);
+				//console.log(veraenderungen[x]);
+				//console.log("wirklich auf link gelandet?");
 				if(aktpos<veraenderungen[x].posinall+veraenderungen[x].mdcode.length-verinlink){
-					console.log("ja, wirklich");
+					//console.log("ja, wirklich");
 					aktpos=aktpos-veraenderungen[x].wystextveraenderung+1;
 					//if(veraenderungen[x+1]!=null && veraenderungen[x+1].angezeigteszeichen &&
 					//veraenderungen[x+1].typ=="link")aktpos--;
 					onlink=true;
 				}
 		}
-		console.log
+		//console.log
 		if(veraenderungen[x].typ=="link" && veraenderungen[x].angezeigteszeichen &&
 		onlink){
 			//link ist bereits angezeigt:mache daher aktpos wieder rückgängig?
 				aktpos--;
 				aktpos-=veraenderungen[x].wystextveraenderung;
-				console.log("rückgängig gemacht auf:"+aktpos);
+				//console.log("rückgängig gemacht auf:"+aktpos);
 		}
 		if(veraenderungen[x].typ=="proposedsymbol" && aktpos<veraenderungen[x].posinall){
 				//auf proposedsymbol gelandet
-				console.log("auf proposedsymbol gelandet an"+aktpos);
+				//console.log("auf proposedsymbol gelandet an"+aktpos);
 				//aktpos=aktpos-veraenderungen[x].wystextveraenderung;//+veraenderungen[x].mdcode.length;
 		}
 
@@ -555,16 +555,16 @@ emdparser.prototype.parsewysiwyghtml= function(){
 				}
 			}
 			cursorinlineneu = wyspos;
-			console.log("cursor gesetzt von"+cursorinlinealt+"auf:"+cursorinlineneu);
-			console.log(wysposobj);
-			console.log(this.map);
+			//console.log("cursor gesetzt von"+cursorinlinealt+"auf:"+cursorinlineneu);
+			//console.log(wysposobj);
+			//console.log(this.map);
 			//proposedsymbols
 		var proposedsymbol = proposedsymbols[neuecursorline];
 		var proposedsymbolhtml = "";
 		if(proposedsymbol==null)proposedsymbol=""; else proposedsymbolhtml = '<span class="proposedsymbol">'+proposedsymbol+'</span>';
 
-		console.log("proposedsymbol:"+proposedsymbol + " neuecursorline:"+neuecursorline);
-		console.log(proposedsymbols);
+		//console.log("proposedsymbol:"+proposedsymbol + " neuecursorline:"+neuecursorline);
+		//console.log(proposedsymbols);
 
 		//cursor setzen
 		//überarbeiten: cursor sollte das nächste wort umfassen und links border haben und nach links "collapsen" anstelle zum ende.
@@ -741,9 +741,9 @@ emdparser.prototype.sanitizedcodepositions = function(text){
 		codepos[f][0]-=veraenderung;
 		veraenderung+=codepos[f][1].length-1;
 	}
-	console.log("codepositions: vom text:"+text);
-	console.log(codepos);
-	console.log(this.insertedhtmlinline);
+	//console.log("codepositions: vom text:"+text);
+	//console.log(codepos);
+	//console.log(this.insertedhtmlinline);
 	return codepos;
 };
 
@@ -1956,8 +1956,10 @@ slidenotes.prototype.texteditorrahmensetzen= function(){
 };
 
 slidenotes.prototype.parseneu = function(){
+	var startzeit = new Date();
 	this.parser = new emdparser(this.textarea.value);
 	this.parser.parsenachzeilen();
+	var zwischenzeit = new Date();
 	if(this.wysiwygactivated){
 		//hier kommt wysiwygkram rein
 		/*this.parser.parsewysiwyghtml();
@@ -1971,6 +1973,11 @@ slidenotes.prototype.parseneu = function(){
 			this.texteditorrahmensetzen();
 		}
 	}
+	var endzeit = new Date();
+	var parszeit = zwischenzeit - startzeit;
+	var renderzeit = endzeit - zwischenzeit;
+	var gesamtzeit = endzeit - startzeit;
+	console.log("Parsen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
 };
 slidenotes.prototype.renderwysiwyg = function(){
 	//nur wysiwyg neu aufbauen
@@ -1979,6 +1986,7 @@ slidenotes.prototype.renderwysiwyg = function(){
 	this.wysiwygarea.innerHTML = this.parser.errorcode;
 	this.wysiwygarea.scrollTop = st;
 	this.wysiwyg.scrollToCursor();
+	console.log("renderwysiwyg abgeschlossen");
 }
 
 slidenotes.prototype.keypressdown = function(event, inputobject){
@@ -2429,53 +2437,27 @@ wysiwygcontroller.prototype.getCaretCharacterOffsetWithin = function(element) {
 };
 
 wysiwygcontroller.prototype.copyCursorToTextarea = function(event){
+	var debugzeitstart = new Date();
 	var sellength = this.getSelectionLength(this.wysiwygarea);
 	var wysiwygcursorpos =  this.getCaretCharacterOffsetWithin(this.wysiwygarea);
 	var selbackwards = this.isSelectionBackwards();
 	var aktpos = wysiwygcursorpos;
 	var startpos = aktpos-sellength;
+
 	if(sellength>0){
 		//es gibt eine neue selection
 		aktpos = this.ersteller.parser.map.WystextToSource(aktpos);
 		startpos = this.ersteller.parser.map.WystextToSource(startpos);
+
 	} else{
 		//es gibt keine neue selection
 			aktpos = this.ersteller.parser.map.WystextToSource(aktpos);
 			startpos = aktpos;
 	}
-	console.log("copyCursorToTextarea wyspos:"+wysiwygcursorpos+" aktpos:"+aktpos+" startpos:"+startpos);
-	console.log(this.ersteller.parser.map);
-		/*
-			//es gibt eine neue selection
-			this.textarea.selectionStart = startpos;
-			//console.log("event vorhanden?"+(event!=null)+"Shiftkey?"+event.shiftKey);
-			if(event!=null && event.shiftKey && event.keyCode != 16){
-				setTimeout("slidenote.keypressdown({key:'Shift'},slidenote.textarea);",200);
-				console.log("shiftkey auslösen? event.shiftKey:"+event.shiftKey+" keyCode:"+event.keyCode);
-			}
-		}else{
-			//es gibt keine neue selection
-			this.textarea.selectionStart = aktpos;
-			//neu: es muss shift-mouse-click abgefangen werden
-			console.log("selec event?"+(event!=null));
-			if(event!=null && event.shiftKey){
-				//shift ist gedrückt, keine bisherige markierung vorhanden:
-				//wysiwygcursorpos: aktuelle cursor-position.
-				//herausfinden: position vom alten cursor
-				var oldcursorpos = this.positionOfElement(this.Cursor());
-
-				if(oldcursorpos < wysiwygcursorpos){
-					//links von altem cursor gedrückt:
-					this.textarea.selectionStart = veraenderungendurchlaufen(veraenderung,oldcursorpos);
-				}else{
-					//rechts von altem cursor gedrückt:
-					aktpos = veraenderungendurchlaufen(veraenderung,oldcursorpos);
-				}
-				console.log("selectionstart ist umgeändert");
-			}
-
-		}
-		*/
+	//console.log("copyCursorToTextarea wyspos:"+wysiwygcursorpos+" aktpos:"+aktpos+" startpos:"+startpos);
+	//console.log(this.ersteller.parser.map);
+	var debugzeitwystexttosource = new Date() - debugzeitstart;
+	console.log("wystexttosource brauchte:"+debugzeitwystexttosource+"ms");
 		this.textarea.focus();
 		this.textarea.selectionEnd = aktpos; //cursor an stelle setzen
 		this.textarea.selectionStart = startpos;
@@ -2485,7 +2467,8 @@ wysiwygcontroller.prototype.copyCursorToTextarea = function(event){
 		//nicht neu parsen - es reicht, html für wysiwyg neu zu rendern
 		this.ersteller.renderwysiwyg();
 		keydown=false;
-
+		var debugzeitend = new Date() - debugzeitstart;
+		console.log("copyCursorToTextarea brauchte "+debugzeitend+"ms")
 };
 
 wysiwygcontroller.prototype.pastefromwysiwyg = function(pastedtext){
@@ -2554,6 +2537,7 @@ wysiwygcontroller.prototype.mousedown = function(event){
 
 		}
 	}
+	console.log("wysiwyg.mousedown abgeschlossen");
 }
 //webkit-hacks:
 var webkit = false;
