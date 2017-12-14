@@ -1478,6 +1478,9 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.loadTheme("procontra");
 	this.loadTheme("azul");
 	this.loadTheme("redalert");
+	this.loadTheme("prototyp");
+	this.loadTheme("highlight");
+
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 	var pagec = 0;
@@ -1518,10 +1521,10 @@ pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 	//pagesperline enthält jetzt array mit lines sortiert nach pages ohne pagebreaks
 	//grundmuster erstellen um überhaupt was zu stylen
 	this.pagestyles = new Array(); //pagestyles löschen
-	this.pagestyles.push(new stylepager(new Array("h2","ol"),'<div class="listblock">','</div>'));
-	this.pagestyles.push(new stylepager(new Array("h2","ul"),'<div class="listblock">','</div>'));
+	//this.pagestyles.push(new stylepager(new Array("h2","ol"),'<div class="listblock">','</div>'));
+	//this.pagestyles.push(new stylepager(new Array("h2","ul"),'<div class="listblock">','</div>'));
 	//this.pagestyles.push(new stylepager(new Array("h2","ol","h2","ol"),'<div class="procontra">',"</div>"));
-	this.pagestyles.push(new stylepager(new Array("h2","text"),'<div class="textblock">','</div>'));
+	//this.pagestyles.push(new stylepager(new Array("h2","text"),'<div class="textblock">','</div>'));
 	//this.pagestyles.push(new stylepager(new Array("h2","text"),'<div class="textblockliste">','</div>',"multiple")); komplexere muster erlauben: alle einschließen
 
 
@@ -1694,20 +1697,25 @@ pagegenerator.prototype.addTheme = function (theme){
 	*/
 
 	console.log("neues Theme geladen: "+theme.classname);
+	//css-mixup vermeiden:
+	this.changeThemeStatus(this.themes.length-1, theme.active);
 	//this.stylePages();
 }
 	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
 	*/
-pagegenerator.prototype.showThemes = function(){
+pagegenerator.prototype.showThemes = function(tabnr){
 	var breaktext = "<br>";
 	var themetabtext = '';
-	var designtabtext = '';
+	var designtabtext = '<h3>Basic Theme Selection</h3>';
+	var designoptions = '<hr><h3>Design Options</h3>';
 	var globaloptionstext = '';
+	var chosencssclass;
 	for(var x=0;x<this.themes.length;x++){
 		var acttheme = this.themes[x];
 		if(acttheme.themetype == "css"){
 			var acttext = '<input type="radio" name="design" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
-			if(acttheme.active)acttext +=' checked>';
+			if(acttheme.active)acttext +=' checked>'; else acttext+='>';
+			if(acttheme.active)chosencssclass=acttheme.classname;
 			acttext += '<label>';
 			acttext += acttheme.classname + ": ";
 			acttext+= acttheme.description;
@@ -1715,22 +1723,81 @@ pagegenerator.prototype.showThemes = function(){
 			designtabtext += acttext + breaktext;
 		}else{
 			var acttext = '<input type="checkbox" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
-			acttext +='checked="'+acttheme.active+'">';
+			if(acttheme.active)acttext +=' checked>'; else acttext+='>';
 			acttext += '<label>';
 			if(acttheme.description==null)acttext += acttheme.classname; else acttext+= acttheme.description;
 			acttext +='</label>';
 			themetabtext += acttext + breaktext;
 		}
+		if(acttheme.designoptions!=null && acttheme.active){
+			//designoptions:
+			designoptions +='<div class="designoptions">';
+			designoptions +='<h3>'+acttheme.classname+'</h3>';
+			for(var deso=0;deso<acttheme.designoptions.length;deso++){
+				actoption = acttheme.designoptions[deso];
+				designoptions+='<div class="designoption">';
+				console.log(actoption);
+				if(actoption.type=="select"){
+					designoptions+="<label>"+actoption.description+"</label>";
+					designoptions+='<select onchange="slidenote.presentation.changeDesignOption('+x+','+deso+',this.value)">';
+					for(var selopt = 0;selopt < actoption.labels.length;selopt++){
+						designoptions+='<option value="'+actoption.values[selopt]+'">';
+						designoptions+=actoption.labels[selopt];
+						designoptions+='</option>';
+					}
+
+					designoptions+='</select>';
+				}
+			}
+			designoptions +='</div>';
+		}
 	}
+	//themeauswahlvoschau:
+	var vorschau='<div id="designvorschau">' +
+					'<h1>title</h1><h2>second title</h2><ol start="1"><li>nummeric</li><li>list</li></ol>'+
+					'<p>some Text</p><ul><li>unordered list</li><li>unordered list</li></ul><p><b>some </b> '+
+					'<i>text</i> <strike>to see</strike> <b><i>it all</i></b><br></p>'+
+					'</div>';
+
 	var seltab = document.getElementById("themeselectiontab");
 	var destab = document.getElementById("designoptionstab");
 	var gloptab= document.getElementById("globaloptionstab");
 	var options = document.getElementById("options");
 	seltab.innerHTML = themetabtext;
-	destab.innerHTML = designtabtext;
+	destab.innerHTML = vorschau+designtabtext+designoptions;
 	gloptab.innerHTML = globaloptionstext;
 	options.classList.add("visible");
+	var optiontabbar = options.getElementsByClassName("tabbar")[0].getElementsByTagName("h2");
+	var tabbs = options.getElementsByClassName("optiontab");
+	console.log(optiontabbar);
+	for(var otb=0;otb<optiontabbar.length;otb++){
+		optiontabbar[otb].classList.remove("active");
+		tabbs[otb].classList.remove("active");
+	}
+	var tabbnr = tabnr;
+	if(tabbnr==null)tabbnr=0;
+	optiontabbar[tabbnr].classList.add("active");
+	tabbs[tabbnr].classList.add("active");
+	if(tabbnr==0){
+		document.getElementById("designvorschau").classList.add(chosencssclass);
+	}
 
+
+}
+
+//optionsTab zeigt den jeweiligen Tab an:
+pagegenerator.prototype.optionsTab = function(tabnr){
+	/*var options = document.getElementById("options");
+ 	var optiontabbar = options.getElementsByClassName("tabbar")[0].getElementsByTagName("h2");
+	var optiontabs = document.getElementsByClassName("optiontab");
+	for(var x=0;x<optiontabbar.length;x++){
+		optiontabbar[x].classList.remove("active");
+		optiontabs[x].classList.remove("active");
+	}
+	optiontabbar[tabnr].classList.add("active");
+	optiontabs[tabnr].classList.add("active");
+	*/
+	this.showThemes(tabnr);
 }
 
 //hideThemes versteckt die Theme-auswahl bei klick auf close
@@ -1741,11 +1808,24 @@ pagegenerator.prototype.hideThemes = function(){
 pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 	if(this.themes[themenr].themetype=="css"){
 		//es darf nur ein css ausgewählt werden?
-		for(var x=0;x<this.themes.length;x++)if(this.themes[x].themetype=="css")this.themes[x].active=false;
+		var vorschau = document.getElementById("designvorschau");
+
+		for(var x=0;x<this.themes.length;x++)if(this.themes[x].themetype=="css"){
+			this.themes[x].active=false;
+			if(vorschau!=null)vorschau.classList.remove(this.themes[x].classname);
+		}
+		if(vorschau!=null)vorschau.classList.add(this.themes[themenr].classname);
+
 	}
 	this.themes[themenr].active = status;
 	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
 }
+
+pagegenerator.prototype.changeDesignOption = function(themenr,optionnr, value){
+	this.themes[themenr].changeDesignOption(optionnr, value);
+	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
+}
+
 
 /* pagegenerator.showpresentation() startet und beendet die präsentation
  * startet die eigentliche präsentation durch aufruf von
@@ -1822,6 +1902,8 @@ function Theme(nombre, weight){
 	this.querycode = "#praesentation .ppage ";
 	this.themetype = "extension";
 	this.descriptiontext = "";
+	this.designoptions;
+	this.globaloptions;
 //	console.log("Theme "+this.classname+" found "+this.htmlelements.length + " of "+htmlelement);
 }
 
@@ -1876,6 +1958,17 @@ Theme.prototype.cycleThroughHtmlElements = function(htmlelement){
 
 Theme.prototype.styleThemeSpecials = function(){
 	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
+}
+
+Theme.prototype.addDesignOption = function(type, description, labels, values){
+	//type: html-element-unterscheidung:
+	var htmlelements ="radio,select,checkbox,button";
+	if(this.designoptions==null)this.designoptions = new Array();
+	this.designoptions.push({type:type,description:description,labels:labels,values:values});
+}
+
+Theme.prototype.changeDesignOption = function(optionnr, value){
+	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
 }
 
 

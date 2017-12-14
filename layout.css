@@ -69,8 +69,9 @@
     top: 0;
     width: 100%;
     z-index: 1000;
-	height:100vh;
-	overflow: scroll;
+	height:100%;
+	overflow: auto;
+	left:0;
 }
 #praesentationrahmen.fullscreen .praesentationsteuerung{
 	position: fixed;
@@ -214,23 +215,72 @@ h1{
     height: 100%;
     z-index: 10;
 		display: none;
-		top:0px;	
+		top:0px;
 }
 #options.visible{
 	display: block;
 }
 
-#options h1 button {
+#options > h1 button {
     float: right;
     margin-right: 50px;
 }
 
-#options h1 {
+#options > h1 {
     background: lightblue;
     padding: 15px;
 }
-/*testsachen*/
 
+/*options-tabbar: */
+.tabbar h2 {
+  display: inline;
+  margin-left: 10px;
+  background: lightgrey;
+  padding: 10px;
+  padding-bottom: unset;
+}
+.tabbar h2.active {
+  border: 1px solid black;
+  border-top: 2px solid #2d2b2b;
+  border-bottom: none;
+  padding-bottom: 1px;
+}
+.tabbar {
+  border-bottom: 1px solid black;
+}
+.tabbar h2 {
+  display: inline;
+  margin-left: 10px;
+  background: lightgrey;
+  padding: 10px;
+  padding-bottom: unset;
+}
+.tabbar h2.active {
+  border: 1px solid black;
+  border-top: 2px solid #2d2b2b;
+  border-bottom: none;
+  padding-bottom: 1px;
+}
+.tabbar h2:hover {
+  background: darkgray;
+}
+.tabbar h2.active:hover {
+  background: lightgrey;
+}
+
+.optiontab {
+  display: none;
+}
+.optiontab.active {
+  display: block;
+}
+/*testsachen*/
+#designvorschau {
+    float: right;
+    width: 30%;
+    padding: 10px;
+    border: 1px solid;
+}
 body {
 //background-color: black;
 //color:white;
