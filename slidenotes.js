@@ -1480,6 +1480,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.loadTheme("redalert");
 	this.loadTheme("prototyp");
 	this.loadTheme("highlight");
+	this.loadTheme("transition");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
@@ -1751,6 +1752,24 @@ pagegenerator.prototype.showThemes = function(tabnr){
 			}
 			designoptions +='</div>';
 		}
+		if(acttheme.globaloptions!=null && acttheme.active){
+			globaloptionstext+='<h3>'+acttheme.classname+'</h3>';
+			for(var glop=0;glop<acttheme.globaloptions.length;glop++){
+				actoption=acttheme.globaloptions[glop];
+				globaloptionstext+='<div class="globaloption">';
+				if(actoption.type=="checkbox"){
+					var acttext = '<input type="checkbox" onchange="slidenote.presentation.changeGlobalOption('+x+','+glop+',this.checked)"';
+					console.log(actoption);
+					if(actoption.values)acttext +=' checked>'; else acttext+='>';
+					acttext += '<label>';
+					if(actoption.description==null)acttext += actoption.classname; else acttext+= actoption.description;
+					acttext +='</label>';
+					globaloptionstext+=acttext;
+
+				}
+				globaloptionstext+='</div>';
+			}
+		}
 	}
 	//themeauswahlvoschau:
 	var vorschau='<div id="designvorschau">' +
@@ -1823,6 +1842,10 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 
 pagegenerator.prototype.changeDesignOption = function(themenr,optionnr, value){
 	this.themes[themenr].changeDesignOption(optionnr, value);
+	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
+}
+pagegenerator.prototype.changeGlobalOption = function(themenr,optionnr, value){
+	this.themes[themenr].changeGlobalOption(optionnr, value);
 	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
 }
 
@@ -1971,6 +1994,15 @@ Theme.prototype.changeDesignOption = function(optionnr, value){
 	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
 }
 
+Theme.prototype.addGlobalOption = function(type, description, labels, values){
+	var htmlelements = "radio, select, checkbox, button";
+	if(this.globaloptions==null)this.globaloptions = new Array();
+	this.globaloptions.push({type:type,description:description, labels:labels, values:values});
+}
+
+Theme.prototype.changeGlobalOption = function(optionnr, value){
+	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
+}
 
 
 
