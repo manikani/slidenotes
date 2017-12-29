@@ -40,7 +40,8 @@ cssfile.setAttribute("href", "themes/highlight/styles/default.css");
 document.getElementsByTagName("head")[0].appendChild(jsfile);
 document.getElementsByTagName("head")[0].appendChild(cssfile);
 
-newtheme.description = "Higlightning of Code in Codeblock";
+newtheme.description = "Automagicaly highlightning Codes in Codeblock using hljs. For more Information "+
+												"see http://highlightjs.org";
 newtheme.styleThemeSpecials = function(){
 	var codeblocks = document.getElementsByTagName("code");
 	for(var x=0;x<codeblocks.length;x++){
