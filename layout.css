@@ -173,6 +173,15 @@ h1{
 #wysiwygarea code{
 
 }
+#wysiwygarea data{
+	white-space: pre;
+	background: #e1e149;
+	border:1px solid black;
+	padding:5px;
+	display: block;
+	width:90%;
+
+}
 #wysiwygarea img{
 	height:100px;
 }

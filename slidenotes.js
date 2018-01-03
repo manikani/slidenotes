@@ -979,6 +979,63 @@ emdparser.prototype.parsenachzeilen= function(){
 
 			}
 		}//lines[x] fängt jetzt mit <code> an
+		//datablock:
+		if(lines[x].length>2 && lines[x].substring(0,2)=="||" && this.lineswithhtml[x]!="data"){
+			//datablock gefunden?
+			//überprüfung von gültigem datablockhead:
+			var datahead;
+			var datatyp;
+			var rawdata;
+			if(lines[x].indexOf("||",2)<0){
+				//kein gültiger datahead gefunden:
+				this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol ||"));
+				this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
+				this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
+			}else{
+				//gültiger datahead gefunden:
+				datahead  = lines[x];
+				datatyp = datahead.substring(2,datahead.indexOf("||",2));
+				var datatag = "||"+datatyp+"||";
+				var dataende = x+1;
+				var scanweiter = true;
+				while(dataende<lines.length && scanweiter) if(lines[dataende].substring(0,datatag.length)==datatag)scanweiter=false;else dataende++;
+				if(dataende==lines.length || lines[dataende].substring(0,datatag.length)!=datatag){
+					this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol "+datatag));
+					this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"code","missing endsymbol "+datatag));
+					this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
+					this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
+				}else{
+					//datablock ist konsistent von lines[x] bis lines[dataend]
+					var altelinie=lines[x];
+					var altelinieende=lines[dataende];
+					lines[x]="<data>"+lines[x];
+					lines[dataende]+="</data>";
+					console.log("dataende:"+dataende+"zeile:"+lines[dataende]);
+					var rawdata = new Array();
+					//sanitize-code of datablock für wysiwyg und parser:
+					for(var dataz=x+1;dataz<dataende;dataz++){
+						rawdata.push(lines[dataz]);
+						lines[dataz]=this.sanitizeemdcodeline(lines[dataz]);
+						var hotpositions= this.sanitizedcodepositions(lines[dataz]);
+						for(var hotp=0;hotp<hotpositions.length;hotp++){
+							this.map.addElement({line:dataz,pos:hotpositions[hotp][0],html:hotpositions[hotp][1],mdcode:"&",typ:"hotcode",wystextveraenderung:0});
+						}
+					}
+					//lineswithhtml:
+					for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data";
+					//mapping des gesamten blocks:
+					//this.map.addElement({line:x,pos:0,html:"<data>",mdcode:altelinie,typ:"start",wystextveraenderung:altelinie.length});
+					//this.map.addElement({line:dataende,pos:0,html:"</data>",mdcode:altelinieende,typ:"start",wystextveraenderung:altelinieende.length});
+					this.map.addElement({line:x,pos:0,html:"<data>",mdcode:"",typ:"start",wystextveraenderung:0});
+					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</data>",mdcode:"",typ:"end",wystextveraenderung:0});
+					//datenobjekt speichern:
+					if(this.dataobjects == null)this.dataobjects = new Array();
+					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
+					console.log("neues dataobjekt hinzugefügt");
+					console.log(this.dataobjects);
+				}
+			}
+		} //end of datablock, lines[x] fängt jetzt mit <data> an
 		//image:
 		if(lines[x].indexOf("![](")>-1){
 			var error="";
@@ -1481,6 +1538,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.loadTheme("prototyp");
 	this.loadTheme("highlight");
 	this.loadTheme("transition");
+	this.loadTheme("chartjs");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
@@ -1742,7 +1800,9 @@ pagegenerator.prototype.showThemes = function(tabnr){
 					designoptions+="<label>"+actoption.description+"</label>";
 					designoptions+='<select onchange="slidenote.presentation.changeDesignOption('+x+','+deso+',this.value)">';
 					for(var selopt = 0;selopt < actoption.labels.length;selopt++){
-						designoptions+='<option value="'+actoption.values[selopt]+'">';
+						designoptions+='<option value="'+actoption.values[selopt]+'"';
+						if(actoption.selected==selopt)designoptions+=' selected="selected"';
+						designoptions+='>';
 						designoptions+=actoption.labels[selopt];
 						designoptions+='</option>';
 					}
@@ -1837,6 +1897,28 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 
 	}
 	this.themes[themenr].active = status;
+	if(this.themes[themenr].editorbuttons!=null){
+		if(status){
+			for(var x=0;x<this.themes[themenr].editorbuttons.length;x++){
+				var actbutton = this.themes[themenr].editorbuttons[x];
+				var newhtmlbutton = document.createElement("button");
+				newhtmlbutton.type = "button";
+				newhtmlbutton.classList.add(this.themes[themenr].classname+"button");
+				newhtmlbutton.innerHTML = actbutton.innerhtml;
+				//var actbuttonfunction = "insertbutton('null','"+actbutton.mdstartcode+"','"+actbutton.mdendcode+"');";
+				newhtmlbutton.value = actbutton.mdstartcode;
+				//console.log("actbuttonfunction:"+actbuttonfunction);
+				//newhtmlbutton.setAttribute("onclick",""+actbuttonfunction);
+				newhtmlbutton.onclick = function(){
+					slidenote.insertbutton(this.value);
+				}
+				document.getElementById("texteditorbuttons").appendChild(newhtmlbutton);
+			}
+		}else{
+			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
+			for(var x=0;x<oldbuttons.length;x++)oldbuttons[x].parentNode.removeChild(oldbuttons[x]);
+		}
+	}
 	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
 }
 
@@ -1983,11 +2065,11 @@ Theme.prototype.styleThemeSpecials = function(){
 	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
 }
 
-Theme.prototype.addDesignOption = function(type, description, labels, values){
+Theme.prototype.addDesignOption = function(type, description, labels, values, selected){
 	//type: html-element-unterscheidung:
 	var htmlelements ="radio,select,checkbox,button";
 	if(this.designoptions==null)this.designoptions = new Array();
-	this.designoptions.push({type:type,description:description,labels:labels,values:values});
+	this.designoptions.push({type:type,description:description,labels:labels,values:values,selected:selected});
 }
 
 Theme.prototype.changeDesignOption = function(optionnr, value){
@@ -2003,7 +2085,10 @@ Theme.prototype.addGlobalOption = function(type, description, labels, values){
 Theme.prototype.changeGlobalOption = function(optionnr, value){
 	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
 }
-
+Theme.prototype.addEditorbutton = function(buttoninnerhtml,startcode,endcode){
+	if(this.editorbuttons==null)this.editorbuttons = new Array();
+	this.editorbuttons.push({mdstartcode:startcode, mdendcode:endcode,innerhtml:buttoninnerhtml});
+}
 
 
 /*neuer aufbau für die steuerung und ablauf usw. des programms:
@@ -2218,7 +2303,8 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 	}
 };
 
-slidenotes.prototype.insertbutton = function(emdzeichen){
+slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode){
+	console.log("insert button:"+emdzeichen+"mdstart:"+mdstartcode);
 	var textarea = this.textarea;
 	var startemdl = new Array('**','*','~~',"%head","%list","%nrlist","%link","%quote","%image","%table");
 	var endemdl = new Array('**','*','~~',"\n","\n","\n","%link","\n","%image","%table");
@@ -2276,7 +2362,9 @@ slidenotes.prototype.insertbutton = function(emdzeichen){
 			emdstart="`";
 			emdend="`";
 		}
-
+	}else if(emdzeichen.substring(0,2)=="||"){
+		emdstart=emdzeichen+"\n";
+		emdend="\n"+emdzeichen.substring(0,emdzeichen.indexOf("||",2)+2);
 	}else{ //einfache zeichen:
 		//emdnr = startemdl.positionOf(emdzeichen); //sollte im array vorkommen. da ich den befehl grad nicht weiß:
 		for(var x=0;x<startemdl.length;x++)if(startemdl[x]==emdzeichen)emdnr=x;
