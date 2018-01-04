@@ -2511,7 +2511,7 @@ wysiwygcontroller.prototype.scrollToCursor = function(){
 	var cursortop;
 
 	if(cursor!=null){
-		cursortop = cursor.offsetTop - this.wysiwygarea.offsetTop;
+		cursortop = cursor.offsetTop;// - this.wysiwygarea.offsetTop;
 		//var wysiwygareaoffset = this.wysiwygarea.offsetTop;
 		//console.log("wysareaoffset:"+wysiwygareaoffset);
 		var wysiwygmaxheight = this.wysiwygarea.clientHeight - cursor.offsetHeight;
@@ -2527,8 +2527,9 @@ wysiwygcontroller.prototype.scrollToCursor = function(){
 		console.log("clientHeight:"+this.wysiwygarea.clientHeight + "offsetHeight:"+this.wysiwygarea.offsetHeight);
 		console.log("cursortop:"+cursortop + "wysmin:"+wysiwygmin+"wysmax"+wysiwygmax);
 		*/
+
 		if(cursortop>wysiwygmax){
-			//console.log("scrolling"+this.wysiwygarea.scrollTop + "->"+ cursortop);
+			console.log("scrolling"+this.wysiwygarea.scrollTop + "->"+ cursortop);
 			this.wysiwygarea.scrollTop = cursortop;
 
 		}else if(cursortop<wysiwygmin){
