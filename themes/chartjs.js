@@ -90,6 +90,7 @@ newtheme.styleThemeSpecials = function(){
       for(var x=0;x<dataobject.raw.length;x++){
       	var rawact = dataobject.raw[x];
       	if(rawact.indexOf(":")>0){
+          //doppelpunktschreibweise
       		var doppunkt = rawact.indexOf(":");
       		if(datasetnr==0)labeldata.push(rawact.substring(0,doppunkt));
       		if(rawact.indexOf(":",doppunkt+1)<0){
@@ -112,6 +113,33 @@ newtheme.styleThemeSpecials = function(){
 
       		}
       	}
+        if(rawact.indexOf("\t")>0){
+          //openoffice schreibweise
+          if(labeldata.length==0){
+            //noch keine label da, label einlesen:
+            var tabpos = 0;
+            while(tabpos>=0){
+              if(rawact.indexOf("\t",tabpos+1)>=0)
+              labeldata.push(rawact.substring(tabpos,rawact.indexOf("\t",tabpos+1)));
+              else labeldata.push(rawact.substring(tabpos));
+              tabpos = rawact.indexOf("\t",tabpos+1);
+            }
+          }else{
+            //label sind da, also sind es daten:
+            var tabpos =0;
+            if(numdata[datasetnr]==null)numdata[datasetnr]=new Array();
+            if(numdata[datasetnr].length>0)datasetnr++;
+            while(tabpos>=0){
+              if(rawact.indexOf("\t",tabpos+1)>=0)
+              numdata[datasetnr].push(rawact.substring(tabpos,rawact.indexOf("\t",tabpos+1)));
+              else numdata[datasetnr].push(rawact.substring(tabpos));
+              tabpos = rawact.indexOf("\t",tabpos+1);
+            }
+
+
+          }
+
+        }
       	if(rawact.substring(0,3)=="###"){
       		datasetlabel.push(rawact.substring(3));
           if(numdata[datasetnr]!=null)datasetnr++;
