@@ -127,13 +127,17 @@ newtheme.styleThemeSpecials = function(){
           }else{
             //label sind da, also sind es daten:
             var tabpos =0;
+            if(numdata[datasetnr]!=null && numdata[datasetnr].length>0)datasetnr++;
             if(numdata[datasetnr]==null)numdata[datasetnr]=new Array();
-            if(numdata[datasetnr].length>0)datasetnr++;
             while(tabpos>=0){
               if(rawact.indexOf("\t",tabpos+1)>=0)
               numdata[datasetnr].push(rawact.substring(tabpos,rawact.indexOf("\t",tabpos+1)));
               else numdata[datasetnr].push(rawact.substring(tabpos));
               tabpos = rawact.indexOf("\t",tabpos+1);
+            }
+            //check ob erstes feld keine nummer ist, dann nämlich ist es ein datenlabel:
+            if(typeof numdata[datasetnr][0] =="string"){
+              datasetlabel[datasetnr] = numdata[datasetnr].shift();
             }
 
 
