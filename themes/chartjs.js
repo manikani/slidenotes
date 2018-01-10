@@ -113,15 +113,17 @@ newtheme.styleThemeSpecials = function(){
 
       		}
       	}
-        if(rawact.indexOf("\t")>0){
+        if(rawact.indexOf("\t")>=0){
           //openoffice schreibweise
+          console.log("rawact:"+rawact);
           if(labeldata.length==0){
             //noch keine label da, label einlesen:
             var tabpos = 0;
+            var ldata;
             while(tabpos>=0){
-              if(rawact.indexOf("\t",tabpos+1)>=0)
-              labeldata.push(rawact.substring(tabpos,rawact.indexOf("\t",tabpos+1)));
-              else labeldata.push(rawact.substring(tabpos));
+              if(rawact.indexOf("\t",tabpos+1)>=0) ldata = rawact.substring(tabpos,rawact.indexOf("\t",tabpos+1));
+                else ldata = rawact.substring(tabpos);
+              if(ldata.length>0)labeldata.push(ldata);
               tabpos = rawact.indexOf("\t",tabpos+1);
             }
           }else{
