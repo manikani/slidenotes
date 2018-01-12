@@ -871,7 +871,9 @@ emdparser.prototype.parsenachzeilen= function(){
 			this.perror.push(new parsererror(x,1,lines[x].length-1,"list","missing space after *"));
 		}
 		//numeric list
-		if(lines[x].search(/[0-9]+\.\s/)==0){
+		console.log("x:"+x+"lwh:"+this.lineswithhtml[x]);
+		if(this.lineswithhtml[x]!="code"&& this.lineswithhtml[x]!="data" &&
+						lines[x].search(/[0-9]+\.\s/)==0){
 			var start=lines[x].substring(0,lines[x].indexOf("."));
 			var starttext = "<ol";
 			if(start>0)starttext+=' start="'+start+'"';
@@ -901,9 +903,9 @@ emdparser.prototype.parsenachzeilen= function(){
 			letztezeile=nlc;
 			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="ol";
 		}
-		//lines[x]fängt jetzt mti <ol> an
-		if(lines[x].search(/[0-9]/)==0){
-			this.perror.push(new parsererror(x,1,lines[x].length,"numeric list","dot and/or whitespace missing"));
+		//lines[x]fängt jetzt mit <ol> an
+		if(lines[x].search(/[0-9]/)==0&&this.lineswithhtml[x]!="data"&&this.lineswithhtml[x]!="code"){
+			this.perror.push(new parsererror(x,1,lines[x].length,"numeric list","dot and/or whitespace missing"+this.lineswithhtml));
 		}
 		//quotes
 		if(linestart==">" && !(lines[x].substring(0,2)=="> ")){
