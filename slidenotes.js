@@ -1539,6 +1539,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.loadTheme("highlight");
 	this.loadTheme("transition");
 	this.loadTheme("chartjs");
+	this.loadTheme("table");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
