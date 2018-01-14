@@ -895,7 +895,7 @@ emdparser.prototype.parsenachzeilen= function(){
 					this.map.addElement({line:nlc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
 				}
 				nlc++;
-				linessearch = lines[nlc].search(/[0-9]+\.\s/);
+				if(nlc<lines.length)linessearch = lines[nlc].search(/[0-9]+\.\s/); //else linessearch=null;
 			}
 			nlc--;
 
