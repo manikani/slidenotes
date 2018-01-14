@@ -283,6 +283,7 @@ function emdparser(text){
 	this.lineswitherrors = new Array(); // array with strings of errorcode parsed as lines into array
 	this.errorsourcelines = new Array(); //array with strings of errorsourcecode parsed as lines into array
 	this.imgurlpre = "images/"; //string with the beginning for image-urls, depending on the server and the nodeid, maybe not necesary
+	this.dataobjects = new Array(); //array with dataobjects of data-blocks
 	//var aktpos = 0;
 	this.parselines(text);  //parsing the sourcecode on init into lines
 	this.perror = new Array(); //array with parsing-errors as objects/array
