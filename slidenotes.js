@@ -880,28 +880,30 @@ emdparser.prototype.parsenachzeilen= function(){
 			starttext +=">";
 			this.map.addElement({line:x,pos:0,html:starttext,mdcode:"",typ:"start",wystextveraenderung:0});
 			nlc=x;
-			//var laengebiszeileglc = laengebiszeile;
-
-			while(nlc <lines.length && lines[nlc].search(/[0-9]+\.\s/)==0){
-				//if(this.insertedhtmlinline[nlc]==null)this.insertedhtmlinline[nlc]=new Array();
-				//this.insertedhtmlinline[nlc].push(new Array(0,lines[nlc].substring(0,lines[nlc].indexOf(". ")+2),"<li>"));
-				var tmpmdcode = lines[nlc].substring(0,lines[nlc].indexOf(". ")+2);
-				this.map.addElement({line:nlc,pos:0,html:"<li>",mdcode:tmpmdcode,
-				typ:"start",wystextveraenderung:tmpmdcode.length});
-				//this.veraenderungen.push(new Array("ul",laengebiszeileglc,lines[nlc].indexOf(". ")+2));
-				//laengebiszeileglc += lines[nlc].length;
-				lines[nlc] = "<li>"+lines[nlc].substring(lines[nlc].indexOf(". ")+2)+"</li>";
+			var linessearch = lines[nlc].search(/[0-9]+\.\s/);
+			while(nlc <lines.length && linessearch ==0 || linessearch ==2){
+				if(linessearch==0){
+					var tmpmdcode = lines[nlc].substring(0,lines[nlc].indexOf(". ")+2);
+					this.map.addElement({line:nlc,pos:0,html:"<li>",mdcode:tmpmdcode,
+					typ:"start",wystextveraenderung:tmpmdcode.length});
+					lines[nlc] = "<li>"+lines[nlc].substring(lines[nlc].indexOf(". ")+2)+"</li>";
+					this.lineswithhtml[nlc]="ol";
+				}else{
+					//linessearch==2, also leerzeichen gefunden. leerzeichen rausnehmen:
+					//dann wird beim nächsten durchlauf neue liste in liste angelegt
+					lines[nlc]=lines[nlc].substring(2);
+					this.map.addElement({line:nlc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
+				}
 				nlc++;
+				linessearch = lines[nlc].search(/[0-9]+\.\s/);
 			}
 			nlc--;
 
 			lines[x] = starttext + lines[x];
-			//if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x] = new Array();
-			//this.insertedhtmlinline[x].unshift(new Array(0,"",starttext)); //packe den ol-tag an die spitze des arrays um reihenfolge zu wahren
-			//wird oben bereits getan
 			lines[nlc]+= "</ol>";
 			letztezeile=nlc;
-			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="ol";
+			//folgendes geht nicht mehr so, wenn eingerückte listen gibt:
+			//for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="ol";
 		}
 		//lines[x]fängt jetzt mit <ol> an
 		if(lines[x].search(/[0-9]/)==0&&this.lineswithhtml[x]!="data"&&this.lineswithhtml[x]!="code"){
@@ -2066,6 +2068,10 @@ Theme.prototype.cycleThroughHtmlElements = function(htmlelement){
 
 Theme.prototype.styleThemeSpecials = function(){
 	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
+}
+Theme.prototype.styleThemeMDCodeEditor = function(){
+	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
+	//Wird ausgelöst wenn MDCodeEditor ausgewählt ist
 }
 
 Theme.prototype.addDesignOption = function(type, description, labels, values, selected){
