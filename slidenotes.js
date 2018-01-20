@@ -841,31 +841,32 @@ emdparser.prototype.parsenachzeilen= function(){
 			this.lineswithhtml[x]="h"+rautenanzahl;
 		} //lines[x] fängt jetzt mit <h an
 		//generic list
-		if(lines[x].substring(0,2)=="* "){
+		if(lines[x].substring(0,2)=="* " || lines[x].substring(0,2)=="- "){
 			glc=x;
 			//var laengebiszeileglc = laengebiszeile;
+			var listzeichen = lines[x].substring(0,2);
 			this.map.addElement({line:x,pos:0,html:"<ul>",mdcode:"",typ:"start",wystextveraenderung:0});
-			while(lines[glc]!=null && lines[glc].substring(0,2)=="* " && glc<lines.length){
-				lines[glc] = "<li>"+ lines[glc].substring(2)+"</li>";
-				//if(this.insertedhtmlinline[glc]==null)this.insertedhtmlinline[glc] = new Array();
-				//this.insertedhtmlinline[glc].push(new Array(0,"* ","<li>"));
-				//this.veraenderungen.push(new Array("ul",laengebiszeileglc,2));
-				//laengebiszeileglc += lines[glc].length;
-				this.map.addElement({line:glc,pos:0,html:"<li>",mdcode:"* ",typ:"start",wystextveraenderung:2});
+			var linessearch = lines[glc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+			while(glc < lines.length && lines[glc]!=null && (lines[glc].substring(0,2)==listzeichen || linessearch==0)){
+				if(lines[glc].substring(0,2)==listzeichen){
+					lines[glc] = "<li>"+ lines[glc].substring(2)+"</li>";
+					this.map.addElement({line:glc,pos:0,html:"<li>",mdcode:listzeichen,typ:"start",wystextveraenderung:2});
+					this.lineswithhtml[glc]="ul";
+					pseudolines[glc]= "€"+pseudolines[glc].substring(1);
+				} else if(lines[glc].substring(0,2)=="  "){
+					lines[glc]=lines[glc].substring(2);
+					this.map.addElement({line:glc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
+				}
  				glc++;
+				if(glc<lines.length){
+					linessearch = lines[glc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+				}
 			}
 			glc--;
 			lines[x]="<ul>"+lines[x];
-			//if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x] = new Array();
-			//this.insertedhtmlinline[x].unshift(new Array(0,"","<ul>")); //setze ul an die spitze der insertedhtmls um reihenfolge zu wahren
 			//muss ich oben machen
 			lines[glc]=lines[glc]+"</ul>";
 			letztezeile=glc;
-			for(var lwh=x;lwh<=letztezeile;lwh++){
-				this.lineswithhtml[lwh]="ul";
-				pseudolines[lwh]= "€"+pseudolines[lwh].substring(1);
-				console.log("generic-list pseudolines[lwh]:"+pseudolines[lwh]);
-			}
 		}
 		//lines[x] fängt jetzt mit ul an:
 		if(lines[x].substring(0,1)=="*"){
@@ -874,29 +875,52 @@ emdparser.prototype.parsenachzeilen= function(){
 		//numeric list
 		console.log("x:"+x+"lwh:"+this.lineswithhtml[x]);
 		if(this.lineswithhtml[x]!="code"&& this.lineswithhtml[x]!="data" &&
-						lines[x].search(/[0-9]+\.\s/)==0){
-			var start=lines[x].substring(0,lines[x].indexOf("."));
+						//hier kommt die regex hin, die prüft ob eine liste anfängt:
+						//bei performace-problemen hier die regex durch andere prüfung ersetzen.
+						//lines[x].search(/[0-9]+\.\s/)==0)
+						lines[x].search(/^([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\))\s/)==0)
+						{
+			//es gibt eine liste, prüfen mit welchem zeichen/welcher logik:
+			var numlistregexlist = [/^[0-9]+\.\s/, //1.
+													/^[0-9]+\.\)\s/, //1.)
+												 	/^[0-9]+\)\s/, //1)
+											 		/^[a-z]\)\s/, //a)
+													/^[IVX]+\)\s/ ]; //I)
+			var numlistregex;
+			var nlregnr
+			for (var nlrit = 0; nlrit < numlistregexlist.length;nlrit++)if(lines[x].search(numlistregexlist[nlrit])==0)nlregnr=nlrit;
+			numlistregex=numlistregexlist[nlregnr];
+			//numlistregex ist jetzt die gefundene regex
+			var listzeichenarr = [". ", ".) ", ") ", ") ", ") "];
+			var listzeichen = listzeichenarr[nlregnr];
+			var start;
+			if(nlregnr<2)start=lines[x].substring(0,lines[x].indexOf("."));
+				else if(nlregnr==2)start=lines[x].substring(0,lines[x].indexOf(")"));
 			var starttext = "<ol";
 			if(start>0)starttext+=' start="'+start+'"';
 			starttext +=">";
 			this.map.addElement({line:x,pos:0,html:starttext,mdcode:"",typ:"start",wystextveraenderung:0});
 			nlc=x;
-			var linessearch = lines[nlc].search(/[0-9]+\.\s/);
-			while(nlc <lines.length && linessearch ==0 || linessearch ==2){
+			var linessearch = lines[nlc].search(numlistregex); //lines[nlc].search(/[0-9]+\.\s/);
+			var linessearch2 = lines[nlc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+			while(nlc <lines.length && (linessearch ==0 || linessearch2 ==0)){
 				if(linessearch==0){
-					var tmpmdcode = lines[nlc].substring(0,lines[nlc].indexOf(". ")+2);
+					var tmpmdcode = lines[nlc].substring(0,lines[nlc].indexOf(listzeichen)+listzeichen.length);//". ")+2);
 					this.map.addElement({line:nlc,pos:0,html:"<li>",mdcode:tmpmdcode,
 					typ:"start",wystextveraenderung:tmpmdcode.length});
-					lines[nlc] = "<li>"+lines[nlc].substring(lines[nlc].indexOf(". ")+2)+"</li>";
+					lines[nlc] = "<li>"+lines[nlc].substring(lines[nlc].indexOf(listzeichen)+listzeichen.length)+"</li>";
 					this.lineswithhtml[nlc]="ol";
-				}else{
+				}else if(lines[nlc].substring(0,2)=="  "){
 					//linessearch==2, also leerzeichen gefunden. leerzeichen rausnehmen:
 					//dann wird beim nächsten durchlauf neue liste in liste angelegt
 					lines[nlc]=lines[nlc].substring(2);
 					this.map.addElement({line:nlc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
 				}
 				nlc++;
-				if(nlc<lines.length)linessearch = lines[nlc].search(/[0-9]+\.\s/); //else linessearch=null;
+				if(nlc<lines.length){
+					linessearch = lines[nlc].search(numlistregex);///[0-9]+\.\s/); //else linessearch=null;
+					linessearch2 = lines[nlc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+				}
 			}
 			nlc--;
 
@@ -2191,6 +2215,9 @@ slidenotes.prototype.parseneu = function(){
 		if(this.texteditorerroractivated){
 			this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
 			this.texteditorrahmensetzen();
+			for(var x=0;x<this.presentation.themes.length;x++){
+				if(this.presentation.themes[x].active)this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
+			}
 		}
 	}
 	var endzeit = new Date();
