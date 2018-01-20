@@ -132,7 +132,7 @@ newtheme.styleThemeSpecials = function(){
             //noch keine label da, label einlesen:
             var tabpos = 0;
             var ldata;
-            while(tabpos>=0 && confirm("weiter?"+tabpos+ldata)){
+            while(tabpos>=0){
               if(rawact.indexOf(separator,tabpos)>=0) ldata = rawact.substring(tabpos,rawact.indexOf(separator,tabpos));
                 else ldata = rawact.substring(tabpos);
               if(ldata.length>0)labeldata.push(ldata);
