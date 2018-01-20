@@ -113,18 +113,31 @@ newtheme.styleThemeSpecials = function(){
 
       		}
       	}
-        if(rawact.indexOf("\t")>=0){
+        //if(rawact.indexOf("\t")>=0){
+        if(rawact.search(/[\t,;]/)>=0){
+          //separator rausfinden:
+          var separators = ["\t",",",";"];
+          var separator;
+          var sepcount = 0;
+          for (var sepx=0;sepx<separators.length;sepx++){
+            if(rawact.split(separators[sepx]).length>sepcount){
+              sepcount = rawact.split(separators[sepx]).length;
+              separator=separators[sepx];
+            }
+          }
+          console.log("separator:"+separator);
           //openoffice schreibweise
           console.log("rawact:"+rawact);
           if(labeldata.length==0){
             //noch keine label da, label einlesen:
             var tabpos = 0;
             var ldata;
-            while(tabpos>=0){
-              if(rawact.indexOf("\t",tabpos+1)>=0) ldata = rawact.substring(tabpos,rawact.indexOf("\t",tabpos+1));
+            while(tabpos>=0 && confirm("weiter?"+tabpos+ldata)){
+              if(rawact.indexOf(separator,tabpos)>=0) ldata = rawact.substring(tabpos,rawact.indexOf(separator,tabpos));
                 else ldata = rawact.substring(tabpos);
               if(ldata.length>0)labeldata.push(ldata);
-              tabpos = rawact.indexOf("\t",tabpos+1);
+              tabpos = rawact.indexOf(separator,tabpos);
+              if(tabpos>=0)tabpos++;
             }
           }else{
             //label sind da, also sind es daten:
@@ -132,13 +145,15 @@ newtheme.styleThemeSpecials = function(){
             if(numdata[datasetnr]!=null && numdata[datasetnr].length>0)datasetnr++;
             if(numdata[datasetnr]==null)numdata[datasetnr]=new Array();
             while(tabpos>=0){
-              if(rawact.indexOf("\t",tabpos+1)>=0)
-              numdata[datasetnr].push(rawact.substring(tabpos,rawact.indexOf("\t",tabpos+1)));
+              if(rawact.indexOf(separator,tabpos)>=0)
+              numdata[datasetnr].push(rawact.substring(tabpos,rawact.indexOf(separator,tabpos)));
               else numdata[datasetnr].push(rawact.substring(tabpos));
-              tabpos = rawact.indexOf("\t",tabpos+1);
+              tabpos = rawact.indexOf(separator,tabpos);
+              if(tabpos>=0)tabpos++;
             }
             //check ob erstes feld keine nummer ist, dann nämlich ist es ein datenlabel:
-            if(typeof numdata[datasetnr][0] =="string"){
+            //if(typeof numdata[datasetnr][0] =="string"){
+            if(isNaN(numdata[datasetnr][0])){
               datasetlabel[datasetnr] = numdata[datasetnr].shift();
             }
 
