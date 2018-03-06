@@ -34,7 +34,6 @@ Eine Zeile mit `inline-code **asdf** bis hier`
 ```
 
 -----
-
 #Link und Images
 Ein [einfacher Link](url) nach url was war denn da los?
 Ein Bild von lapa: ![](images/lapa.jpg) eol
@@ -43,6 +42,13 @@ Ein Bildlink?: [![](images/lapa.jpg)](images/lapa.jpg)
 Ein Bischen Text drunter zum Testen...
 #Titel mit Bild ![](images/lapa.jpg)
 testtext
+-----
+# Leerzeichen und Tabs
+Ein Text mit drei Leerzeichen zwischen A   B
+Ein Text mit Tab zwischen A	B
+Ein weiterer Text mit mehreren A	Tabs	B
+Ein weiterer Text mit mehreren A			Tabs				B
+Ein weiterer Text mit mehreren A					Tabs						B
 -----
 #Letzte Seite
 Mehr fällt mir grad nicht ein zum Testen...
