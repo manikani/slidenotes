@@ -630,7 +630,8 @@ emdparser.prototype.parseerrorsourcehtml= function(){
 */
 emdparser.prototype.parseerrorsourcebackground = function(){
 	//this.parsenachzeilen(); //erstmal aktualisieren
-	var lines = this.returnparsedlines(this.replace(this.replace(this.sourcecode,"<","&lt;"),"\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"));
+	var lines = this.returnparsedlines(this.replace(this.sourcecode,"<","&lt;"));
+	//this.returnparsedlines(this.replace(this.replace(this.sourcecode,"<","&lt;"),"\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"));
 	var temptext = "";
 	for(var x=0;x<lines.length;x++){
 		var pseudoline="&nbsp;";
@@ -1946,7 +1947,7 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 			}
 		}else{
 			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
-			for(var x=0;x<oldbuttons.length;x++)oldbuttons[x].parentNode.removeChild(oldbuttons[x]);
+			for(var x=oldbuttons.length-1;x>=0;x--)oldbuttons[x].parentNode.removeChild(oldbuttons[x]);
 		}
 	}
 	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
