@@ -107,6 +107,16 @@ function initeditor(){
 				if(key==="Escape")slidenote.presentation.showpresentation();
 				if(key==="ArrowRight" || key===" ")presentation.nextPage();
 				if(key==="ArrowLeft")presentation.lastPage();
+				if(key==="0" ||key==="1" ||key==="2" ||key==="3" ||key==="4" ||key==="5" ||key==="6" ||key==="7" ||key==="8" ||key==="9" ){
+					if(presentation.lastpressednrkey==undefined)presentation.lastpressednrkey="";
+					presentation.lastpressednrkey+=key;
+				}
+				if(key==="Enter"){
+					presentation.lastpressednrkey--;
+					console.log(presentation.lastpressednrkey);
+					presentation.showPage(presentation.lastpressednrkey);
+					presentation.lastpressednrkey="";
+				}
 			}
 		}
 	}
