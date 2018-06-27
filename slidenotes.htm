@@ -136,13 +136,24 @@ function insertbutton(code){
 			<input type="button" onclick="insertbutton('%nrlist')" value="ordered list">
 			<input type="button" onclick="insertbutton('%quote')" value="quote">
 			<input type="button" onclick="insertbutton('%link')" value="link">
-			<input type="button" onclick="insertbutton('%image')" value="image">
+			<!--<input type="button" onclick="insertbutton('%image')" value="image">-->
 			<input type="button" onclick="insertbutton('%code')" value="code">
+			<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>
 		</div>
 		<div id="texteditor" class="texteditor">
 			<div id="texteditorerrorlayer"></div>
 			<textarea spellcheck="false" id="quelltext" onload="initeditor()" autofocus onfocus="initeditor();"></textarea>
 			<div id="wysiwygarea" contenteditable="true" spellcheck="false"></div>
+		</div>
+		<div id="imagesblock">
+				<h1>Image Upload <button onclick="Javascript:document.getElementById('imagesblock').classList.remove('visible');">close</button></h1>
+			<div>
+				Select an local image file to upload, then click on image to use it in this slidenote
+				<input type="file" id="fileInput">
+			</div>
+			<div id="filePreview"></div>
+			<h1>Files in Database (click on image to reuse)</h1>
+			<div id="fileOld"></div>
 		</div>
 
 	</div>

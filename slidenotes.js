@@ -1570,6 +1570,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.loadTheme("transition");
 	this.loadTheme("chartjs");
 	this.loadTheme("table");
+	this.loadTheme("imgtourl");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
@@ -1790,6 +1791,7 @@ pagegenerator.prototype.addTheme = function (theme){
 	//css-mixup vermeiden:
 	this.changeThemeStatus(this.themes.length-1, theme.active);
 	//this.stylePages();
+	theme.init();
 }
 	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
 	*/
@@ -2124,6 +2126,10 @@ Theme.prototype.addEditorbutton = function(buttoninnerhtml,startcode,endcode){
 	if(this.editorbuttons==null)this.editorbuttons = new Array();
 	this.editorbuttons.push({mdstartcode:startcode, mdendcode:endcode,innerhtml:buttoninnerhtml});
 }
+Theme.prototype.init = function(){
+	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
+	//wird nach zufügen des Themes aufgerufen
+}
 
 
 /*neuer aufbau für die steuerung und ablauf usw. des programms:
@@ -2232,6 +2238,16 @@ slidenotes.prototype.renderwysiwyg = function(){
 	var st = this.wysiwygarea.scrollTop;
 	this.parser.parsewysiwyghtml();
 	this.wysiwygarea.innerHTML = this.parser.errorcode;
+	//ergänzung für base64-urls:
+	if(this.base64images!=null){
+		//ersetze img-srcs durch entsprechende base64-codes:
+		//console.log("base64 nicht leer - bilder ersetzen");
+		var b64imges = this.wysiwygarea.getElementsByTagName("img");
+		for(var x=0;x<b64imges.length;x++){
+			var b64url=this.base64images.imageByName(b64imges[x].src.substring(b64imges[x].src.lastIndexOf("/")+1));
+			if(b64url!=null)b64imges[x].src = b64url.base64url;
+		}
+	}
 	this.wysiwygarea.scrollTop = st;
 	this.wysiwyg.scrollToCursor();
 	console.log("renderwysiwyg abgeschlossen");
@@ -2387,8 +2403,16 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 			emdstart="[";
 			emdend="]("+linkurl+")";
 	}else if(emdzeichen=="%image"){
+		//if(slidenote.base64images!=null){
+		//	var imgurl = slidenote.base64images.lastImage().name;
+		//} else {
 			var imgurl = prompt("hier kommt bald imageupload rein. solange: tippe hier url ein:");
+		//}
 			emdend="![]("+imgurl+")";
+  }else if(emdzeichen.substring(0,4)==="%b64"){
+		if(slidenote.base64images!=null){
+			emdend="![]("+emdzeichen.substring(4)+")";
+		}
 	}else if(emdzeichen=="%table"){
 		emdend="\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text     | Text     |";
 	}else if(emdzeichen=="%code"){
