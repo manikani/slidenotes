@@ -100,6 +100,14 @@ function initeditor(){
 			console.log("slidenotes geladen");
 			console.log(slidenote);
 			texted.addEventListener("focusout", function(){setTimeout("slidenote.wysiwyg.hideorshowcursor()", 100);});
+			document.getElementById("praesentationrahmen").onkeyup = function(event){
+				//Keyboardsteuerung der Slideshow:
+				var key=""+event.key;
+				console.log("keycode of pressed key:"+key);
+				if(key==="Escape")slidenote.presentation.showpresentation();
+				if(key==="ArrowRight" || key===" ")presentation.nextPage();
+				if(key==="ArrowLeft")presentation.lastPage();
+			}
 		}
 	}
 

@@ -1995,11 +1995,15 @@ pagegenerator.prototype.showpresentation = function(){
 		//console.log("querycodeanfang:"+document.querySelectorAll(".presentation code")[0].innerHTML.substring(0,20));
 		this.showPage(presentation.emdparsobjekt.pageAtPosition(quelle.selectionStart)[0]);
 		praesesrahmen.classList.add("fullscreen");
+		praesesrahmen.tabIndex=1; //make it tabable to get keystrokes
+		praesesrahmen.focus(); //focus it to get keystrokes
+		//document.getElementById("praesentation").focus();
 		//praesesrahmen.style.height = document.height;
 		document.body.style.height = "100vh";
 		document.body.style.overflow = "hidden";
 	} else{
 		fullscreen=false;
+		praesesrahmen.tabIndex = undefined; //undo tabable so it cant get accessed by accident/screenreader
 		//presentation.ausgabediv.classList.remove("active");
 
 		quelle.selectionEnd = presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
