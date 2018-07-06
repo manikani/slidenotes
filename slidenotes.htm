@@ -5,8 +5,10 @@
 <title>Slidenote-Editor</title>
 <link rel="stylesheet" href="layout.css">
 <script language="javascript" src="slidenotes.js"></script>
+<script language="javascript" src="themes/slidenoteguardian.js"></script>
 <script language="javascript"><!--
 var slidenote;
+var slidenoteguardian;
 var presentation; //TODO: sollte noch entfernt werden. nur noch slidenote-objekt global
 /* = new slidenotes(document.getElementById("quelltext"),
 							document.getElementById("texteditorerrorlayer"),
@@ -117,7 +119,8 @@ function initeditor(){
 					presentation.showPage(presentation.lastpressednrkey);
 					presentation.lastpressednrkey="";
 				}
-			}
+			};
+			slidenoteguardian = new slidenoteGuardian(slidenote);
 		}
 	}
 
@@ -199,6 +202,13 @@ function insertbutton(code){
 		<input type="button" onclick="this.parentNode.classList.remove('active')" value="close">
 	</div>
 </div>
-
+<div><h1>Later Hidden Content: CMS-Area</h1>
+	<button onclick="slidenoteguardian.saveNote('cms')">save to cms</button>
+	<button onclick="slidenoteguardian.loadNote('cms')">load to cms</button>
+	<button onclick="slidenoteguardian.saveNote('local')">save local</button>
+	<button onclick="slidenoteguardian.loadNote('local')">load local</button>
+	<textarea id="cmsarea"></textarea>
+	<input type="text" id="cmsareatitle">
+	<textarea id="cmsimages"></textarea>
 </body>
 </html>
