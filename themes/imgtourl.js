@@ -62,13 +62,17 @@ slidenote.base64images = {
   loadImageString: function(imagestring){
     let aktpos=0;
     let imgstring = imagestring;
-    while(imgstring.length>0){
+    while(imgstring.indexOf('>>>')>0){
       let aktimg = imgstring.substring(0,imgstring.indexOf('<<<'));
-      this.addImage(aktimg.substring(0,aktimg.indexOf('>>>')), aktimg.substring(aktimg.indexOf('>>>')+3));
+      this.base64images.push(new base64Image(aktimg.substring(0,aktimg.indexOf('>>>')), aktimg.substring(aktimg.indexOf('>>>')+3)));
       imgstring = imgstring.substring(imgstring.indexOf('<<<')+3);
     }
+    this.rebuildOldImages();
+  },
+  notempty: function(){
+    return (this.base64images.length>0);
   }
-  
+
 
 };
 
