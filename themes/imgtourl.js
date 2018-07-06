@@ -24,7 +24,7 @@ slidenote.base64images = {
     var oldimagestext = "";
     for(var x=0;x<this.base64images.length;x++){
       //oldimagestext+='<a href="Javascript:insertbutton(\'%b64'+this.base64images[x].name+'\')"';
-      oldimagestext+= '';
+      oldimagestext+= 'Image #'+x+'. Use ![]('+this.base64images[x].name+') in md-code or click on image to insert into editor:';
       oldimagestext+='<img src="'+this.base64images[x].base64url+'" name="'+this.base64images[x].name+'" onclick="slidenote.base64images.insertImage(this.name)">';
       oldimagestext+='<a href="Javascript:slidenote.base64images.deleteImage(\''+this.base64images[x].name+'\')">Delete Image from Database</a>';
       oldimagestext+='<br>';
