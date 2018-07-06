@@ -51,7 +51,24 @@ slidenote.base64images = {
   },
   lastImage: function(){
     return this.base64images[this.base64images.length-1];
+  },
+  allImagesAsString: function(){
+    let imagestring = "";
+    for(let x=0;x<this.base64images.length;x++){
+      imagestring+=this.base64images[x].name+'>>>'+this.base64images[x].base64url+'<<<';
+    }
+    return imagestring;
+  },
+  loadImageString: function(imagestring){
+    let aktpos=0;
+    let imgstring = imagestring;
+    while(imgstring.length>0){
+      let aktimg = imgstring.substring(0,imgstring.indexOf('<<<'));
+      this.addImage(aktimg.substring(0,aktimg.indexOf('>>>')), aktimg.substring(aktimg.indexOf('>>>')+3));
+      imgstring = imgstring.substring(imgstring.indexOf('<<<')+3);
+    }
   }
+  
 
 };
 
