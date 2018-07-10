@@ -2290,10 +2290,10 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 
 	}else if(inputobject==this.textarea && key=="Shift"){
 		console.log("Shift gedrückt");
-		let alteselection = document.getElementsByClassName("wysiwygselection")[0];
+		var alteselection = document.getElementsByClassName("wysiwygselection")[0];
 		if(alteselection!=null){
 			//old selection exists, so reuse this
-			let oldtop = this.wysiwygarea.scrollTop; //remember old scrollTop
+			var oldtop = this.wysiwygarea.scrollTop; //remember old scrollTop
 			this.wysiwygarea.focus(); //focus on wysiwygarea
 			this.wysiwyg.setCursorToElement(alteselection, true); //set selection on wysiwygarea
 			this.wysiwygarea.scrollTop = oldtop; //set old scrollTop so browser does not scroll to top

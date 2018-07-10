@@ -5,7 +5,39 @@
 <title>Slidenote-Editor</title>
 <link rel="stylesheet" href="layout.css">
 <script language="javascript" src="slidenotes.js"></script>
-<script language="javascript" src="themes/slidenoteguardian.js"></script>
+<script language="javascript">
+var errors="";
+try {
+		  eval('async () => {}');
+} catch (e) {
+		  if (e instanceof SyntaxError){
+			  errors += "dein browser unterstützt kein async";
+			  }else
+				    throw e; // throws CSP error
+}
+if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) {
+        window.crypto.subtle = window.crypto.webkitSubtle;
+		errors += "dein browser braucht webkitSuble";
+}
+    if (!window.crypto || !window.crypto.subtle) {
+        errors +="Your browser does not support the Web Cryptography API! This page will not work.";
+
+    }
+	if (!('TextDecoder' in window))errors+="kein Textdecoder da!";
+try {
+		eval('var dec=new TextDecoder();');
+	} catch(e){
+		errors+="kein TextDecoder möglich";
+}
+if(errors==""){
+	let jsfile = document.createElement('script');
+	jsfile.setAttribute("type","text/javascript");
+	jsfile.setAttribute("src", "themes/slidenoteguardian.js");
+	document.getElementsByTagName("head")[0].appendChild(jsfile);
+}else{
+	alert(errors);
+}
+</script>
 <script language="javascript"><!--
 var slidenote;
 var slidenoteguardian;
