@@ -2269,7 +2269,7 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			//key=event.keyCode;
 			key = getKeyOfKeyCode(event.keyCode);
 	}
-	if(key=="Shift")this.wysiwyg.shiftdown = true;
+	if(key==="Shift")this.wysiwyg.shiftdown = true;
 	console.log("key:"+key);
 	var keydown = this.keydown; //braucht das noch? erstmal zum testen hier temporär, wenns funktioniert
 	//kann es ganz weg, sonst wieder global machen
@@ -2290,12 +2290,13 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 
 	}else if(inputobject==this.textarea && key=="Shift"){
 		console.log("Shift gedrückt");
-		var alteselection = document.getElementsByClassName("wysiwygselection")[0];
+		let alteselection = document.getElementsByClassName("wysiwygselection")[0];
 		if(alteselection!=null){
-			//es gibt ne alte selection, also selection auswählen und focus auf
-			//wysiwyg setzen
-			this.wysiwygarea.focus();
-			this.wysiwyg.setCursorToElement(alteselection, true);
+			//old selection exists, so reuse this
+			let oldtop = this.wysiwygarea.scrollTop; //remember old scrollTop
+			this.wysiwygarea.focus(); //focus on wysiwygarea
+			this.wysiwyg.setCursorToElement(alteselection, true); //set selection on wysiwygarea
+			this.wysiwygarea.scrollTop = oldtop; //set old scrollTop so browser does not scroll to top
 		}
 	}
 	if(key.length<2 && !event.ctrlKey)
