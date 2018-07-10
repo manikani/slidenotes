@@ -1080,7 +1080,7 @@ emdparser.prototype.parsenachzeilen= function(){
 				}
 				imgaktpos=imgpos+4;
 				var imgurl = lines[x].substring(imgpos+4,imgposend);
-				//if-abfrage ob img unter url existiert, sonst fehler
+				//TODO: if-abfrage ob img unter url existiert, sonst fehler
 				var imghtml = '<img src="'+imgurl+'">';
 				if(error.length==0){
 					lines[x] = lines[x].substring(0,imgpos)+imghtml+lines[x].substring(imgposend+1);
@@ -1088,8 +1088,8 @@ emdparser.prototype.parsenachzeilen= function(){
 					//this.insertedhtmlinline[x].push(new Array(pseudozeile.indexOf("![]("),"![]("+imgurl+")",imghtml));
 					this.map.addElement({line:x,pos:pseudozeile.indexOf("![]("),html:imghtml,mdcode:"![]("+imgurl+")",typ:"image",wystextveraenderung:5+imgurl.length});
 					//this.veraenderungen.push(new Array("image",laengebiszeile+imgpos,imgposend-imgpos));
-
-					pseudozeile = pseudozeile.substring(0,pseudozeile.indexOf("![]("))+"€€€€"+pseudozeile.substring(pseudozeile.indexOf("![]("+4));
+					var pseudoimgpos = pseudozeile.indexOf("![](");
+					pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€€€"+pseudozeile.substring(pseudoimgpos+4);
 				}else {
 					//alert(error);
 					//lines[x]=lines[x].substring(0,imgpos)+lines[x].substring(imgpos+4);
