@@ -15,22 +15,30 @@ function slidenoteGuardian(slidenote){
   this.configArea = document.getElementById("configarea");
   this.cmsArea = document.getElementById("cmsarea");
   this.cmsImages = document.getElementById("cmsimages");
+  this.cmsSlidenoteHash = document.getElementById("cmsslidenotehash");
+  this.cmsImagesHash = document.getElementById("cmsimageshash");
+  this.cmsNoteSave;
+  this.cmsImagesSave;
   this.configs; //not used yet
   this.password; //storing password for later use so user has not to retype it all the time he saves (automagicaly)
+  this.passwordHash;
   this.key = null; //always start with empty key
   this.crypto = window.crypto; //make crypto available
   this.decText; //last decrypted Text - we could get rid of it
   this.encBufferString; //last encrypted String from cms or local storage
   this.encImageString; //last encrypted String from cms or local storage with base64-images
-  this.iv; //the initialisation-vector to use
+  this.iv; //the initialisation-vector to use - we could get rid of it?
   this.ivlength = 12; //the length of the initialisation vector used for encryption
   this.localstorage = window.localStorage; //set local storage
+
 }
 
 slidenoteGuardian.prototype.loadNote = async function(destination){
     //loads Note from cmsArea or from local destination
     //destination is "cms" or "local"
     if(destination==="cms"){
+      //first thing to do is get the fields right:
+      this.getCMSFields();
       this.encBufferString = this.cmsArea.value;
       //this.encImageString = this.cmsImages.value;
     }else if(destination==="local"){
@@ -65,6 +73,7 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
 slidenoteGuardian.prototype.saveNote = async function(destination){
   //saves Note to cmsArea -> CMS or to local destination
   //destination is cms or local - will be encrypted nevertheless
+  let slidenotetext = this.slidenote.textarea.value;
   let encResult = await this.encrypt(slidenote.textarea.value);
   let encTextBuffer = encResult.encbuffer;
   let iv = encResult.iv;
@@ -80,18 +89,42 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   for(let i=0; i<iv.length;i++)ivstring+=String.fromCharCode(iv[i]+255);
   let result = ivstring+utf8string;//save iv in front of code
   //save Images:
+  let encimgstring="";
   if(this.slidenote.base64images.notempty){
-    //Images sind vorhanden - TODO: hier später weiterer check ob bereits gesichert ist
-    await this.saveImages(destination);
+    if(destination ==="cms"){
+      //first get the fields right:
+      this.getCMSFields();
+      //slidenote has images - check if already saved:
+      let newimghash = await this.hash(this.slidenote.base64images.allImagesAsString());
+      if(this.cmsImagesHash.value != newimghash){
+        console.log("save images with hash:"+newimghash);
+        encimgstring = await this.encryptImages(); //encrypt imagestring
+        this.cmsImagesHash.value = newimghash; //send new hash to cms
+      } else{
+        console.log("images did not change:"+newimghash);
+      }
+    }else if(destination==="local"){
+      //saving images to localStorage - TODO: do we want to check if already saved?
+      encimgstring = await this.encryptImages();
+    }
   }
   if(destination ==="cms"){
+    //first get the fields right:
+    this.getCMSFields();
+    this.cmsSlidenoteHash.value = await this.hash(slidenotetext); //putting hash into cms
     this.cmsArea.value= result; //putting it in textarea of cms
     //if(imagestring.length>0)this.cmsImages.value = ivstring+imagestring;
     //TODO: images?
+    if(encimgstring!=""){
+      this.cmsImages.value=encimgstring;
+      this.sendToCMS("images");
+    }
     //TODO: sending result to CMS
+    this.sendToCMS("note");
   }else if(destination==="local"){
     //TODO: testing max-size of local storage
     this.localstorage.setItem('cryptnote',result); //saving it to local storage
+    this.localstorage.setItem('cryptimagestring',encimgstring);
     //TODO: save images localy
   }
 
@@ -116,22 +149,19 @@ slidenoteGuardian.prototype.loadImages = async function(destination){
   }
 };
 
-slidenoteGuardian.prototype.saveImages = async function(destination){
+slidenoteGuardian.prototype.encryptImages = async function(){
   //now the images:
   let imagestring="";
-  console.log("save Imagestring:"+this.slidenote.base64images.allImagesAsString());
+  //console.log("save Imagestring:"+this.slidenote.base64images.allImagesAsString());
   if(this.slidenote.base64images.base64images.length>0){ //muss diese abfrage überhaupt hier sein?
     let encResult = await this.encrypt(this.slidenote.base64images.allImagesAsString());
     let imageBuffer = encResult.encbuffer;
     for(let i=0;i<encResult.iv.length;i++)imagestring+=String.fromCharCode(encResult.iv[i]+255);
     let imageutf8 = new Uint8Array(imageBuffer);
     for(let i=0;i<imageutf8.length;i++)imagestring+=String.fromCharCode(imageutf8[i]+255);
-    if(destination==="cms"){
-      this.cmsImages.value=imagestring;
-    }else if(destination==="local"){
-      console.log("cryptimagestring:"+imagestring);
-      this.localstorage.setItem('cryptimagestring',imagestring);
-    }
+    return imagestring;
+  } else{
+    return "";
   }
 };
 
@@ -171,11 +201,20 @@ slidenoteGuardian.prototype.decrypt = async function(buffer, iv){
 
 //helper functions - for internal use only:
 
+slidenoteGuardian.prototype.hash = async function(text){
+  let textutf8 = new TextEncoder().encode(text);
+  let hash = new Uint8Array(await this.crypto.subtle.digest('SHA-256', textutf8));
+  let result = "";
+  for(let i=0;i<hash.length;i++)result+=String.fromCharCode(hash[i]+255);
+  return result;
+}
+
 slidenoteGuardian.prototype.createKey = async function(iv){
   console.log("creating Key");
   if(this.password == null)this.password = prompt("please type in your personal password");
   let pwUtf8 = new TextEncoder().encode(this.password);
-  let passwordHash = await this.crypto.subtle.digest('SHA-256', pwUtf8);
+  this.passwordHash = await this.crypto.subtle.digest('SHA-256', pwUtf8);
+  let passwordHash = this.passwordHash;
   let keyguardian = {};
   if(iv==null){
     keyguardian.iv = crypto.getRandomValues(new Uint8Array(this.ivlength));
@@ -186,4 +225,36 @@ slidenoteGuardian.prototype.createKey = async function(iv){
   keyguardian.key = await crypto.subtle.importKey('raw', passwordHash, keyguardian.alg, false, ['encrypt', 'decrypt']);
   console.log("key created");
   return keyguardian;
+}
+
+slidenoteGuardian.prototype.getCMSFields = function(){
+  //get the cms-fields right. Test Style for slidenote.htm:
+  this.configArea = document.getElementById("configarea");
+  this.cmsArea = document.getElementById("cmsarea");
+  this.cmsImages = document.getElementById("cmsimages");
+  this.cmsSlidenoteHash = document.getElementById("cmsslidenotehash");
+  this.cmsImagesHash = document.getElementById("cmsimageshash");
+
+  //drupal7 with editablefields-module:
+  let notename = "encslidenote";
+  let imagename = "imagescontainer";
+  let holdingforms = document.getElementsByClassName("editable-field");
+  for(let x=0;x<holdingforms.length;x++){
+    if(holdingforms[x].id.indexOf(notename)>1){
+      this.cmsNoteSave = holdingforms[x].getElementsByClassName("form-submit")[0];
+			this.cmsArea = holdingforms[x].getElementsByClassName("text-full")[0];
+			this.cmsSlidenoteHash = holdingforms[x].getElementsByClassName("text-summary")[0];
+    }
+    if(holdingforms[x].id.indexOf(imagename)>1){
+      this.cmsImagesSave = holdingforms[x].getElementsByClassName("form-submit")[0];
+			this.cmsImages = holdingforms[x].getElementsByClassName("text-full")[0];
+			this.cmsImagesHash = holdingforms[x].getElementsByClassName("text-summary")[0];
+    }
+  }
+}
+
+slidenoteGuardian.prototype.sendToCMS = function(target){
+  //drupal7 with editablefields-module:
+  if(target==="note")cmsNoteSave.dispatchEvent(new Event("click"));
+  if(target==="images")cmsImagesSave.dispatchEvent(new Event("click"));
 }
