@@ -21,7 +21,7 @@ function slidenoteGuardian(slidenote){
   this.cmsImagesSave;
   this.configs; //not used yet
   this.password; //storing password for later use so user has not to retype it all the time he saves (automagicaly)
-  this.passwordHash;
+  this.passwordHash; //better use this than original password?
   this.key = null; //always start with empty key
   this.crypto = window.crypto; //make crypto available
   this.decText; //last decrypted Text - we could get rid of it
@@ -30,7 +30,26 @@ function slidenoteGuardian(slidenote){
   this.iv; //the initialisation-vector to use - we could get rid of it?
   this.ivlength = 12; //the length of the initialisation vector used for encryption
   this.localstorage = window.localStorage; //set local storage
+  /*in local-storage there can be saved ONE slidenote only. items:
+  * cryptnote: encrypted slidenote
+  * cryptimagestring: encrypted string with base64-images
+  * title: the title of the saved slidenote
+  */
+  this.notetitle = "slidenotetest"; //the title of the saved slidenote - normaly set via cms
+  //can we start the init here? why not?
+  this.init();
+}
 
+slidenoteGuardian.prototype.init = function(){
+  //init will be called once the slidenote has been loaded from cms
+  this.getCMSFields();
+  if(this.localstorage.getItem("title")===this.notetitle){
+    if(confirm("We found a Version of this Slidenote in your local Storage. Do you want to load it?")){
+      this.loadNote("local");
+    } else {
+      //this.loadNote("cms");
+    }
+  }
 }
 
 slidenoteGuardian.prototype.loadNote = async function(destination){
@@ -125,6 +144,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     //TODO: testing max-size of local storage
     this.localstorage.setItem('cryptnote',result); //saving it to local storage
     this.localstorage.setItem('cryptimagestring',encimgstring);
+    this.localstorage.setItem('title',this.notetitle);
     //TODO: save images localy
   }
 
@@ -236,6 +256,8 @@ slidenoteGuardian.prototype.getCMSFields = function(){
   this.cmsImagesHash = document.getElementById("cmsimageshash");
 
   //drupal7 with editablefields-module:
+  let nodetitle = document.getElementById("page-title");
+  if(nodetitle!=null)this.notetitle=nodetitle.innerHTML;
   let notename = "encslidenote";
   let imagename = "imagescontainer";
   let holdingforms = document.getElementsByClassName("editable-field");
