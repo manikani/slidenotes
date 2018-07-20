@@ -231,7 +231,10 @@ slidenoteGuardian.prototype.hash = async function(text){
 
 slidenoteGuardian.prototype.createKey = async function(iv){
   console.log("creating Key");
-  if(this.password == null)this.password = prompt("please type in your personal password");
+  if(this.password == null){
+    //this.password = prompt("please type in your personal password");
+    this.password = await this.passwordPrompt("please type in your personal password");
+  }
   let pwUtf8 = new TextEncoder().encode(this.password);
   this.passwordHash = await this.crypto.subtle.digest('SHA-256', pwUtf8);
   let passwordHash = this.passwordHash;
@@ -279,4 +282,59 @@ slidenoteGuardian.prototype.sendToCMS = function(target){
   //drupal7 with editablefields-module:
   if(target==="note")cmsNoteSave.dispatchEvent(new Event("click"));
   if(target==="images")cmsImagesSave.dispatchEvent(new Event("click"));
+}
+
+slidenoteGuardian.prototype.passwordPrompt = function (text){
+  /*creates a password-prompt*/
+	var width=200;
+	var height=100;
+	var pwprompt = document.createElement("div");
+	pwprompt.id= "slidenoteGuardianPasswortPrompt";
+	pwprompt.style.position = "fixed";
+	pwprompt.style.left = ((window.innerWidth / 2) - (width / 2)) + "px";
+	pwprompt.style.top = ((window.innerWidth / 2) - (width / 2)) + "px";
+  pwprompt.style.border = "1px solid black";
+  pwprompt.style.padding = "16px";
+  pwprompt.style.background = "white";
+  pwprompt.style.zIndex = 10000;
+
+	var pwtext = document.createElement("div");
+	pwtext.innerHTML = text;
+	pwprompt.appendChild(pwtext);
+	var pwinput = document.createElement("input");
+	pwinput.id = "password_id";
+	pwinput.type="password";
+	pwprompt.appendChild(pwinput);
+	var pwokbutton = document.createElement("button");
+	pwokbutton.innerHTML = "ok";
+	var pwcancelb = document.createElement("button");
+	pwcancelb.innerHTML = "cancel";
+	pwprompt.appendChild(pwcancelb);
+	pwprompt.appendChild(pwokbutton);
+	document.body.appendChild(pwprompt);
+	pwinput.focus();
+
+	return new Promise(function(resolve, reject) {
+	    pwprompt.addEventListener('click', function handleButtonClicks(e) {
+	      if (e.target.tagName !== 'BUTTON') { return; }
+	      pwprompt.removeEventListener('click', handleButtonClicks); //removes eventhandler on cancel or ok
+	      if (e.target === pwokbutton) {
+			//let fuckingpw = pwinput.value;
+	        resolve(pwinput.value);
+	      } else {
+	        reject(new Error('User cancelled'));
+	      }
+		  document.body.removeChild(pwprompt);
+
+	    });
+		pwinput.addEventListener('keyup',function handleEnter(e){
+			if(e.keyCode == 13){
+				resolve(pwinput.value);
+				document.body.removeChild(pwprompt);
+			}else if(e.keyCode==27){
+				document.body.removeChild(pwprompt);
+				reject(new Error("User cancelled"));
+			}
+		});
+	});
 }
