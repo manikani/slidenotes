@@ -294,46 +294,35 @@ slidenoteGuardian.prototype.sendToCMS = function(target){
 
 slidenoteGuardian.prototype.passwordPrompt = function (text){
   /*creates a password-prompt*/
-	var width=200;
-	var height=100;
-	var pwprompt = document.createElement("div");
-	pwprompt.id= "slidenoteGuardianPasswortPrompt";
-	pwprompt.style.position = "fixed";
-	pwprompt.style.left = ((window.innerWidth / 2) - (width / 2)) + "px";
-	pwprompt.style.top = ((window.innerWidth / 2) - (width / 2)) + "px";
-  pwprompt.style.border = "1px solid black";
-  pwprompt.style.padding = "16px";
-  pwprompt.style.background = "white";
-  pwprompt.style.zIndex = 10000;
-
-	var pwtext = document.createElement("div");
+	var pwprompt = document.createElement("div"); //the prompt-container
+	pwprompt.id= "slidenoteGuardianPasswortPrompt"; //id for css
+  var pwpromptbox = document.createElement("div"); //inner promptbox
+  pwprompt.appendChild(pwpromptbox);
+	var pwtext = document.createElement("div"); //text to be displayed inside box
 	pwtext.innerHTML = text;
-	pwprompt.appendChild(pwtext);
-	var pwinput = document.createElement("input");
-	pwinput.id = "password_id";
+	pwpromptbox.appendChild(pwtext);
+	var pwinput = document.createElement("input"); //password-box
 	pwinput.type="password";
-	pwprompt.appendChild(pwinput);
+	pwpromptbox.appendChild(pwinput);
 	var pwokbutton = document.createElement("button");
 	pwokbutton.innerHTML = "ok";
 	var pwcancelb = document.createElement("button");
 	pwcancelb.innerHTML = "cancel";
-	pwprompt.appendChild(pwcancelb);
-	pwprompt.appendChild(pwokbutton);
-	document.body.appendChild(pwprompt);
-	pwinput.focus();
+	pwpromptbox.appendChild(pwcancelb);
+	pwpromptbox.appendChild(pwokbutton);
+	document.body.appendChild(pwprompt); //make promptbox visible
+	pwinput.focus(); //focus on pwbox to get direct input
 
 	return new Promise(function(resolve, reject) {
 	    pwprompt.addEventListener('click', function handleButtonClicks(e) {
 	      if (e.target.tagName !== 'BUTTON') { return; }
 	      pwprompt.removeEventListener('click', handleButtonClicks); //removes eventhandler on cancel or ok
 	      if (e.target === pwokbutton) {
-			//let fuckingpw = pwinput.value;
-	        resolve(pwinput.value);
+	        resolve(pwinput.value); //return password
 	      } else {
-	        reject(new Error('User cancelled'));
+	        reject(new Error('User cancelled')); //return error
 	      }
-		  document.body.removeChild(pwprompt);
-
+		    document.body.removeChild(pwprompt); //let prompt disapear
 	    });
 		pwinput.addEventListener('keyup',function handleEnter(e){
 			if(e.keyCode == 13){

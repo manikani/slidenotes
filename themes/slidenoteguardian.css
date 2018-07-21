@@ -1,0 +1,16 @@
+#slidenoteGuardianPasswortPrompt {
+  background: rgba(0,50,255,0.75);
+  height:100%;
+  left:0;
+  position: fixed;
+  top:0;
+  width: 100%;
+  z-index: 10000;
+  padding:40%;
+}
+#slidenoteGuardianPasswortPrompt > div {
+
+    background: white;
+    padding: 15px;
+    width: 300px;
+}
