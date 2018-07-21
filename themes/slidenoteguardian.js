@@ -72,6 +72,13 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
     for(let i=0;i<this.encBufferString.length;i++)buffer[i]=this.encBufferString.charCodeAt(i)-255;
     //this.encTextBuffer = buffer.buffer; //changing to ArrayBuffer -- TODO:kann weg oder?
     this.decText = await this.decrypt(buffer.buffer, this.iv); //decrypt ArrayBuffer
+    //console.log("decryption fail:"+this.decText);
+    //error-handling - try again:
+    while(this.decText === "decryption has failed" && confirm("decryption failed. try it again?")){
+        this.decText = await this.decrypt(buffer.buffer, this.iv); //decrypt ArrayBuffer anew
+    }
+    if(this.decText === "decryption has failed")return; //password wrong, abort the load
+
     this.slidenote.textarea.value = this.decText; //putting result into textarea
     //loading images:
     let imgstring;
@@ -213,6 +220,7 @@ slidenoteGuardian.prototype.decrypt = async function(buffer, iv){
   } catch(e){
     console.log(e);
     console.log("decryption has failed!");
+    this.password = null; //reset password as it has no meaning
     return "decryption has failed";
   }
   console.log("decoding has ended");
