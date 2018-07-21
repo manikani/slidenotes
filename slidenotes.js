@@ -1565,6 +1565,7 @@ function pagegenerator(emdparsobjekt, ausgabediv){
 	this.loadTheme("procontra");
 	this.loadTheme("azul");
 	this.loadTheme("redalert");
+	this.loadTheme("tufte");
 	this.loadTheme("prototyp");
 	this.loadTheme("highlight");
 	this.loadTheme("transition");
