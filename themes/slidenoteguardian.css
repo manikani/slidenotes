@@ -9,8 +9,9 @@
   padding:40%;
 }
 #slidenoteGuardianPasswortPrompt > div {
-
     background: white;
     padding: 15px;
     width: 300px;
+    position: fixed;
+    top: 30%;
 }

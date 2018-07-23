@@ -2237,6 +2237,7 @@ slidenotes.prototype.parseneu = function(){
 	var renderzeit = endzeit - zwischenzeit;
 	var gesamtzeit = endzeit - startzeit;
 	console.log("Parsen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
+	if(slidenoteguardian)slidenoteguardian.autoSaveToLocal(new Date().getTime());
 };
 slidenotes.prototype.renderwysiwyg = function(){
 	//nur wysiwyg neu aufbauen

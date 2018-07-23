@@ -36,6 +36,9 @@ function slidenoteGuardian(slidenote){
   * title: the title of the saved slidenote
   */
   this.notetitle = "slidenotetest"; //the title of the saved slidenote - normaly set via cms
+  //helpers for autosave:
+  this.lastNoteFormId;
+  //this.lastTimeActive = new Date().getTime(); //last time user was active - needed for Timeout before saving
   //can we start the init here? why not?
   this.init();
 }
@@ -50,6 +53,7 @@ slidenoteGuardian.prototype.init = function(){
       //this.loadNote("cms");
     }
   }
+  setTimeout("slidenoteguardian.autoSaveToCMS()",3000);
 }
 
 slidenoteGuardian.prototype.loadNote = async function(destination){
@@ -288,8 +292,41 @@ slidenoteGuardian.prototype.getCMSFields = function(){
 
 slidenoteGuardian.prototype.sendToCMS = function(target){
   //drupal7 with editablefields-module:
-  if(target==="note")cmsNoteSave.dispatchEvent(new Event("click"));
-  if(target==="images")cmsImagesSave.dispatchEvent(new Event("click"));
+  if(target==="note" && this.cmsNoteSave)this.cmsNoteSave.dispatchEvent(new Event("click"));
+  if(target==="images" && this.cmsImagesSave)this.cmsImagesSave.dispatchEvent(new Event("click"));
+}
+
+slidenoteGuardian.prototype.autoSaveToLocal = function(time){
+  //TODO: performance-check. if saving costs too much it should save less
+  this.saveNote("local");
+  console.log("saved to local:"+time);
+}
+
+slidenoteGuardian.prototype.autoSaveToCMS = async function(){
+  //check if you have to save:
+  console.log("autosave to cms started");
+  if(this.slidenote.textarea.value.length<1){
+    //if empty dont save:
+    setTimeout("slidenoteguardian.autoSaveToCMS()",30000);
+    return;
+  }
+  let acthash = await this.hash(this.slidenote.textarea.value); //hash the actual slidenote
+  this.getCMSFields();//getting the fields right:
+  let oldhash = this.cmsSlidenoteHash.value; //oldhash
+  if(oldhash != acthash){
+    //acthash diffs from old saved hash in cms so we have to save:
+    console.log("autosave oldhash:"+oldhash+"\nnew hash:"+acthash);
+    this.saveNote("cms");
+  }
+  //check if cms-save is actually done yet (drupal7):
+  if(this.cmsNoteSave && this.cmsNoteSave.id != this.lastNoteFormId){
+    this.lastNoteFormId = this.cmsNoteSave.id;
+    console.log("autosave done - cms-form has new id");
+  }
+
+  //repeats itself every 30 seconds, 2 minutes
+  let autosavetime = 30000;//120000;
+  setTimeout("slidenoteguardian.autoSaveToCMS()",autosavetime);
 }
 
 slidenoteGuardian.prototype.passwordPrompt = function (text){
