@@ -2367,8 +2367,8 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode){
 	console.log("insert button:"+emdzeichen+"mdstart:"+mdstartcode);
 	var textarea = this.textarea;
-	var startemdl = new Array('**','*','~~',"%head","%list","%nrlist","%link","%quote","%image","%table");
-	var endemdl = new Array('**','*','~~',"\n","\n","\n","%link","\n","%image","%table");
+	var startemdl = new Array('**','*','~~',"%head","%list","%nrlist","%link","%quote","%image","%table","-----");
+	var endemdl = new Array('**','*','~~',"\n","\n","\n","%link","\n","%image","%table","\n");
 	var emdnr;
 	var emdstart="";
 	var emdend="";
@@ -2434,6 +2434,9 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	}else if(emdzeichen.substring(0,2)=="||"){
 		emdstart=emdzeichen+"\n";
 		emdend="\n"+emdzeichen.substring(0,emdzeichen.indexOf("||",2)+2);
+	}else if(emdzeichen==="-----"){
+		emdstart = "\n"+emdzeichen+"\n";
+		emdend = "";
 	}else{ //einfache zeichen:
 		//emdnr = startemdl.positionOf(emdzeichen); //sollte im array vorkommen. da ich den befehl grad nicht weiß:
 		for(var x=0;x<startemdl.length;x++)if(startemdl[x]==emdzeichen)emdnr=x;
@@ -2455,7 +2458,7 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	textarea.focus();
 	//textarea.value = textarbody;
 	textarea.selectionEnd = selectionend+emdstart.length; //cursor vor emdendsymbol stellen
-	textarea.scrollTop = scrolltop; //scrolle an richtige stelle
+	//textarea.scrollTop = scrolltop; //scrolle an richtige stelle
 	//testparsenachzeilen(document.getElementById("quelltext").value); //zeichen einparsen
 	this.parseneu();
 
