@@ -18,7 +18,7 @@ var styles = new Array(
 "sunburst","tomorrow","tomorrow-night-blue","tomorrow-night-bright","tomorrow-night",
 "tomorrow-night-eighties","vs2015","vs","xcode","xt256","zenburn");
 
-newtheme.addDesignOption("select", "theme of hljs:", styles, styles);
+newtheme.addDesignOption("select", "theme of hljs:", styles, styles, 0);
 
 newtheme.changeDesignOption = function(optionnr, value){
 	var cssfile = document.createElement("link");
@@ -26,6 +26,12 @@ newtheme.changeDesignOption = function(optionnr, value){
 	cssfile.setAttribute("type", "text/css");
 	cssfile.setAttribute("href", "themes/highlight/styles/"+value+".css");
 	document.getElementsByTagName("head")[0].appendChild(cssfile);
+	//console.log("changedesignoption:"+optionnr+":"+value);
+	var seldesign = 0;
+	for(var selx=0;selx<this.designoptions[0].values.length;selx++){
+		if(this.designoptions[0].values[selx] === value)seldesign = selx;
+	}
+	this.designoptions[optionnr].selected = seldesign;
 
 }
 
