@@ -633,11 +633,12 @@ emdparser.prototype.parseerrorsourcebackground = function(){
 	var lines = this.returnparsedlines(this.replace(this.sourcecode,"<","&lt;"));
 	//this.returnparsedlines(this.replace(this.replace(this.sourcecode,"<","&lt;"),"\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"));
 	var temptext = "";
+	/* dont remember why i wrote this but it doesnt have any effect so get rid of it:
 	for(var x=0;x<lines.length;x++){
 		var pseudoline="&nbsp;";
 		for(var y;y<lines[x].length;y++)pseudoline+=pseudoline;
 		//lines[x]=pseudoline+".";
-	}
+	} */
 	//nur einen gleichen error anzeigen lassen pro zeile, first comes first:
 	var lasterrorline;
 	var x;
@@ -676,6 +677,200 @@ emdparser.prototype.parseerrorsourcebackground = function(){
 	return temptext;
 
 };
+/* renderCodeeditorBackground:
+ *  makes use of the map to render background for md-Code-Editor
+ */
+emdparser.prototype.renderCodeeditorBackground = function(){
+	 var lines = this.returnparsedlines(this.sourcecode); //raw sourcecode
+	 var changes = new Array(); //saves the changes we have to do
+	 var imagesinline = new Array(); //array with array of images-changes
+	 //create cursor-change:
+	 var cursorposinall = slidenote.textarea.selectionEnd;
+	 var cursorline = this.lineAtPosition(cursorposinall);
+	 var cursorposinline = cursorposinall - this.map.linepos[cursorline]-1;
+	 var cursorchange = {
+	 	line:cursorline,
+	 	posinall:cursorposinall,
+	 	pos:cursorposinline,
+	 	html:'<span id="carret"></span>',
+	 	mdcode:'',
+	 	typ:'cursor'
+	 };
+	 changes.push(cursorchange);
+
+	 //looking for simple changes:
+	 var mdsimples = "***__~~<`"; //< is also a simple change
+	 for(var x=0;x<this.map.insertedhtmlelements.length;x++){
+		 var element = this.map.insertedhtmlelements[x];
+		 //iterate through map and get changes we have to do to orig-text:
+		 if(element.mdcode.length>0 && mdsimples.indexOf(element.mdcode)>-1){
+			 //a simple thing - just do the changes later on:
+			 //end should be changed after element
+			 if(element.typ==="start") changes.push(element);
+			 if(element.typ==="end")changes.push({
+					line:element.line,
+					posinall:element.posinall+element.mdcode.length,
+					pos:element.pos+element.mdcode.length,
+					html:element.html,
+				 	mdcode:element.mdcode,
+			 		typ:element.typ
+				});
+		 }
+		 if(element.typ === "image"){
+			 //record in imagesinline;
+			 if(imagesinline[element.line]==null)imagesinline[element.line] = new Array();
+			 imagesinline[element.line].push(element);
+		 }
+	 }
+
+	 //sort the array:
+	 changes.sort(function(a,b){return a.posinall - b.posinall});
+	 console.log(changes);
+	 //do the changes from behind to beginning:
+	 for(var c=changes.length-1;c>=0;c--){
+		 actchange = changes[c];
+		 if(actchange.typ==="<"){
+			 lines[actchange.line] = lines[actchange.line].substring(0,actchange.pos) +
+  		 												actchange.html +
+  														lines[actchange.line].substring(actchange.pos+1);
+		 }else {
+			// if(actchange.typ ==="start"){
+		 	 		lines[actchange.line] = lines[actchange.line].substring(0,actchange.pos) +
+		 												actchange.html +
+														lines[actchange.line].substring(actchange.pos);
+				//}else{
+					//lines[actchange.line] = lines[actchange.line].substring(0,actchange.pos+actchange.mdcode.length) +
+		 				//								actchange.html +
+					//									lines[actchange.line].substring(actchange.pos+actchange.mdcode.length);
+				//}
+			}
+	 }
+
+	 //add proposedsymbol:
+	var lasterrorline;
+ 	var x;
+ 	//* before ** :
+ 	var doppelsternchen = new Array();
+ 	for(x=0;x<this.perror.length;x++){
+ 			if(lasterrorline != this.perror[x].line && this.perror[x].errortext!="missing space after *"){ //only one error per line, dont parse missing space after * because it sucks
+ 				lines[this.perror[x].line]=this.perror[x].encapsulehtml(lines[this.perror[x].line]);
+ 				var proposedsymbol = this.perror[x].proposeEnding();
+ 				if(proposedsymbol != ""){
+ 					if(this.perror[x].errorclass=="bold")doppelsternchen.push(x); else
+ 					 lines[this.perror[x].line]+='<span class="proposedsymbol">'+proposedsymbol+'</span>';
+ 				}
+
+ 			}
+ 			lasterrorline = this.perror[x].line;
+
+ 	}
+ 	//doppelsternchenfehler anzeigen lassen:
+ 	for(x=0;x<doppelsternchen.length;x++)lines[this.perror[doppelsternchen[x]].line]+='<span class="proposedsymbol">' + this.perror[doppelsternchen[x]].proposeEnding() + '</span>';
+
+	//putting it inside line-spans and returning as whole text:
+	var temptext = "";
+	for(x=0;x<lines.length;x++){
+		var lineclass="backgroundline";
+		var imgtemptext ="";
+		//checking for images:
+		/*if(imagesinline[x]!=null){
+			//there are images in this line:
+			lineclass+=" imageline";
+
+			for(var im=0;im<imagesinline[x].length;im++){
+				var img = imagesinline[x][im];
+				if(img.src.substring(0,4)!="http" && slidenote.base64images){
+					//base64images is active, so check if image is in database:
+					if(slidenote.base64images.imageByName(img.src)!=null){
+						//base64image found in database:
+						console.log("image found: "+img.src);
+						imgtemptext+= '<img src="'+slidenote.base64images.imageByName(img.src).base64url+'">';
+					}else{
+						//base64image not found in database:
+						console.log("imagesrc:"+img.src);
+						//imgurl = "images/imageupload.png";
+						imgtemptext+= '<img src="images/imageupload.png">';
+					}
+				} else {
+					imgtemptext+='<img src="'+img.src+'">';
+				}
+			}
+		}//end of imagesinline[x]!=null
+		imgtemptext ="";*/
+		lineclass += " "+slidenote.parser.lineswithhtml[x];
+		temptext += imgtemptext +'<span class="linenr">'+x+'</span><span class="'+lineclass+'">'+lines[x]+'</span>';
+		temptext+="<br>\n";
+	}
+	console.log("changes:"); console.log(changes);
+	return temptext;
+};
+
+emdparser.prototype.renderCodeeditorImagePreview = function(){
+	var images = new Array();
+	var lines = this.returnparsedlines(this.sourcecode); //raw sourcecode
+
+	for(var x=0;x<this.map.insertedhtmlelements.length;x++)if(this.map.insertedhtmlelements[x].typ ==="image")images.push(this.map.insertedhtmlelements[x]);
+	//images is now filled with all image-elements
+	images.sort(function(a,b){return a.posinall -b.posinall}); //sort them
+	for(var x=0;x<lines.length;x++){
+		lines[x]="";
+	}
+	//lines are now empty
+
+	for(var x=0;x<images.length;x++){
+		img = images[x];
+		if(lines[img.line]===""){
+			var beforetmp="";
+			var arrowtoimage="";
+			for(var bf=0;bf<img.pos+img.mdcode.length;bf++)beforetmp+="&nbsp;";
+			var afterspace = 75-img.pos-img.mdcode.length;//(slidenote.textarea.clientWidth / 16) - img.pos - img.mdcode.length;
+			for(var ai=0;ai<afterspace;ai++)arrowtoimage+="-";
+			lines[img.line]+=beforetmp+arrowtoimage+">";
+			console.log(slidenote.textarea.clientWidth + ":clientwidth"+ beforetmp+arrowtoimage+afterspace);
+		}
+		if(img.src.substring(0,4)!="http" && slidenote.base64images){
+			//base64images is active, so check if image is in database:
+			if(slidenote.base64images.imageByName(img.src)!=null){
+				//base64image found in database:
+				console.log("image found: "+img.src);
+				lines[img.line]+= '<img src="'+slidenote.base64images.imageByName(img.src).base64url+'">';
+			}else{
+				//base64image not found in database:
+				console.log("imagesrc:"+img.src);
+				//imgurl = "images/imageupload.png";
+				lines[img.line]+= '<img src="images/imageupload.png">';
+			}
+		} else {
+			lines[img.line]+='<img src="'+img.src+'">';
+		}
+	}
+	var imgtemptext ="";
+	for(var x=0;x<lines.length;x++)imgtemptext+='<span>'+lines[x]+"&nbsp;</span><br>";
+	return imgtemptext;
+}
+
+/* Returns the element in the map the current carret is on
+ * usefull for many things in the md-Code-Editor
+ * returns null if there is no element
+*/
+emdparser.prototype.CarretOnElement = function(carretpos){
+	var element;
+	for(var x=0;x<this.map.insertedhtmlelements.length;x++){
+		var actel = this.map.insertedhtmlelements[x];
+		var actelend = actel.posinall+actel.mdcode.length ;
+		if(actel.mdcode.substring(0,1) === "#")actelend = this.map.linepos[actel.line+1];
+		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall;
+		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
+		if(actel.posinall<carretpos && actelend > carretpos){
+			//element getroffen:
+			var allowed = "###***__~~"
+
+			element = actel;
+		}
+
+	}
+	return element;
+}
 /*	* replace: hilfsmethode um nicht zu regexen(text,symbol,newsymbol)
 	* text: zu durchsuchender string, symbol: zu ersetzender string, newsymbol: ersetzungsmuster string
 	* gibt string zurück mit ersetztem text
@@ -1086,7 +1281,7 @@ emdparser.prototype.parsenachzeilen= function(){
 					lines[x] = lines[x].substring(0,imgpos)+imghtml+lines[x].substring(imgposend+1);
 					if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
 					//this.insertedhtmlinline[x].push(new Array(pseudozeile.indexOf("![]("),"![]("+imgurl+")",imghtml));
-					this.map.addElement({line:x,pos:pseudozeile.indexOf("![]("),html:imghtml,mdcode:"![]("+imgurl+")",typ:"image",wystextveraenderung:5+imgurl.length});
+					this.map.addElement({line:x,pos:pseudozeile.indexOf("![]("),html:imghtml,mdcode:"![]("+imgurl+")",typ:"image",wystextveraenderung:5+imgurl.length, src:imgurl});
 					//this.veraenderungen.push(new Array("image",laengebiszeile+imgpos,imgposend-imgpos));
 					var pseudoimgpos = pseudozeile.indexOf("![](");
 					pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€€€"+pseudozeile.substring(pseudoimgpos+4);
@@ -1207,11 +1402,14 @@ emdparser.prototype.parsenachzeilen= function(){
 						this.map.addElement({line:x,pos:codestart+1+hotpositions[hotp][0],html:hotpositions[hotp][1],mdcode:"&",typ:"hotcode",wystextveraenderung:0});
 					}
 					//auch für einfache zeichen vor codeummantelung schützen:
-
+					console.log("inlinecode hotcode vor change:"+hotcode+" length:"+hotcode.length);
 					var oldsymbol = new Array("*", "<",">","~","[","]","(",")","|","-","_");
 //					var newsymbol = new Array("&lowast;","&lt;","&gt;","&tilde;","&#91;","&#93;","&#40;","&#41;","&#124;","&#45;");
 					for(var sym=0;sym<oldsymbol.length;sym++)hotcode = this.replace(hotcode,oldsymbol[sym],"€");
-					pseudolines[x]=pseudolines[x].substring(0,textareacodestart)+hotcode+pseudolines[x].substring(textareacodeend+1);
+					console.log("inlinecode hotcode nach change:"+hotcode+" length:"+hotcode.length);
+					console.log("inlinecode pseudoline:"+pseudolines[x]);
+					pseudolines[x]=pseudolines[x].substring(0,textareacodestart)+"€"+hotcode+"€"+pseudolines[x].substring(textareacodeend+1);//+1
+					console.log("inlinecode pseudoline after:"+pseudolines[x]);
 					//console.log("inlinecode abgeschlossen");
 					codepos=codeend+1; //suche nach dem endzeichen weiter
 
@@ -2158,8 +2356,13 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 	this.presentation = new pagegenerator(this.parser,this.presentationdiv);
 
 	//edit-modus:
-	this.wysiwygactivated = true;
+	this.wysiwygactivated = false;
 	this.texteditorerroractivated = true;
+	this.wysiwygarea.classList.add("hidden");
+	this.texteditorerrorlayer.classList.remove("hidden");
+
+	//markdowneditor-sachen:
+	this.lasttyping = new Date().getTime();
 }
 
 slidenotes.prototype.choseEditor=function(editor){
@@ -2206,7 +2409,8 @@ slidenotes.prototype.texteditorrahmensetzen= function(){
 	texteditorrahmen.style.width = eingabeblock.offsetWidth + "px";
 	texteditorrahmen.style.height = eingabeblock.clientHeight+"px";
 	texteditorfehlerlayer.style.width = (eingabeblock.offsetWidth-4) + "px";
-	texteditorfehlerlayer.style.height = (eingabeblock.offsetHeight-4)+"px";
+	//texteditorfehlerlayer.style.height = (eingabeblock.offsetHeight-4)+"px";
+	texteditorfehlerlayer.style.height = (eingabeblock.clientHeight-4)+"px";
 	//frag mich nicht warum 4px abgezogen werden müssen, aber dann passts.
 	//vermutung ist der focus-rahmen vom texteditor...
 };
@@ -2225,7 +2429,11 @@ slidenotes.prototype.parseneu = function(){
 	} else {
 		//ohne wysiwyg-kram:
 		if(this.texteditorerroractivated){
-			this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
+			//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
+			this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
+			this.scroll(this.textarea);
+			//this.texteditorImagesPreview = document.getElementById("texteditorimagespreview");
+			//this.texteditorImagesPreview.innerHTML = this.parser.renderCodeeditorImagePreview();
 			this.texteditorrahmensetzen();
 			for(var x=0;x<this.presentation.themes.length;x++){
 				if(this.presentation.themes[x].active)this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
@@ -2259,8 +2467,24 @@ slidenotes.prototype.renderwysiwyg = function(){
 	console.log("renderwysiwyg abgeschlossen");
 }
 
+slidenotes.prototype.parseLater = function(){
+	var lasttyping = new Date().getTime();
+	var pause = 500;
+	var diff = lasttyping - this.lasttyping;
+	console.log("parselater()"+diff);
+	this.lasttyping = lasttyping;
+	setTimeout("slidenote.parseLater2("+pause+")",pause);
+}
+slidenotes.prototype.parseLater2 = function(pause){
+	var lasttyping = new Date().getTime();
+	var diff = lasttyping - this.lasttyping;
+	if(diff>pause-10)this.parseneu();
+	console.log("parselater2:"+diff+(diff>pause));
+}
+
 slidenotes.prototype.keypressdown = function(event, inputobject){
 	var key = ""+event.key;
+	console.log(event);
 	if(key=="undefined"){
 			webkit = true;
 			console.log("keycode:"+event.keyCode)
@@ -2271,6 +2495,44 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			//key=event.keyCode;
 			key = getKeyOfKeyCode(event.keyCode);
 	}
+	//mdcode-editor-part:
+	if(!this.wysiwygactivated&&this.texteditorerroractivated){
+		//var renderkeys = "*_#"
+		if(key==="Enter"){// || key==="Backspace" || renderkeys.indexOf(key)>-1){
+			this.parseneu();//on Enter you should always parse anew
+			this.scroll();
+		}else{
+			//getting new key into position:
+			/*var carretpos = this.textarea.selectionEnd;
+			var linenr=0;
+			for(var x=0;x<this.parser.map.linepos.length;x++)if(this.parser.map.linepos[x]<carretpos)linenr=x;
+			var bglines = document.getElementsByClassName("backgroundline");
+			var cposinline = carretpos - this.parser.map.linepos[linenr];
+			var tmpline = this.returnparsedlines(this.sourcecode)[linenr];
+			tmpline = tmpline.substring(0,cposinline)+key+tmpline.substring(cposinline);
+			for(var x=this.parser.map.insertedhtmlinline[linenr].length-1;x>=0;x--){
+				var elm = this.parser.map.insertedhtmlinline[linenr][x];
+				if(elm.mdcode.length>=1 && (elm.typ==="start" || elm.typ="end")){
+					tmpline = tmpline.substring(0,elm.pos)+elm.html+tmpline.substring(elm.pos);
+
+				}
+			}
+			*/
+			if(key.length===1){
+				var cursor = document.getElementById("carret");
+				cursor.innerHTML = cursor.innerHTML+""+key;
+			}
+			this.parseLater();
+		}
+
+	}
+
+	//from here on only if wysiwyg is activated:
+	if(!this.wysiwygactivated){
+
+		return;
+	}
+
 	if(key==="Shift")this.wysiwyg.shiftdown = true;
 	console.log("key:"+key);
 	var keydown = this.keydown; //braucht das noch? erstmal zum testen hier temporär, wenns funktioniert
@@ -2314,6 +2576,17 @@ slidenotes.prototype.keypresswebkit = function(event, inputobject){
 slidenotes.prototype.keypressup = function(event, inputobject){
 	var key = ""+event.key;
 	if(key=="undefined")key=getKeyOfKeyCode(event.keyCode);//key=String.fromCharCode(event.keyCode);
+	if(this.texteditorerroractivated){
+		var renderkeys = "*_#"
+		if(key==="Enter" || "Backspace" || renderkeys.indexOf(key)>-1){
+			this.parseneu();
+			this.scroll();
+			this.lasttyping = new Date().getTime();
+		}
+	}
+
+
+	if(!this.wysiwygactivated)return;
 	if(key=="Shift"){
 		this.wysiwyg.shiftdown = false;
 		console.log("Shift up");
@@ -2357,7 +2630,7 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 				console.log("tippen mit:"+key + " metakey:"+event.metaKey);
 				this.wysiwyg.typing(key);
 			}
-		} else {
+		} else if(!this.texteditorerroractivated) {
 			console.log("parsen....");
 			this.parseneu();
 		}
@@ -2466,6 +2739,7 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 };
 
 slidenotes.prototype.scroll = function(editor){
+	this.texteditorrahmensetzen();
 	if(editor==this.textarea && this.texteditorerroractivated)
 	this.texteditorerrorlayer.scrollTop = editor.scrollTop;
 	//TODO: wysiwyg-scroll wenn cursor aus dem bild kommt

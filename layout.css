@@ -12,6 +12,7 @@
 	z-Index:1;
 	/*font-weight:bolder;*/
 }
+
 #texteditorerrorlayer, #quelltext, #wysiwygarea {
     font-family: monospace;
 	font-size: 1em;
@@ -49,6 +50,52 @@
 	background:rgba(0,255,255,0.8);
 	float: right;
 	color: red;
+}
+/*mdcodeeditor*/
+.backgroundline.h1{
+	background:lightblue;
+}
+.backgroundline.h2{
+	background:lightblue;
+}
+.backgroundline b, .backgroundline i, .backgroundline strike{
+	background:lightgreen;
+}
+.backgroundline.code, .backgroundline code{
+	background:orange;
+}
+.backgroundline.code{
+	display:inline-block;
+	width:100%;
+}
+.backgroundline.quote{
+	background:gainsboro;
+	font-style:italic;
+	display:inline-block;
+	width:100%;
+}
+.backgroundline.pagebreak:after {
+    content: "»»» new page";
+    color: white;
+		font-style:italic;
+}
+.backgroundline.pagebreak {
+    display: inline-block;
+    background: grey;
+    width: 100%;
+}
+.backgroundline.data{
+	display:inline-block;
+	width: 100%;
+	background:yellow;
+}
+/*mdcodeeditor imagespreview */
+#texteditorimagespreview{
+	font-family:monospace;
+	width:700px;
+}
+#texteditorimagespreview img{
+	float:right;
 }
 /*presentation */
 .ppage{

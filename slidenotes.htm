@@ -41,7 +41,10 @@ function initeditor(){
 			presentation = slidenote.presentation;
 			//texted.onresize = slidenote.parseneu;
 			texted.onresize= function(){slidenote.parseneu();};
-			texted.onkeydown= function(event){if(slidenote.wysiwygactivated)slidenote.keypressdown(event, texted);};
+			texted.onkeydown= function(event){
+				//if(slidenote.wysiwygactivated)slidenote.keypressdown(event, texted); else slidenote.parseneu()
+				slidenote.keypressdown(event, texted);
+			};
 			texted.onkeypress= function(event){if(slidenote.wysiwygactivated)slidenote.keypresswebkit(event, texted);};
 			texted.onkeyup=function(event){slidenote.keypressup(event, texted);};
 			texted.onpaste=function(){setTimeout('slidenote.parseneu()',150)};
@@ -159,6 +162,7 @@ function insertbutton(code){
 			<input type="button" onclick="insertbutton('%nrlist')" value="ordered list">
 			<input type="button" onclick="insertbutton('%quote')" value="quote">
 			<input type="button" onclick="insertbutton('%link')" value="link">
+			<input type="button" onclick="insertbutton('-----')" value="new Page">
 			<!--<input type="button" onclick="insertbutton('%image')" value="image">-->
 			<input type="button" onclick="insertbutton('%code')" value="code">
 			<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>
@@ -166,6 +170,7 @@ function insertbutton(code){
 		<div id="texteditor" class="texteditor">
 			<div id="texteditorerrorlayer"></div>
 			<textarea spellcheck="false" id="quelltext" onload="initeditor()" autofocus onfocus="initeditor();"></textarea>
+			<div id="texteditorimagespreview"></div>
 			<div id="wysiwygarea" contenteditable="true" spellcheck="false"></div>
 		</div>
 		<div id="imagesblock">
