@@ -787,6 +787,38 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 			 });
 			 changes.push({
 				 line:element.line,
+				 posinall:element.posinall+2,
+				 pos:element.pos+2,
+				 html:'<span class="imagealt">',
+				 mdcode:"",
+				 typ:"image-alt"
+			 });
+			 changes.push({
+				 line:element.line,
+				 posinall:element.posinall+2+element.alt.length,
+				 pos:element.midpos,
+				 html:'</span>',
+				 mdcode:"",
+				 typ:"end"
+			 });
+			 changes.push({
+				 line:element.line,
+				 posinall:element.posinall+2+element.alt.length+2,
+				 pos:element.midpos+2,
+				 html:'<span class="imagesrc">',
+				 mdcode:"",
+				 typ:"image-src"
+			 });
+			 changes.push({
+				 line:element.line,
+				 posinall:element.posinall+element.endpos-element.pos,
+				 pos:element.endpos,
+				 html:'</span>',
+				 mdcode:"",
+				 typ:"end"
+			 });
+			 changes.push({
+				 line:element.line,
 				 posinall:element.posinall+element.mdcode.length,
 				 pos:element.pos+element.mdcode.length,
 				 html:"</span>",
@@ -1413,30 +1445,43 @@ emdparser.prototype.parsenachzeilen = function(){
 				}
 			}
 		} //end of datablock, lines[x] fängt jetzt mit <data> an
-		//image:
-		if(lines[x].indexOf("![](")>-1){
-			var error="";
+		//image: (has to check for alt-text too:)
+		if(lines[x].indexOf("![")>-1){
+
 			var imgaktpos=0;
 			var pseudozeile=pseudolines[x];
-			while(lines[x].indexOf("![](", imgaktpos)>-1){ //können ja mehrere sein
-				var imgpos =lines[x].indexOf("![](");
-				var imgposend = lines[x].indexOf(")",imgpos);
+			while(pseudozeile.indexOf("![", imgaktpos)>-1){ //können ja mehrere sein
+				var imgpos =pseudozeile.indexOf("![");
+				var imgposmid = pseudozeile.indexOf("](",imgpos);
+				var imgposend = pseudozeile.indexOf(")",imgpos);
+				var error="";
 				if(imgposend==-1){
-					this.perror.push(new parsererror(x,imgaktpos,lines[x].length-1,"image","missing endsymbol )"));//
+					this.perror.push(new parsererror(x,imgpos,lines[x].length-1,"image","missing endsymbol )"));//
 					error="imgende";
 				}
+				if(imgposmid==-1){
+					this.perror.push(new parsererror(x,imgpos,lines[x].length-1,"image","missing midsymbol )"));//
+					error="imgmid";
+				}
 				imgaktpos=imgpos+4;
-				var imgurl = lines[x].substring(imgpos+4,imgposend);
+				var imgurl = lines[x].substring(imgposmid+2,imgposend);
+				var imgalt = lines[x].substring(imgpos+2,imgposmid);
 				//TODO: if-abfrage ob img unter url existiert, sonst fehler
-				var imghtml = '<img src="'+imgurl+'">';
+				var imghtml = '<img alt ="'+imgalt+'"src="'+imgurl+'">';
 				if(error.length==0){
 					lines[x] = lines[x].substring(0,imgpos)+imghtml+lines[x].substring(imgposend+1);
 					if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
 					//this.insertedhtmlinline[x].push(new Array(pseudozeile.indexOf("![]("),"![]("+imgurl+")",imghtml));
-					this.map.addElement({line:x,pos:pseudozeile.indexOf("![]("),html:imghtml,mdcode:"![]("+imgurl+")",typ:"image",wystextveraenderung:5+imgurl.length, src:imgurl});
+					this.map.addElement({line:x,pos:pseudozeile.indexOf("!["),
+															html:imghtml,
+															mdcode:"!["+imgalt+"]("+imgurl+")",
+															typ:"image",
+															wystextveraenderung:5+imgurl.length,
+															src:imgurl, midpos:imgposmid,endpos:imgposend, alt:imgalt
+														});
 					//this.veraenderungen.push(new Array("image",laengebiszeile+imgpos,imgposend-imgpos));
-					var pseudoimgpos = pseudozeile.indexOf("![](");
-					pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€€€"+pseudozeile.substring(pseudoimgpos+4);
+					var pseudoimgpos = pseudozeile.indexOf("![");
+					pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€"+pseudozeile.substring(pseudoimgpos+2);
 				}else {
 					//alert(error);
 					//lines[x]=lines[x].substring(0,imgpos)+lines[x].substring(imgpos+4);
