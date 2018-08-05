@@ -51,6 +51,7 @@ function initeditor(){
 			texted.oncut=function(){setTimeout('slidenote.parseneu()',150)};
 			//autofocus tonfocus="initeditor(this.value);
 			texted.onscroll=function(){slidenote.scroll(texted);};
+			texted.onclick = function(){console.log("parseneu forced by click"+this.selectionEnd);slidenote.parseneu();};
 			wys.onmouseup=function(event){slidenote.wysiwyg.copyCursorToTextarea(event); console.log("onmouseupend");};
 			wys.onmousedown=function(event){slidenote.wysiwyg.mousedown(event);};
 			wys.onpaste=function(event){
@@ -146,7 +147,7 @@ function insertbutton(code){
 		<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
 			<option value="wysiwyg">WYSIWYM-Editor</option>
 			<option value="wysiwygfullscreen">WYSIWYM-Editor Fullscreen</option>
-			<option value="md-texteditor">MD-Code Editor</option>
+			<option value="md-texteditor" selected>MD-Code Editor</option>
 			<option value="wysiwygdebugmode">WYSIWYM-debug mode</option>
 		</select>
 		<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">

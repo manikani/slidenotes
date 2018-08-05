@@ -6,7 +6,7 @@
 	padding:15px;
 }
 #texteditorerrorlayer{
-	color:red;
+	color:unset;
 	overflow-y:auto;
 	overflow-x:none;
 	z-Index:1;
@@ -26,6 +26,8 @@
 #quelltext{
 	z-Index:2;
 	background:none;
+	color:transparent;
+	caret-color:black;
 }
 
 .linenr {
@@ -33,10 +35,11 @@
 	display:none;
 }
 .error{
-	background:red;
+
 }
 #texteditorerrorlayer .error{
 	color: red;
+	border-bottom:3px solid red;
 }
 .backgroundline{
 	white-space: pre-wrap;
@@ -53,13 +56,14 @@
 }
 /*mdcodeeditor*/
 .backgroundline.h1{
-	background:lightblue;
+	color:blue;
+	font-weight: bold;
 }
 .backgroundline.h2{
-	background:lightblue;
+	color:blue;
 }
 .backgroundline b, .backgroundline i, .backgroundline strike{
-	background:lightgreen;
+	border-bottom:1px solid lightgreen;
 }
 .backgroundline.code, .backgroundline code{
 	background:orange;
@@ -74,8 +78,8 @@
 	display:inline-block;
 	width:100%;
 }
-.backgroundline.pagebreak:after {
-    content: "»»» new page";
+#texteditorerrorlayer .pagenr {
+    /*content: "»»» new page";*/
     color: white;
 		font-style:italic;
 }

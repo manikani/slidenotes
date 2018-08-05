@@ -22,16 +22,24 @@ function mapping (parser) {
 	 this.insertedhtmlelements = new Array();
 	 this.insertedhtmlinline = new Array();
 	 this.lastline=0;
-	 this.linepos = [0];
+	 //this.linepos = [0];
+	 this.linestart = [0];
+	 this.lineend = new Array();
 	 this.angezeigtezeichen = new Array();
+	 this.pagestart = [{line:0,posinall:0}];
+	 this.pageend = new Array();
+	 this.lastcursorpos = 0;//
 
 	var origtext = parser.sourcecode;
 	var lastpos=origtext.indexOf("\n");
 	while(lastpos>-1){
-		this.linepos.push(lastpos);
+		//this.linepos.push(lastpos+1); //wrong - should be lastpos +1 because \n is on the end
+		this.lineend.push(lastpos);
+		this.linestart.push(lastpos+1);
 		this.lastline++;
 		lastpos=origtext.indexOf("\n",lastpos+1);
 	}
+	this.lineend.push(origtext.length);
 	//lastline steht jetzt auf der letzten linie
 
 
@@ -46,13 +54,14 @@ mapping.prototype.init = function(){
 
 mapping.prototype.addElement = function(element2){
 	var element=element2;
-	if(element.posinall==null)element.posinall=element.pos+this.linepos[element.line];
+	if(element.posinall==null)element.posinall=element.pos+this.linestart[element.line];
 	this.insertedhtmlelements.push(element);
 	this.insertedhtmlinline[element.line].push(element);
 };
 mapping.prototype.addVeraenderung = function(element){
-	if(element.posinall==null)element.posinall=element.pos+this.linepos[element.line];
+	if(element.posinall==null)element.posinall=element.pos+this.linestart[element.line];
 	element.angezeigteszeichen=true;
+	//this.lineend.push(lastpos);
 	this.angezeigtezeichen.push(element);
 }
 mapping.prototype.ganzeZeileVeraendern = function(zeile){
@@ -686,8 +695,12 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 var imagesinline = new Array(); //array with array of images-changes
 	 //create cursor-change:
 	 var cursorposinall = slidenote.textarea.selectionEnd;
+	 //var linediff = this.lineAtPosition(cursorposinall);
+	 //cursorposinall -=linediff; //\n counts in cursorpos
 	 var cursorline = this.lineAtPosition(cursorposinall);
-	 var cursorposinline = cursorposinall - this.map.linepos[cursorline]-1;
+	 var cursorposinline = cursorposinall - this.map.linestart[cursorline];
+	 console.log("new cursor at line:"+cursorline+", posinall:"+cursorposinall+", pos:"+cursorposinline);
+	 //if(cursorposinline<0)cursorposinline=0;
 	 var cursorchange = {
 	 	line:cursorline,
 	 	posinall:cursorposinall,
@@ -704,10 +717,42 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 		 var element = this.map.insertedhtmlelements[x];
 		 //iterate through map and get changes we have to do to orig-text:
 		 if(element.mdcode.length>0 && mdsimples.indexOf(element.mdcode)>-1){
+			 	console.log("adding change "+element.mdcode);
 			 //a simple thing - just do the changes later on:
 			 //end should be changed after element
-			 if(element.typ==="start") changes.push(element);
-			 if(element.typ==="end")changes.push({
+			 if(element.typ==="start" || element.typ==="<") changes.push(element);
+			 if(element.typ==="start" && element.brotherelement && element.brotherelement.line!=element.line){
+				 console.log("element"+element.mdcode+element.typ+element.line+" brotherelement:"+element.brotherelement.mdcode+element.brotherelement.typ+element.brotherelement.line);
+				 console.log(element);
+				 changes.push({
+					 line:element.line,
+					 posinall:this.map.lineend[element.line],
+					 pos:lines[element.line].length,
+					 html:element.brotherelement.html,
+					 mdcode:element.brotherelement.mdcode,
+					 typ:element.brotherelement.typ
+				 });
+				 for(var ellines=element.line+1;ellines<element.brotherelement.line;ellines++){
+					 changes.push({
+						 line:ellines,
+						 posinall:this.map.linestart[ellines],
+						 pos:0,
+						 html:element.html,
+						 mdcode:element.mdcode,
+						 typ:"start"
+					 });
+					 changes.push({
+						 line:ellines,
+						 posinall:this.map.lineend[ellines],
+						 pos:lines[ellines].length,
+						 html:element.brotherelement.html,
+						 mdcode:element.brotherelement.mdcode,
+						 typ:"end"
+					 });
+				 }//for-to schleife
+			 }//now lines are filled with nearly all changes
+			 if(element.typ==="end"){
+				 changes.push({
 					line:element.line,
 					posinall:element.posinall+element.mdcode.length,
 					pos:element.pos+element.mdcode.length,
@@ -715,11 +760,44 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 				 	mdcode:element.mdcode,
 			 		typ:element.typ
 				});
+				if(element.brotherelement && element.brotherelement.line!=element.line){
+					changes.push({
+						line:element.line,
+						posinall:this.map.linestart[element.line],
+						pos:0,
+						html:element.brotherelement.html,
+						mdcode:element.brotherelement.mdcode,
+						typ:element.brotherelement.typ
+					})
+				}
+			}
 		 }
 		 if(element.typ === "image"){
 			 //record in imagesinline;
 			 if(imagesinline[element.line]==null)imagesinline[element.line] = new Array();
 			 imagesinline[element.line].push(element);
+		 }
+
+	 }
+	 //add error-spans:
+	 for(var er=0;er<this.perror.length;er++){
+		 if(this.perror[er].errortext!="missing space after *"){
+			 changes.push({
+				 line:this.perror[er].line,
+				 posinall:this.map.linestart[this.perror[er].line]+this.perror[er].row,
+				 pos:this.perror[er].row,
+				 html:this.perror[er].htmlstart,
+				 mdcode:"",
+				 typ:"error"
+			 });
+			 changes.push({
+				 line:this.perror[er].line,
+				 posinall:this.map.lineend[this.perror[er].line],//this.map.linestart[this.perror[er].line]+lines[this.perror[er].line].length,
+				 pos:lines[this.perror[er].line].length,
+				 html:this.perror[er].htmlend,
+				 mdcode:"",
+				 typ:"error"
+			 });
 		 }
 	 }
 
@@ -753,7 +831,7 @@ emdparser.prototype.renderCodeeditorBackground = function(){
  	var doppelsternchen = new Array();
  	for(x=0;x<this.perror.length;x++){
  			if(lasterrorline != this.perror[x].line && this.perror[x].errortext!="missing space after *"){ //only one error per line, dont parse missing space after * because it sucks
- 				lines[this.perror[x].line]=this.perror[x].encapsulehtml(lines[this.perror[x].line]);
+ 				//lines[this.perror[x].line]=this.perror[x].encapsulehtml(lines[this.perror[x].line]);
  				var proposedsymbol = this.perror[x].proposeEnding();
  				if(proposedsymbol != ""){
  					if(this.perror[x].errorclass=="bold")doppelsternchen.push(x); else
@@ -766,7 +844,9 @@ emdparser.prototype.renderCodeeditorBackground = function(){
  	}
  	//doppelsternchenfehler anzeigen lassen:
  	for(x=0;x<doppelsternchen.length;x++)lines[this.perror[doppelsternchen[x]].line]+='<span class="proposedsymbol">' + this.perror[doppelsternchen[x]].proposeEnding() + '</span>';
-
+	//adding pagenr to pagebreak:
+	for(x=0;x<this.map.pagestart.length;x++)lines[this.map.pagestart[x].line-1]+='<span class="pagenr">    »»» new page #'+x+'</span>';
+	console.log(this.map.pagestart);
 	//putting it inside line-spans and returning as whole text:
 	var temptext = "";
 	for(x=0;x<lines.length;x++){
@@ -799,10 +879,54 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 		imgtemptext ="";*/
 		lineclass += " "+slidenote.parser.lineswithhtml[x];
 		temptext += imgtemptext +'<span class="linenr">'+x+'</span><span class="'+lineclass+'">'+lines[x]+'</span>';
+
 		temptext+="<br>\n";
 	}
 	console.log("changes:"); console.log(changes);
+	this.mdcodeeditorchanges = changes;
 	return temptext;
+};
+
+emdparser.prototype.renderNewCursorInCodeeditor = function(){
+	var cursorposinall = slidenote.textarea.selectionEnd;
+	var cursorline = this.lineAtPosition(cursorposinall);
+	var cursorposinline = cursorposinall - this.map.linestart[cursorline];
+	console.log("new cursor at line:"+cursorline+", posinall:"+cursorposinall+", pos:"+cursorposinline);
+	var codeofline = this.sourcecode.substring(this.map.linestart[cursorline],this.map.lineend[cursorline]);
+
+	var changes = new Array();
+	var cursorchange = {
+	 line:cursorline,
+	 posinall:cursorposinall,
+	 pos:cursorposinline,
+	 html:'<span id="carret"></span>',
+	 mdcode:'',
+	 typ:'cursor'
+	};
+	changes.push(cursorchange);
+	for(var x=0;x<this.mdcodeeditorchanges.length;x++){
+		//add parsed changes of cursorline to actual changes
+		if(this.mdcodeeditorchanges[x].line===cursorline &&
+			 this.mdcodeeditorchanges[x].typ!='cursor')changes.push(this.mdcodeeditorchanges[x]);
+	}
+	changes.sort(function(a,b){return a.pos-b.pos});
+
+	for(var x=changes.length-1;x>=0;x--){
+		var actchange = changes[x];
+		if(actchange.typ==="<"){
+			codeofline = codeofline.substring(0,actchange.pos) +
+														 actchange.html +
+														 codeofline.substring(actchange.pos+1);
+		}else {
+		 // if(actchange.typ ==="start"){
+				 codeofline = codeofline.substring(0,actchange.pos) +
+													 actchange.html +
+													 codeofline.substring(actchange.pos);
+
+		}
+	}
+	var backgroundlines = document.getElementsByClassName("backgroundline");
+	if(backgroundlines.length>=cursorline)backgroundlines[cursorline].innerHTML=codeofline;
 };
 
 emdparser.prototype.renderCodeeditorImagePreview = function(){
@@ -858,7 +982,7 @@ emdparser.prototype.CarretOnElement = function(carretpos){
 	for(var x=0;x<this.map.insertedhtmlelements.length;x++){
 		var actel = this.map.insertedhtmlelements[x];
 		var actelend = actel.posinall+actel.mdcode.length ;
-		if(actel.mdcode.substring(0,1) === "#")actelend = this.map.linepos[actel.line+1];
+		if(actel.mdcode.substring(0,1) === "#")actelend = this.map.lineend[actel.line]; //TODO:linepos
 		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall;
 		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
 		if(actel.posinall<carretpos && actelend > carretpos){
@@ -1364,6 +1488,9 @@ emdparser.prototype.parsenachzeilen= function(){
 				this.map.addElement({line:x,pos:0,html:"<hr>",mdcode:"-----",typ:"pagebreak",wystextveraenderung:5});
 
 			}
+			this.map.pageend.push({line:x});
+			this.map.pagestart.push({line:x+1});
+
 
 		}//page-break ist jetzt eingefügt
 		//inline code:
@@ -1611,6 +1738,10 @@ emdparser.prototype.parsenachzeilen= function(){
 	}
 	//alert(this.lineswithhtml.toString());
 	//lineswithhtml ist jetzt gefüttert mit jeder zeile
+	//add last pageend:
+	this.map.pageend.push({lines:lines.length});
+	//save cursorpos:
+	this.parsedcursorpos = slidenote.textarea.selectionEnd;
 	//fehlende zeilenumbrüche in html-blöcken text und code einsetzen:
 	var temptext ="";
 	for(var lx=0;lx<lines.length;lx++){
@@ -2209,6 +2340,7 @@ pagegenerator.prototype.showpresentation = function(){
 		quelle.selectionStart = quelle.selectionEnd;
 		quelle.focus();
 		quelle.selectionEnd = presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
+		console.log("parse neu ein");
 		slidenote.parseneu();
 		praesesrahmen.classList.remove("fullscreen");
 		document.body.style.height = "unset";
@@ -2397,6 +2529,7 @@ slidenotes.prototype.choseEditor=function(editor){
 	}else{
 		this.wysiwygarea.classList.remove("debugmode");
 	}
+	console.log("choseEditor parse:");
 	this.parseneu();
 	this.textarea.focus();
 }
@@ -2478,7 +2611,11 @@ slidenotes.prototype.parseLater = function(){
 slidenotes.prototype.parseLater2 = function(pause){
 	var lasttyping = new Date().getTime();
 	var diff = lasttyping - this.lasttyping;
-	if(diff>pause-10)this.parseneu();
+
+	if(diff>pause-10){
+		console.log("parse von parselater2");
+		this.parseneu();
+	}
 	console.log("parselater2:"+diff+(diff>pause));
 }
 
@@ -2499,30 +2636,25 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 	if(!this.wysiwygactivated&&this.texteditorerroractivated){
 		//var renderkeys = "*_#"
 		if(key==="Enter"){// || key==="Backspace" || renderkeys.indexOf(key)>-1){
+			console.log("parse keypressdown");
 			this.parseneu();//on Enter you should always parse anew
 			this.scroll();
+		}else if(key.indexOf("Page")>-1){
+			this.parser.map.lastcursorpos = this.textarea.selectionEnd;
+			event.preventDefault();
 		}else{
-			//getting new key into position:
-			/*var carretpos = this.textarea.selectionEnd;
-			var linenr=0;
-			for(var x=0;x<this.parser.map.linepos.length;x++)if(this.parser.map.linepos[x]<carretpos)linenr=x;
-			var bglines = document.getElementsByClassName("backgroundline");
-			var cposinline = carretpos - this.parser.map.linepos[linenr];
-			var tmpline = this.returnparsedlines(this.sourcecode)[linenr];
-			tmpline = tmpline.substring(0,cposinline)+key+tmpline.substring(cposinline);
-			for(var x=this.parser.map.insertedhtmlinline[linenr].length-1;x>=0;x--){
-				var elm = this.parser.map.insertedhtmlinline[linenr][x];
-				if(elm.mdcode.length>=1 && (elm.typ==="start" || elm.typ="end")){
-					tmpline = tmpline.substring(0,elm.pos)+elm.html+tmpline.substring(elm.pos);
-
+			if(key.length===1 && !event.ctrlKey){
+				//this.lastcarretpos = carretpos;
+				if(this.textarea.selectionEnd-this.textarea.selectionStart>0){
+					console.log("parseneu forced because of selection");
+					setTimeout("slidenote.parseneu()",50); //on selection parse anew
+				}else{
+					var cursor = document.getElementById("carret");
+					cursor.innerHTML = cursor.innerHTML+""+key;
 				}
 			}
-			*/
-			if(key.length===1){
-				var cursor = document.getElementById("carret");
-				cursor.innerHTML = cursor.innerHTML+""+key;
-			}
-			this.parseLater();
+
+			//this.parseLater();
 		}
 
 	}
@@ -2575,14 +2707,228 @@ slidenotes.prototype.keypresswebkit = function(event, inputobject){
 
 slidenotes.prototype.keypressup = function(event, inputobject){
 	var key = ""+event.key;
+
+
+	/*var carretpos = this.textarea.selectionEnd;
+	if(carretpos - this.lastcarretpos!=1){
+		console.log("parseneu forced by carretpos on keyup"+carretpos+"->"+this.lastcarretpos);
+		this.parseneu();
+	}
+	this.lastcarretpos = carretpos;*/
 	if(key=="undefined")key=getKeyOfKeyCode(event.keyCode);//key=String.fromCharCode(event.keyCode);
 	if(this.texteditorerroractivated){
 		var renderkeys = "*_#"
-		if(key==="Enter" || "Backspace" || renderkeys.indexOf(key)>-1){
+		if(key==="Enter" || key==="Backspace" || key==="Delete" || renderkeys.indexOf(key)>-1){
+			console.log("parseneu forced after key "+key);
+
 			this.parseneu();
 			this.scroll();
 			this.lasttyping = new Date().getTime();
 		}
+		console.log("Key pressed:"+key);
+		if(key.indexOf("Arrow")>-1 || key==="Home" || key==="End"){
+			console.log("home, end or arrow pressed");
+			var actcursor=document.getElementById("carret");
+			if(actcursor.innerHTML.length>0){
+				console.log("parseneu forced after arrowkey");
+				this.parseneu();
+				this.scroll();
+			}else{
+				console.log("parse only new cursor after arrowkey");
+				actcursor.parentNode.removeChild(actcursor);
+				this.parser.renderNewCursorInCodeeditor();
+			}
+			return;
+		}
+		/*
+		if(key==="PageDown"){
+			console.log("pagedown:");
+			//var currentpos = this.textarea.selectionEnd;
+			var currentline = this.parser.lineAtPosition(this.textarea.selectionEnd);
+			var selendline = currentline;
+			var gotoline=0;
+			var gotopage=0;
+			for(var gtl=0;gtl<this.parser.map.pagestart.length;gtl++){
+				var pageel = this.parser.map.pagestart[gtl];
+				if(pageel.line>currentline && gotoline==0){
+					gotoline=pageel.line;
+					gotopage=gtl;
+				}
+			}
+			if(gotoline>0){
+				if(this.textarea.selectionEnd - this.textarea.selectionStart!=0){
+					//something is selected
+					console.log("Selection found:"+this.textarea.selectionStart+"->"+this.textarea.selectionEnd+":"+this.textarea.selectionDirection+"gotoline"+gotoline+"currentline"+currentline);
+					if(this.textarea.selectionDirection==="forward"){
+						//just expand:
+						this.textarea.selectionEnd = this.parser.map.linestart[gotoline];
+					}else{
+						if(currentline>gotoline){
+							//selection was minified
+							this.textarea.selectionStart = this.parser.map.linestart[gotoline];
+						}else{
+							//swap the selection:
+							this.textarea.setSelectionRange(this.textarea.selectionStart, this.parser.map.linestart[gotoline],"forward");
+						}
+					}
+				}else{
+					this.textarea.selectionEnd = this.parser.map.linestart[gotoline];
+				}
+				console.log("parseneu forced by pagedown");
+				this.parseneu();
+				if(!event.shiftKey)this.textarea.selectionStart = this.textarea.selectionEnd;
+				var htmllines = document.getElementsByClassName("backgroundline");
+				if(gotoline<htmllines.length){
+					var oftop = htmllines[gotoline-1].offsetTop;
+					this.textarea.scrollTop = oftop;
+					console.log("scroll to:"+oftop);
+				}
+			}
+
+			console.log("from "+currentline+"go to line:"+gotoline +" page:"+gotopage + "from"+this.parser.map.pagestart.length);
+			return;
+		}
+		if(key==="PageUp"){
+			console.log("pageup:");
+			//var currentpos = this.textarea.selectionEnd;
+			var currentline = this.parser.lineAtPosition(this.textarea.selectionEnd);
+			var selend = currentline;
+			if(this.textarea.selectionStart < this.textarea.selectionEnd)currentline=this.parser.lineAtPosition(this.textarea.selectionStart);
+			var selstart = currentline;
+			var gotoline=this.parser.map.linestart.length;
+			var gotopage=this.parser.map.pagestart.length-1;
+			for(var gtl=this.parser.map.pagestart.length-1;gtl>=0;gtl--){
+				var pageel = this.parser.map.pagestart[gtl];
+				if(pageel.line<currentline && gotoline===this.parser.map.linestart.length){
+					gotoline=pageel.line;
+					gotopage=gtl;
+				}
+			}
+			if(gotoline<this.parser.map.linestart.length){
+				//on shift or selection do this, else:
+				if(this.textarea.selectionStart - this.textarea.selectionEnd!=0){
+					//something is selected:
+					console.log("Selection found:"+this.textarea.selectionStart+"->"+this.textarea.selectionEnd+":"+this.textarea.selectionDirection);
+					if(this.textarea.selectionDirection==="backward"){
+						//just expand:
+						this.textarea.selectionStart = this.parser.map.linestart[gotoline];
+						if(!event.shiftKey)this.textarea.selectionEnd = this.textarea.selectionStart;
+					}else if(this.textarea.selectionDirection==="forward"){
+						if(gotoline<selstart){
+							//outside of selection so selection is expanded in new direction:
+							this.textarea.selectionEnd = this.textarea.selectionStart;
+							this.textarea.selectionStart = this.parser.map.linestart[gotoline];
+							if(!event.shiftKey)this.textarea.selectionEnd = this.textarea.selectionStart;
+						}else{
+							//inside of selection
+							this.textarea.selectionEnd = this.parser.map.linestart[gotoline];
+							if(!event.shiftKey)this.textarea.selectionStart = this.textarea.selectionEnd;
+						}
+					}
+
+				}else{
+					//nothing selected:
+					this.textarea.setSelectionRange(this.parser.map.linestart[gotoline],this.textarea.selectionEnd,"backward");
+					//this.textarea.selectionDirection="backward";
+					console.log("Selection"+this.textarea.selectionDirection);
+					if(!event.shiftKey)this.textarea.selectionEnd = this.textarea.selectionStart;
+				}
+				console.log("parseneu forced by pagedown");
+				this.parseneu();
+				var htmllines = document.getElementsByClassName("backgroundline");
+				if(gotoline<htmllines.length){
+					var oftop=0;
+					if(gotoline>0)oftop=htmllines[gotoline-1].offsetTop;
+					if(oftop==undefined)oftop=0;
+					this.textarea.scrollTop = oftop;
+					console.log("scroll to:"+oftop);
+					this.scroll();
+				}
+			}
+
+			console.log("from "+currentline+"go to line:"+gotoline +" page:"+gotopage + "from"+this.parser.map.pagestart.length);
+			return;
+		}//PageUp
+		*/
+		if(key==="PageUp" || key==="PageDown"){
+			var selstart = this.textarea.selectionStart;
+			var selend = this.textarea.selectionEnd;
+			var currentline;
+			var gotoline=null;
+			var currentpos;
+			if(this.textarea.selectionDirection === "backward"){
+				currentline = this.parser.lineAtPosition(selstart);
+				currentpos=selstart;
+			}	else {
+				currentline = this.parser.lineAtPosition(selend);
+				currentpos = selend;
+			}
+			if(key==="PageUp"){
+
+				for(var gtl=this.parser.map.pagestart.length-1;gtl>=0;gtl--){
+						var pageel = this.parser.map.pagestart[gtl];
+						if(pageel.line<currentline && gotoline==null){
+							gotoline=pageel.line;
+							gotopage=gtl;
+						} else if(pageel.line===currentline &&
+											this.parser.map.linestart[pageel.line]<currentpos && gotoline==null){
+							gotoline=pageel.line;
+							gotopage=gtl;
+							console.log("from:"+selstart+"to:"+this.parser.map.linestart[pageel.line]+"line"+gtl);
+						}
+					}
+					if(gotoline==null)gotoline=0;
+			} else {
+				for(var gtl=0;gtl<this.parser.map.pagestart.length;gtl++){
+						var pageel = this.parser.map.pagestart[gtl];
+						if(pageel.line>currentline && gotoline==null){
+							gotoline=pageel.line;
+							gotopage=gtl;
+						}
+				}
+				if(gotoline==null)gotoline=this.parser.map.lineend.length-1;
+			}
+
+			if(event.shiftKey){
+				if(key==="PageUp"){
+					if(this.textarea.selectionDirection==="backward")this.textarea.selectionStart = this.parser.map.linestart[gotoline];
+					if(this.textarea.selectionDirection === "forward"){
+						if(this.parser.map.linestart[gotoline]>=selstart)this.textarea.setSelectionRange(this.textarea.selectionStart, this.parser.map.linestart[gotoline],"forward");
+						if(this.parser.map.linestart[gotoline]<selstart)this.textarea.setSelectionRange(this.parser.map.linestart[gotoline], this.textarea.selectionStart,"backward");
+					}
+				}
+				if(key==="PageDown"){
+					if(this.textarea.selectionDirection==="forward")this.textarea.selectionEnd = this.parser.map.linestart[gotoline];
+					if(this.textarea.selectionDirection==="forward" && gotoline===currentline)this.textarea.selectionEnd = this.parser.map.lineend[gotoline];
+					if(this.textarea.selectionDirection==="backward"){
+						console.log("from:"+currentline+"to:"+gotoline+"selection:"+selstart+"/"+selend);
+						if(this.parser.map.linestart[gotoline]<=selend)this.textarea.setSelectionRange(this.parser.map.linestart[gotoline],this.textarea.selectionEnd,"backward");
+						if(this.parser.map.linestart[gotoline]>selend)this.textarea.setSelectionRange(this.textarea.selectionEnd, this.parser.map.linestart[gotoline],"forward");
+					}
+				}
+			}else{
+					this.textarea.selectionStart = 	this.parser.map.linestart[gotoline];
+					this.textarea.selectionEnd = this.textarea.selectionStart;
+			}
+			console.log("parseneu forced by pageup/down");
+			this.parseneu();
+			var htmllines = document.getElementsByClassName("backgroundline");
+			if(gotoline<htmllines.length){
+				var oftop=0;
+				if(gotoline>0)oftop=htmllines[gotoline-1].offsetTop;
+				if(oftop==undefined)oftop=0;
+				this.textarea.scrollTop = oftop;
+				console.log("scroll to:"+oftop);
+				this.scroll();
+			}
+			console.log("from "+currentline+"go to line:"+gotoline +" page:"+gotopage + "from"+this.parser.map.pagestart.length);
+			return;
+		}
+		if(key==="Escape"){
+			this.parseneu();
+			this.presentation.showpresentation();
+		}
+
 	}
 
 
@@ -2625,6 +2971,7 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 					this.renderwysiwyg();
 				console.log("left-right-key"+key);
 			}else if(key=="Control" || event.ctrlKey){
+				console.log("start parse");
 				this.parseneu();
 			}else {//if(!event.ctrlKey){
 				console.log("tippen mit:"+key + " metakey:"+event.metaKey);
@@ -2733,6 +3080,7 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	textarea.selectionEnd = selectionend+emdstart.length; //cursor vor emdendsymbol stellen
 	//textarea.scrollTop = scrolltop; //scrolle an richtige stelle
 	//testparsenachzeilen(document.getElementById("quelltext").value); //zeichen einparsen
+	console.log("parse nach input");
 	this.parseneu();
 
 

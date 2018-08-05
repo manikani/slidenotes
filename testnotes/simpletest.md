@@ -27,6 +27,7 @@ __Doppelter Unterstrich mit *einfachem Stern* gemischt__, **Doppelstern mit ~~du
 > Zitat Ende
 
 Eine Zeile mit `inline-code **asdf** bis hier` 
+Nach dem `**inlinecode**` sollte aber *noch was stehen*
 
 ```
 #Ein Codeblock
@@ -49,6 +50,43 @@ Ein Text mit Tab zwischen A	B
 Ein weiterer Text mit mehreren A	Tabs	B
 Ein weiterer Text mit mehreren A			Tabs				B
 Ein weiterer Text mit mehreren A					Tabs						B
+-----
+Ein Datenblock:
+||chart||pie
+#titel
+##untertitel 1
+##untertitel 2
+option a:10
+option b:20
+option c: 30
+||chart||
+-----
+#nächster datenblock:
+||chart||bar
+#titel
+##untertitel 1
+##untertitel 2
+option a:10
+option b:20
+option c: 30
+||chart||
+-----
+#noch ein datenblock
+||chart||line
+#titel
+##untertitel 1
+##untertitel 2
+option a:10
+option b:20
+option c: 30
+||chart||
+-----
+#table-datenblock
+||table||
+a|b|c
+1|2|3
+1|2|3
+||table||
 -----
 #Letzte Seite
 Mehr fällt mir grad nicht ein zum Testen...
