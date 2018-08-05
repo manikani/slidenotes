@@ -776,6 +776,23 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 			 //record in imagesinline;
 			 if(imagesinline[element.line]==null)imagesinline[element.line] = new Array();
 			 imagesinline[element.line].push(element);
+			 //add span for image-tag to get highlightning
+			 changes.push({
+				 line:element.line,
+				 posinall:element.posinall,
+				 pos:element.pos,
+				 html:'<span class="imagetag">',
+				 mdcode:"",
+				 typ:"image-tag"
+			 });
+			 changes.push({
+				 line:element.line,
+				 posinall:element.posinall+element.mdcode.length,
+				 pos:element.pos+element.mdcode.length,
+				 html:"</span>",
+				 mdcode:"",
+				 typ:"end"
+			 });
 		 }
 
 	 }
@@ -802,7 +819,13 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 }
 
 	 //sort the array:
-	 changes.sort(function(a,b){return a.posinall - b.posinall});
+	 changes.sort(function(a,b){
+		 if(a.typ==="cursor"&&b.typ==="end" &&
+		  	a.posinall-b.posinall==0){
+			 return 1;
+		 }else
+		 return a.posinall - b.posinall;
+	 });
 	 console.log(changes);
 	 //do the changes from behind to beginning:
 	 for(var c=changes.length-1;c>=0;c--){
@@ -909,7 +932,12 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 		if(this.mdcodeeditorchanges[x].line===cursorline &&
 			 this.mdcodeeditorchanges[x].typ!='cursor')changes.push(this.mdcodeeditorchanges[x]);
 	}
-	changes.sort(function(a,b){return a.pos-b.pos});
+	changes.sort(function(a,b){
+		if(a.typ==="cursor"&&b.typ==="end" &&
+			 a.posinall-b.posinall==0){
+			return 1;
+		}else
+		return a.pos-b.pos});
 
 	for(var x=changes.length-1;x>=0;x--){
 		var actchange = changes[x];
@@ -1112,7 +1140,7 @@ emdparser.prototype.positionAtPage = function(page){
  * speichert gefundene fehler in this.perror - array
  * speichert zeilenmuster in this.lineswithhtml (h1-4, ul, ol, quote, table, code, text )
 */
-emdparser.prototype.parsenachzeilen= function(){
+emdparser.prototype.parsenachzeilen = function(){
 	//erstmal nach zeilen, dann ist auch die * aufzählung weg:
 	//var lines = new Array();
 	var lines = this.returnparsedlines(this.sourcecode);
@@ -2740,116 +2768,7 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 			}
 			return;
 		}
-		/*
-		if(key==="PageDown"){
-			console.log("pagedown:");
-			//var currentpos = this.textarea.selectionEnd;
-			var currentline = this.parser.lineAtPosition(this.textarea.selectionEnd);
-			var selendline = currentline;
-			var gotoline=0;
-			var gotopage=0;
-			for(var gtl=0;gtl<this.parser.map.pagestart.length;gtl++){
-				var pageel = this.parser.map.pagestart[gtl];
-				if(pageel.line>currentline && gotoline==0){
-					gotoline=pageel.line;
-					gotopage=gtl;
-				}
-			}
-			if(gotoline>0){
-				if(this.textarea.selectionEnd - this.textarea.selectionStart!=0){
-					//something is selected
-					console.log("Selection found:"+this.textarea.selectionStart+"->"+this.textarea.selectionEnd+":"+this.textarea.selectionDirection+"gotoline"+gotoline+"currentline"+currentline);
-					if(this.textarea.selectionDirection==="forward"){
-						//just expand:
-						this.textarea.selectionEnd = this.parser.map.linestart[gotoline];
-					}else{
-						if(currentline>gotoline){
-							//selection was minified
-							this.textarea.selectionStart = this.parser.map.linestart[gotoline];
-						}else{
-							//swap the selection:
-							this.textarea.setSelectionRange(this.textarea.selectionStart, this.parser.map.linestart[gotoline],"forward");
-						}
-					}
-				}else{
-					this.textarea.selectionEnd = this.parser.map.linestart[gotoline];
-				}
-				console.log("parseneu forced by pagedown");
-				this.parseneu();
-				if(!event.shiftKey)this.textarea.selectionStart = this.textarea.selectionEnd;
-				var htmllines = document.getElementsByClassName("backgroundline");
-				if(gotoline<htmllines.length){
-					var oftop = htmllines[gotoline-1].offsetTop;
-					this.textarea.scrollTop = oftop;
-					console.log("scroll to:"+oftop);
-				}
-			}
 
-			console.log("from "+currentline+"go to line:"+gotoline +" page:"+gotopage + "from"+this.parser.map.pagestart.length);
-			return;
-		}
-		if(key==="PageUp"){
-			console.log("pageup:");
-			//var currentpos = this.textarea.selectionEnd;
-			var currentline = this.parser.lineAtPosition(this.textarea.selectionEnd);
-			var selend = currentline;
-			if(this.textarea.selectionStart < this.textarea.selectionEnd)currentline=this.parser.lineAtPosition(this.textarea.selectionStart);
-			var selstart = currentline;
-			var gotoline=this.parser.map.linestart.length;
-			var gotopage=this.parser.map.pagestart.length-1;
-			for(var gtl=this.parser.map.pagestart.length-1;gtl>=0;gtl--){
-				var pageel = this.parser.map.pagestart[gtl];
-				if(pageel.line<currentline && gotoline===this.parser.map.linestart.length){
-					gotoline=pageel.line;
-					gotopage=gtl;
-				}
-			}
-			if(gotoline<this.parser.map.linestart.length){
-				//on shift or selection do this, else:
-				if(this.textarea.selectionStart - this.textarea.selectionEnd!=0){
-					//something is selected:
-					console.log("Selection found:"+this.textarea.selectionStart+"->"+this.textarea.selectionEnd+":"+this.textarea.selectionDirection);
-					if(this.textarea.selectionDirection==="backward"){
-						//just expand:
-						this.textarea.selectionStart = this.parser.map.linestart[gotoline];
-						if(!event.shiftKey)this.textarea.selectionEnd = this.textarea.selectionStart;
-					}else if(this.textarea.selectionDirection==="forward"){
-						if(gotoline<selstart){
-							//outside of selection so selection is expanded in new direction:
-							this.textarea.selectionEnd = this.textarea.selectionStart;
-							this.textarea.selectionStart = this.parser.map.linestart[gotoline];
-							if(!event.shiftKey)this.textarea.selectionEnd = this.textarea.selectionStart;
-						}else{
-							//inside of selection
-							this.textarea.selectionEnd = this.parser.map.linestart[gotoline];
-							if(!event.shiftKey)this.textarea.selectionStart = this.textarea.selectionEnd;
-						}
-					}
-
-				}else{
-					//nothing selected:
-					this.textarea.setSelectionRange(this.parser.map.linestart[gotoline],this.textarea.selectionEnd,"backward");
-					//this.textarea.selectionDirection="backward";
-					console.log("Selection"+this.textarea.selectionDirection);
-					if(!event.shiftKey)this.textarea.selectionEnd = this.textarea.selectionStart;
-				}
-				console.log("parseneu forced by pagedown");
-				this.parseneu();
-				var htmllines = document.getElementsByClassName("backgroundline");
-				if(gotoline<htmllines.length){
-					var oftop=0;
-					if(gotoline>0)oftop=htmllines[gotoline-1].offsetTop;
-					if(oftop==undefined)oftop=0;
-					this.textarea.scrollTop = oftop;
-					console.log("scroll to:"+oftop);
-					this.scroll();
-				}
-			}
-
-			console.log("from "+currentline+"go to line:"+gotoline +" page:"+gotopage + "from"+this.parser.map.pagestart.length);
-			return;
-		}//PageUp
-		*/
 		if(key==="PageUp" || key==="PageDown"){
 			var selstart = this.textarea.selectionStart;
 			var selend = this.textarea.selectionEnd;
