@@ -93,6 +93,14 @@
 	width: 100%;
 	background:yellow;
 }
+.backgroundline .imagetag{
+	color:blue;
+	font-weight:bold;
+	background:lightblue;
+}
+.backgroundline .imagesrc, .backgroundline .imagealt{
+	color:green;
+}
 /*mdcodeeditor imagespreview */
 #texteditorimagespreview{
 	font-family:monospace;

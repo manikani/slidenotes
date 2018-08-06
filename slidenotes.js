@@ -785,22 +785,25 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 				 mdcode:"",
 				 typ:"image-tag"
 			 });
-			 changes.push({
-				 line:element.line,
-				 posinall:element.posinall+2,
-				 pos:element.pos+2,
-				 html:'<span class="imagealt">',
-				 mdcode:"",
-				 typ:"image-alt"
-			 });
-			 changes.push({
-				 line:element.line,
-				 posinall:element.posinall+2+element.alt.length,
-				 pos:element.midpos,
-				 html:'</span>',
-				 mdcode:"",
-				 typ:"end"
-			 });
+			 if(element.alt.length>0){
+				 changes.push({
+					 line:element.line,
+					 posinall:element.posinall+2,
+					 pos:element.pos+2,
+					 html:'<span class="imagealt">',
+					 mdcode:"",
+					 typ:"image-alt"
+				 });
+				 changes.push({
+					 line:element.line,
+					 posinall:element.posinall+2+element.alt.length,
+					 pos:element.midpos,
+					 html:'</span>',
+					 mdcode:"",
+					 typ:"end",
+					 tag: "image-alt-end"
+				 });
+			 }
 			 changes.push({
 				 line:element.line,
 				 posinall:element.posinall+2+element.alt.length+2,
@@ -829,24 +832,43 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 
 	 }
 	 //add error-spans:
+	 this.perror.sort(function(a,b){return a.row-b.row});
+	 var lasterrorpos;
 	 for(var er=0;er<this.perror.length;er++){
-		 if(this.perror[er].errortext!="missing space after *"){
-			 changes.push({
-				 line:this.perror[er].line,
-				 posinall:this.map.linestart[this.perror[er].line]+this.perror[er].row,
-				 pos:this.perror[er].row,
-				 html:this.perror[er].htmlstart,
-				 mdcode:"",
-				 typ:"error"
-			 });
-			 changes.push({
-				 line:this.perror[er].line,
-				 posinall:this.map.lineend[this.perror[er].line],//this.map.linestart[this.perror[er].line]+lines[this.perror[er].line].length,
-				 pos:lines[this.perror[er].line].length,
-				 html:this.perror[er].htmlend,
-				 mdcode:"",
-				 typ:"error"
-			 });
+		 if(this.perror[er].row!=lasterrorpos){
+			 lasterrorpos = this.perror[er].row;
+			 if(this.perror[er].errortext!="missing space after *"){
+				 changes.push({
+					 line:this.perror[er].line,
+					 posinall:this.map.linestart[this.perror[er].line]+this.perror[er].row,
+					 pos:this.perror[er].row,
+					 html:this.perror[er].htmlstart,
+					 mdcode:"",
+					 typ:"error",
+					 tag:this.perror[er].errorclass
+				 });
+				 if(this.perror[er].errorclass="image"){
+					 changes.push({
+						 line:this.perror[er].line,
+						 posinall:this.map.linestart[this.perror[er].line]+this.perror[er].rowend,//this.map.linestart[this.perror[er].line]+lines[this.perror[er].line].length,
+						 pos:this.perror[er].rowend,
+						 html:this.perror[er].htmlend,
+						 mdcode:"",
+						 typ:"error",
+						 tag:"imageerror end"
+					 });
+				 }else{
+					 changes.push({
+						 line:this.perror[er].line,
+						 posinall:this.map.lineend[this.perror[er].line],//this.map.linestart[this.perror[er].line]+lines[this.perror[er].line].length,
+						 pos:lines[this.perror[er].line].length,
+						 html:this.perror[er].htmlend,
+						 mdcode:"",
+						 typ:"error",
+						 tag:this.perror[er].errorclass
+					 });
+			 		}
+				}
 		 }
 	 }
 
@@ -1409,8 +1431,8 @@ emdparser.prototype.parsenachzeilen = function(){
 				var scanweiter = true;
 				while(dataende<lines.length && scanweiter) if(lines[dataende].substring(0,datatag.length)==datatag)scanweiter=false;else dataende++;
 				if(dataende==lines.length || lines[dataende].substring(0,datatag.length)!=datatag){
-					this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol "+datatag));
-					this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"code","missing endsymbol "+datatag));
+					this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol "+datatag));
+					this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol "+datatag));
 					this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
 					this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
 				}else{
@@ -1451,25 +1473,39 @@ emdparser.prototype.parsenachzeilen = function(){
 			var imgaktpos=0;
 			var pseudozeile=pseudolines[x];
 			while(pseudozeile.indexOf("![", imgaktpos)>-1){ //können ja mehrere sein
-				var imgpos =pseudozeile.indexOf("![");
+				var imgpos =pseudozeile.indexOf("![",imgaktpos);
 				var imgposmid = pseudozeile.indexOf("](",imgpos);
 				var imgposend = pseudozeile.indexOf(")",imgpos);
+				var imginimg = pseudozeile.indexOf("![]",imgpos+1)
+				var nextspace = pseudozeile.indexOf(" ",imgpos)
 				var error="";
-				if(imgposend==-1){
-					this.perror.push(new parsererror(x,imgpos,lines[x].length-1,"image","missing endsymbol )"));//
+
+				if(imginimg>-1 && imginimg<imgposend){
+					this.perror.push(new parsererror(x,imgpos,nextspace,"image","image in image"));//
+					error="imginimg";
+					console.log("image in image: imgpos:"+imgpos+"imginimg"+imginimg+"imgposend"+imgposend);
+
+				}
+				if(imgposend==-1 && imginimg==-1){
+					this.perror.push(new parsererror(x,imgpos,nextspace,"image","missing endsymbol )"));//
 					error="imgende";
+					console.log("image: missing endsymbol"+imgpos+"->"+nextspace);
+
 				}
 				if(imgposmid==-1){
 					this.perror.push(new parsererror(x,imgpos,lines[x].length-1,"image","missing midsymbol )"));//
 					error="imgmid";
 				}
 				imgaktpos=imgpos+4;
-				var imgurl = lines[x].substring(imgposmid+2,imgposend);
-				var imgalt = lines[x].substring(imgpos+2,imgposmid);
+				console.log("image imgpos:"+imgpos+"imgaktpos:"+imgaktpos+"nextspace:"+nextspace+"error:"+error);
+				var imgurl = pseudozeile.substring(imgposmid+2,imgposend);
+				var imgalt = pseudozeile.substring(imgpos+2,imgposmid);
 				//TODO: if-abfrage ob img unter url existiert, sonst fehler
 				var imghtml = '<img alt ="'+imgalt+'"src="'+imgurl+'">';
 				if(error.length==0){
-					lines[x] = lines[x].substring(0,imgpos)+imghtml+lines[x].substring(imgposend+1);
+					var imgpos2 = lines[x].indexOf("![");
+					var imgpos2end = lines[x].indexOf(")",imgpos2);
+					lines[x] = lines[x].substring(0,imgpos2)+imghtml+lines[x].substring(imgpos2end+1);
 					if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
 					//this.insertedhtmlinline[x].push(new Array(pseudozeile.indexOf("![]("),"![]("+imgurl+")",imghtml));
 					this.map.addElement({line:x,pos:pseudozeile.indexOf("!["),
@@ -1485,7 +1521,7 @@ emdparser.prototype.parsenachzeilen = function(){
 				}else {
 					//alert(error);
 					//lines[x]=lines[x].substring(0,imgpos)+lines[x].substring(imgpos+4);
-
+					pseudozeile = pseudozeile.substring(0,imgpos)+"€€"+pseudozeile.substring(imgpos+2); //dont scan image again!
 					this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
 					this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
 				}
@@ -1505,7 +1541,7 @@ emdparser.prototype.parsenachzeilen = function(){
 				else	var linktextendsymbol=lines[x].indexOf("](",linktextstartsymbol);
 			var linkurlstart=linktextendsymbol+2;
 			var linkurlend = lines[x].indexOf(")",linkurlstart);
-			if(linkurlend == -1)this.perror.push(new parsererror(x,0,lines[x].length-1,"link","missing endsymbol )"));//error="linkurlendsymbol";
+			if(linkurlend == -1)this.perror.push(new parsererror(x,0,lines[x].length-1,"link","missing link endsymbol )"));//error="linkurlendsymbol";
 			if(this.perror.length==error){
 				var linktext = lines[x].substring(linktextstartsymbol+1,linktextendsymbol);
 				var linkurl = lines[x].substring(linkurlstart,linkurlend);

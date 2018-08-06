@@ -208,7 +208,7 @@ slidenoteGuardian.prototype.saveConfig = async function(destination){
 
 }
 slidenoteGuardian.prototype.encrypt = async function(plaintext){
-  console.log("encrypt plaintext:"+plaintext);
+  console.log("encrypt plaintext:"+plaintext.substring(0,20));
     let plainTextUtf8 = new TextEncoder().encode(plaintext); //changing into UTF-8-Array
     let keyguardian = await this.createKey();
     //this.iv = keyguardian.iv;
