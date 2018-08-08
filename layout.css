@@ -101,6 +101,9 @@
 .backgroundline .imagesrc, .backgroundline .imagealt{
 	color:green;
 }
+.backgroundline .imagesrc.imagenotfound{
+	color:red;
+}
 /*mdcodeeditor imagespreview */
 #texteditorimagespreview{
 	font-family:monospace;

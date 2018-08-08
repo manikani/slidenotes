@@ -776,6 +776,25 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 			 //record in imagesinline;
 			 if(imagesinline[element.line]==null)imagesinline[element.line] = new Array();
 			 imagesinline[element.line].push(element);
+			 //check if image is over http and if so if it exists:
+			 var imgparsefalse = false;
+			 if(element.src.substring(0,4)==="http"){
+				 var imgtocheck = new Image();
+				 imgtocheck.src = element.src;
+				 imgtocheck.onerror = function(){
+					 //alert("image not found")
+					 console.log("image not found:"+this.src);
+					 var imgsrcs = document.getElementsByClassName("imagesrc");
+					 for(var i=0;i<imgsrcs.length;i++){
+						 console.log("imgsrcs innerhtml:"+imgsrcs[i].innerHTML);
+						 if(imgsrcs[i].innerHTML === this.src || imgsrcs[i].innerHTML+"/"===this.src){
+							 imgsrcs[i].classList.add("imagenotfound");
+						 }
+					 }
+
+				 };
+				 //imgtocheck.onload = function(){alert("image geladen")};
+			 }
 			 //add span for image-tag to get highlightning
 			 changes.push({
 				 line:element.line,
@@ -912,7 +931,8 @@ emdparser.prototype.renderCodeeditorBackground = function(){
  				var proposedsymbol = this.perror[x].proposeEnding();
  				if(proposedsymbol != ""){
  					if(this.perror[x].errorclass=="bold")doppelsternchen.push(x); else
- 					 lines[this.perror[x].line]+='<span class="proposedsymbol">'+proposedsymbol+'</span>';
+ 					 lines[this.perror[x].line]+=' <span class="proposedsymbol">'+proposedsymbol+'</span>';
+					 console.log("proposedsymbol:"+proposedsymbol);
  				}
 
  			}
@@ -2669,10 +2689,15 @@ slidenotes.prototype.parseneu = function(){
 		this.wysiwyg.scrollToCursor();*/
 		this.renderwysiwyg();
 	} else {
-		//ohne wysiwyg-kram:
+		//MDCodeEditor:
 		if(this.texteditorerroractivated){
 			//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
 			this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
+			//getting rid of false lines from proposedsymbols:
+			var proposedsymbols = document.getElementsByClassName("proposedsymbol");
+			for(var pps = 0;pps<proposedsymbols.length;pps++){
+				if(proposedsymbols[pps].offsetLeft<10) proposedsymbols[pps].style.display = "none";
+			}
 			this.scroll(this.textarea);
 			//this.texteditorImagesPreview = document.getElementById("texteditorimagespreview");
 			//this.texteditorImagesPreview.innerHTML = this.parser.renderCodeeditorImagePreview();
@@ -2752,7 +2777,7 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			this.parser.map.lastcursorpos = this.textarea.selectionEnd;
 			event.preventDefault();
 		}else{
-			if(key.length===1 && !event.ctrlKey){
+			if(key.length===1 && !event.ctrlKey){ //TODO: Mac-Command-Taste?
 				//this.lastcarretpos = carretpos;
 				if(this.textarea.selectionEnd-this.textarea.selectionStart>0){
 					console.log("parseneu forced because of selection");
