@@ -239,7 +239,7 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   for(var x=0;x<slidenote.presentation.themes.length;x++){
     var act = slidenote.presentation.themes[x];
     if(actthemesstring.indexOf(act.classname)>=0){
-      slidenote.presentation.changeThemeStatus(x,true);
+      if(!act.active)slidenote.presentation.changeThemeStatus(x,true);
       themes.push(act);
     }else{
       slidenote.presentation.changeThemeStatus(x,false);
