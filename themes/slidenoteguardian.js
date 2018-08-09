@@ -12,7 +12,7 @@
 
 function slidenoteGuardian(slidenote){
   this.slidenote = slidenote;
-  this.configArea = document.getElementById("configarea");
+  this.cmsConfig = document.getElementById("cmsconfig");
   this.cmsArea = document.getElementById("cmsarea");
   this.cmsImages = document.getElementById("cmsimages");
   this.cmsSlidenoteHash = document.getElementById("cmsslidenotehash");
@@ -51,12 +51,13 @@ slidenoteGuardian.prototype.init = function(){
       this.loadNote("local");
     } else {
       //this.loadNote("cms");
+      //this.loadConfig("cms");
     }
   }
   if(this.localstorage.getItem("config")!=null){
     //i cant do it directly because its quite obvious that some themes are not added yet
     //for testing purpose i should just wait 5 seconds
-    setTimeout('slidenoteguardian.loadConfig("local")',5000);
+    setTimeout('slidenoteguardian.loadConfig("local")',15000);
   }
   document.getElementById("optionsclose").addEventListener("click",function(event){
       slidenoteguardian.saveConfig("local");
@@ -208,7 +209,8 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   //loads Config from configarea or from local destination
   //destination is cms or local
   var savedConfigString;
-  if(destination==="cms")savedConfigString = configField.value;
+  this.getCMSFields();
+  if(destination==="cms")savedConfigString = this.cmsConfig.value;
   if(destination==="local")savedConfigString = this.localstorage.getItem('config');
   if(slidenote==null){
     setTimeout("slidenoteguardian.loadConfig("+destination+")",2000);
@@ -329,6 +331,7 @@ slidenoteGuardian.prototype.createKey = async function(iv){
     //this.password = prompt("please type in your personal password");
     this.password = await this.passwordPrompt("please type in your personal password");
   }
+  if(this.password ==null)return;
   let pwUtf8 = new TextEncoder().encode(this.password);
   this.passwordHash = await this.crypto.subtle.digest('SHA-256', pwUtf8);
   let passwordHash = this.passwordHash;
@@ -346,11 +349,13 @@ slidenoteGuardian.prototype.createKey = async function(iv){
 
 slidenoteGuardian.prototype.getCMSFields = function(){
   //get the cms-fields right. Test Style for slidenote.htm:
-  this.configArea = document.getElementById("configarea");
+  //this.configArea = document.getElementById("configarea");
   this.cmsArea = document.getElementById("cmsarea");
   this.cmsImages = document.getElementById("cmsimages");
   this.cmsSlidenoteHash = document.getElementById("cmsslidenotehash");
   this.cmsImagesHash = document.getElementById("cmsimageshash");
+  this.cmsConfig = document.getElementById("cmsconfig");
+
 
   //drupal7 with editablefields-module:
   let nodetitle = document.getElementById("page-title");
@@ -405,6 +410,11 @@ slidenoteGuardian.prototype.autoSaveToCMS = async function(){
     this.lastNoteFormId = this.cmsNoteSave.id;
     console.log("autosave done - cms-form has new id");
   }
+  //check if config has changed:
+  var localSavedConfig = this.localstorage.getItem("config");
+  if(localSavedConfig!=null && localSavedConfig != this.cmsConfig.value){
+    this.cmsConfig.value = localSavedConfig;
+  }
 
   //repeats itself every 30 seconds, 2 minutes
   let autosavetime = 30000;//120000;
@@ -413,6 +423,10 @@ slidenoteGuardian.prototype.autoSaveToCMS = async function(){
 
 slidenoteGuardian.prototype.passwordPrompt = function (text){
   /*creates a password-prompt*/
+  if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null){
+    console.log("second password-prompt");
+    return null;
+  }
 	var pwprompt = document.createElement("div"); //the prompt-container
 	pwprompt.id= "slidenoteGuardianPasswortPrompt"; //id for css
   var pwpromptbox = document.createElement("div"); //inner promptbox
@@ -422,6 +436,7 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
 	pwpromptbox.appendChild(pwtext);
 	var pwinput = document.createElement("input"); //password-box
 	pwinput.type="password";
+  pwinput.id="pwpromptfield";
 	pwpromptbox.appendChild(pwinput);
 	var pwokbutton = document.createElement("button");
 	pwokbutton.innerHTML = "ok";
@@ -431,6 +446,7 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
 	pwpromptbox.appendChild(pwokbutton);
 	document.body.appendChild(pwprompt); //make promptbox visible
 	pwinput.focus(); //focus on pwbox to get direct input
+  setTimeout("document.getElementById('pwpromptfield').focus()",500); //not the most elegant, but direct focus does not work sometimes - dont know why
 
 	return new Promise(function(resolve, reject) {
 	    pwprompt.addEventListener('click', function handleButtonClicks(e) {
