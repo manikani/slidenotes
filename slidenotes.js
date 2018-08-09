@@ -259,6 +259,7 @@ function parsererror(line, row, rowend, errorclass, errortext, parseobjekt){
 	this.htmlstart = '<span class="error">';
 	this.htmlend = "</span>";
 	this.parseobjekt = parseobjekt;
+	console.log("new error found"+errorclass+errortext);
 }
 parsererror.prototype.proposeEnding = function(){
 	if(this.errortext.indexOf("missing endsymbol ")>-1)return this.errortext.substring(this.errortext.indexOf("missing endsymbol ")+18);
@@ -1987,7 +1988,8 @@ stylepager.prototype.encapsuleHtml = function(pagelines,pagetaglines){
  * Braucht: emdparsobjekt vom typ emdparser, ausgabediv: ein HTML-Objekt, in welches die Präsentation eingefügt wird
 */
 
-function pagegenerator(emdparsobjekt, ausgabediv){
+function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
+	this.slidenote = slidenote;
 	this.sourcecode = emdparsobjekt.parsedcode;
 	this.emdparsobjekt = emdparsobjekt;
 	this.pages = new Array(); //strings with ready-for-output-pages parsed by pagebreak
@@ -2220,7 +2222,7 @@ pagegenerator.prototype.showPage = function(page){
 */
 themeobjekts = "";
 pagegenerator.prototype.loadTheme = function(themename){
-	if(themeobjekts.indexOf(themename)==-1){
+	if(this.slidenote.themeobjekts.indexOf(themename)==-1){
 		console.log("load Theme "+themename);
 		var jsfile = document.createElement('script');
   	jsfile.setAttribute("type","text/javascript");
@@ -2231,8 +2233,9 @@ pagegenerator.prototype.loadTheme = function(themename){
   	cssfile.setAttribute("href", this.cssfilepath + themename + ".css");
 		document.getElementsByTagName("head")[0].appendChild(jsfile);
 		document.getElementsByTagName("head")[0].appendChild(cssfile);
-		themeobjekts+=themename;
+		this.slidenote.themeobjekts+=themename;
 	}
+	console.log(this.slidenote.themeobjekts);
 }
 /* pagegenerator.addTheme(theme)
  * fügt ein Theme dem Pagegenerator hinzu
@@ -2377,7 +2380,7 @@ pagegenerator.prototype.hideThemes = function(){
 }
 //changeThemeStatus erwartet eine themenr und ändert das entsprechende theme
 pagegenerator.prototype.changeThemeStatus = function(themenr, status){
-	if(this.themes[themenr].themetype=="css"){
+	if(this.themes[themenr].themetype=="css" && status){
 		//es darf nur ein css ausgewählt werden?
 		var vorschau = document.getElementById("designvorschau");
 
@@ -2594,7 +2597,15 @@ Theme.prototype.init = function(){
 	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
 	//wird nach zufügen des Themes aufgerufen
 }
-
+Theme.prototype.saveConfigString = function(){
+	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
+	//wird von slidenoteguardian benutzt um Configs zu speichern
+	return null;
+}
+Theme.prototype.loadConfigString = function(data){
+	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
+	//wird von slidenoteguardian benutzt um Configs zu laden
+}
 
 /*neuer aufbau für die steuerung und ablauf usw. des programms:
 */
@@ -2614,7 +2625,8 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 	//das nächste ist der wysiwyg-editor:
 	this.wysiwyg = new wysiwygcontroller(this.textarea, this.wysiwygarea, this);
 	//als letztes die präsentation:
-	this.presentation = new pagegenerator(this.parser,this.presentationdiv);
+	this.themeobjekts="";
+	this.presentation = new pagegenerator(this.parser,this.presentationdiv, this);
 
 	//edit-modus:
 	this.wysiwygactivated = false;

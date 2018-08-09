@@ -137,7 +137,7 @@ function insertbutton(code){
 
 --></script>
 </head>
-<body>
+<body onload="initeditor()">
 <h1>Welcome to the Slidenote-Editor</h1>
 <div id="slidenotediv">
 	<div id="slidenotebuttons">
@@ -170,7 +170,7 @@ function insertbutton(code){
 		</div>
 		<div id="texteditor" class="texteditor">
 			<div id="texteditorerrorlayer"></div>
-			<textarea spellcheck="false" id="quelltext" onload="initeditor()" autofocus onfocus="initeditor();"></textarea>
+			<textarea spellcheck="false" id="quelltext" onload="" autofocus onfocus="initeditor();"></textarea>
 			<div id="texteditorimagespreview"></div>
 			<div id="wysiwygarea" contenteditable="true" spellcheck="false"></div>
 		</div>
@@ -195,7 +195,7 @@ function insertbutton(code){
 		</div>
 	</div>
 	<div id="options">
-		<h1>Options<button onclick="slidenote.presentation.hideThemes()" value="close">close</button></h1>
+		<h1>Options<button id="optionsclose" onclick="slidenote.presentation.hideThemes()" value="close">close</button></h1>
 		<div class="tabbar">
 			<h2><a href="javascript:slidenote.presentation.optionsTab(0)">Design Options</a></h2>
 			<h2><a href="javascript:slidenote.presentation.optionsTab(1)">Global Options</a></h2>

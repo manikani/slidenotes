@@ -53,6 +53,14 @@ slidenoteGuardian.prototype.init = function(){
       //this.loadNote("cms");
     }
   }
+  if(this.localstorage.getItem("config")!=null){
+    //i cant do it directly because its quite obvious that some themes are not added yet
+    //for testing purpose i should just wait 5 seconds
+    setTimeout('slidenoteguardian.loadConfig("local")',5000);
+  }
+  document.getElementById("optionsclose").addEventListener("click",function(event){
+      slidenoteguardian.saveConfig("local");
+  });
   setTimeout("slidenoteguardian.autoSaveToCMS()",3000);
 }
 
@@ -199,13 +207,87 @@ slidenoteGuardian.prototype.encryptImages = async function(){
 slidenoteGuardian.prototype.loadConfig = async function(destination){
   //loads Config from configarea or from local destination
   //destination is cms or local
+  var savedConfigString;
+  if(destination==="cms")savedConfigString = configField.value;
+  if(destination==="local")savedConfigString = this.localstorage.getItem('config');
+  if(slidenote==null){
+    setTimeout("slidenoteguardian.loadConfig("+destination+")",2000);
+    return;
+  }
+  //load Themes:
+  console.log("load configString:"+savedConfigString);
+  var themes = new Array(); //only active themes
+  var actthemesstring = savedConfigString.substring(0,savedConfigString.indexOf("$$"));
+  var actthemenames = actthemesstring.split(";");
+  //check if Theme allready loaded - if not, load anew:
+  //check if Theme allready added to themes, if not await:
+  var addedthemes="";
+  for(var x=0;x<slidenote.presentation.themes.length;x++)addedthemes+=slidenote.presentation.themes[x].classname;
+
+  for(var x=0;x<actthemenames.length;x++){
+    if(slidenote.themeobjekts.indexOf(actthemenames[x])==-1){
+      //slidenote.presentation.loadTheme(actthemenames[x]);
+      //is this really important? isnt this decided elsewhere? like in the cms?
+    }
+    if(addedthemes.indexOf(actthemenames[x])==-1){
+      //this is bullshit - i should not do that
+    }
+  }
+
+  for(var x=0;x<slidenote.presentation.themes.length;x++){
+    var act = slidenote.presentation.themes[x];
+    if(actthemesstring.indexOf(act.classname)>=0){
+      slidenote.presentation.changeThemeStatus(x,true);
+      themes.push(act);
+    }else{
+      slidenote.presentation.changeThemeStatus(x,false);
+    }
+  }
+  //Choose Editor:
+  var editorchoiceString = savedConfigString.substring(savedConfigString.indexOf("$$")+2,savedConfigString.indexOf("€€"));
+  slidenote.choseEditor(editorchoiceString);
+  console.log("choseeditor:"+editorchoiceString);
+  //load Themes-Config:
+  var savedConfigStrings = new Array();
+  for(var x=0;x<themes.length;x++){
+  	var pos = savedConfigString.indexOf("{["+themes[x].classname+"]}");
+  	if(pos>=0)savedConfigStrings.push({name:themes[x].classname, position:pos, dataposition:pos+4+themes[x].classname.length,theme:themes[x]});
+  }
+  savedConfigStrings.sort(function(a,b){return a.position-b.position});
+  for(var x=0;x<savedConfigStrings.length-1;x++){
+  	savedConfigStrings[x].data = savedConfigString.substring(savedConfigStrings[x].dataposition, savedConfigStrings[x+1].position);
+  }
+  //savedConfigStrings[savedConfigStrings.length-1].data = savedConfigString.substring(savedConfigStrings[savedConfigStrings.length-1].dataposition);
+  console.log(savedConfigStrings);
+  for(var x=0;x<savedConfigStrings.length;x++)savedConfigStrings[x].theme.loadConfigString(savedConfigStrings[x].data);
 }
 
 slidenoteGuardian.prototype.saveConfig = async function(destination){
   //saves configs to local destination or to cmsarea -> CMS
   //destination is cms or local
+  var themes = new Array(); //only active themes
+  var stringToSave = "";
+  for(var x=0;x<slidenote.presentation.themes.length;x++){
+        if(slidenote.presentation.themes[x].active){
+          themes.push(slidenote.presentation.themes[x]); //collect active themes
+          stringToSave+=slidenote.presentation.themes[x].classname+";";
+        }
+  }
+  stringToSave+="$$";
+  stringToSave+=document.getElementById("editorchoice").value;
+  stringToSave+="€€";
 
-
+  for(var x=0;x<themes.length;x++){
+	    var actConfigString = themes[x].saveConfigString();
+	    if(actConfigString!=null){
+		      stringToSave+="{["+themes[x].classname+"]}";
+		        stringToSave+=actConfigString;
+	    }
+  }
+  if(destination==="local"){
+    this.localstorage.setItem("config",stringToSave);
+    console.log("saved to local:"+stringToSave);
+  }
 }
 slidenoteGuardian.prototype.encrypt = async function(plaintext){
   console.log("encrypt plaintext:"+plaintext.substring(0,20));
