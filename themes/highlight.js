@@ -17,6 +17,7 @@ var styles = new Array(
 "railscasts","rainbow","routeros","school-book","solarized-dark","solarized-light",
 "sunburst","tomorrow","tomorrow-night-blue","tomorrow-night-bright","tomorrow-night",
 "tomorrow-night-eighties","vs2015","vs","xcode","xt256","zenburn");
+newtheme.cssarray = styles;
 
 newtheme.addDesignOption("select", "theme of hljs:", styles, styles, 0);
 
@@ -32,7 +33,17 @@ newtheme.changeDesignOption = function(optionnr, value){
 		if(this.designoptions[0].values[selx] === value)seldesign = selx;
 	}
 	this.designoptions[optionnr].selected = seldesign;
+	this.seldesign = seldesign;
+	console.log("designoption changed hljs"+optionnr+"->"+value);
 
+}
+
+
+newtheme.saveConfigString = function(){
+	return this.seldesign;
+}
+newtheme.loadConfigString = function(data){
+	this.changeDesignOption(0,this.cssarray[data]);
 }
 
 /*dateien nachladen:*/

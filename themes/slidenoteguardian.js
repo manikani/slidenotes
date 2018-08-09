@@ -63,6 +63,11 @@ slidenoteGuardian.prototype.init = function(){
       slidenoteguardian.saveConfig("local");
   });
   setTimeout("slidenoteguardian.autoSaveToCMS()",3000);
+  slidenote.textarea.addEventListener("focus",function(event){
+    if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null){
+      document.getElementById("pwpromptfield").focus();
+    }
+  })
 }
 
 slidenoteGuardian.prototype.loadNote = async function(destination){
@@ -112,6 +117,7 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
 slidenoteGuardian.prototype.saveNote = async function(destination){
   //saves Note to cmsArea -> CMS or to local destination
   //destination is cms or local - will be encrypted nevertheless
+  if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null)return;
   let slidenotetext = this.slidenote.textarea.value;
   let encResult = await this.encrypt(slidenote.textarea.value);
   let encTextBuffer = encResult.encbuffer;
@@ -255,13 +261,17 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   	var pos = savedConfigString.indexOf("{["+themes[x].classname+"]}");
   	if(pos>=0)savedConfigStrings.push({name:themes[x].classname, position:pos, dataposition:pos+4+themes[x].classname.length,theme:themes[x]});
   }
+  //console.log()
   savedConfigStrings.sort(function(a,b){return a.position-b.position});
   for(var x=0;x<savedConfigStrings.length-1;x++){
   	savedConfigStrings[x].data = savedConfigString.substring(savedConfigStrings[x].dataposition, savedConfigStrings[x+1].position);
   }
-  //savedConfigStrings[savedConfigStrings.length-1].data = savedConfigString.substring(savedConfigStrings[savedConfigStrings.length-1].dataposition);
+  if(savedConfigStrings.length>0)
+        savedConfigStrings[savedConfigStrings.length-1].data = savedConfigString.substring(savedConfigStrings[savedConfigStrings.length-1].dataposition);
   console.log(savedConfigStrings);
-  for(var x=0;x<savedConfigStrings.length;x++)savedConfigStrings[x].theme.loadConfigString(savedConfigStrings[x].data);
+  for(var x=0;x<savedConfigStrings.length;x++){
+    savedConfigStrings[x].theme.loadConfigString(savedConfigStrings[x].data);
+  }
 }
 
 slidenoteGuardian.prototype.saveConfig = async function(destination){
@@ -295,6 +305,7 @@ slidenoteGuardian.prototype.encrypt = async function(plaintext){
   console.log("encrypt plaintext:"+plaintext.substring(0,20));
     let plainTextUtf8 = new TextEncoder().encode(plaintext); //changing into UTF-8-Array
     let keyguardian = await this.createKey();
+    if(keyguardian==null)return {encbuffer:null, iv:null};
     //this.iv = keyguardian.iv;
     let encbuffer = await crypto.subtle.encrypt(keyguardian.alg, keyguardian.key, plainTextUtf8);
     return {encbuffer: encbuffer, iv:keyguardian.iv};

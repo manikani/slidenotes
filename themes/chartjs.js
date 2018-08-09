@@ -59,6 +59,21 @@ for(var x=0;x<chartjscolors.selectedcolors.length;x++){
 newtheme.changeDesignOption = function(optionnr, value){
   chartjscolors.selectedcolors[optionnr]=value;
   this.designoptions[optionnr].selected=value;
+  console.log("designoption changed"+optionnr+"->"+value);
+}
+newtheme.saveConfigString = function(){
+  var stringToSave="";
+  for(var x=0;x<chartjscolors.selectedcolors.length;x++){
+    stringToSave+=chartjscolors.selectedcolors[x]+",";
+  }
+  return stringToSave;
+}
+newtheme.loadConfigString = function(datastring){
+  console.log("load config-string chartjs:"+datastring);
+  var data = datastring.split(",");
+  for(var x=0;x<data.length-1;x++){
+    this.changeDesignOption(x,data[x]);
+  }
 }
 
 newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"||chart||pie","||chart||");
