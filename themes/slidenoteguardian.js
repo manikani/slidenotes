@@ -57,7 +57,7 @@ slidenoteGuardian.prototype.init = function(){
   if(this.localstorage.getItem("config")!=null){
     //i cant do it directly because its quite obvious that some themes are not added yet
     //for testing purpose i should just wait 5 seconds
-    setTimeout('slidenoteguardian.loadConfig("local")',15000);
+    setTimeout('slidenoteguardian.loadConfig("local")',2000);
   }
   document.getElementById("optionsclose").addEventListener("click",function(event){
       slidenoteguardian.saveConfig("local");

@@ -2670,6 +2670,7 @@ slidenotes.prototype.choseEditor=function(editor){
 	}else{
 		this.wysiwygarea.classList.remove("debugmode");
 	}
+	document.getElementById("editorchoice").value = editor;
 	console.log("choseEditor parse:");
 	this.parseneu();
 	this.textarea.focus();
