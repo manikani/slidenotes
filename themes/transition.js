@@ -17,6 +17,18 @@ newtheme.changeGlobalOption = function(optionnr, value){
   console.log(this.options);
 }
 
+newtheme.saveConfigString = function(){
+  var stringToSave="";
+  stringToSave+=this.options[0].value+";"+this.options[1].value;
+  return stringToSave;
+}
+
+newtheme.loadConfigString = function(datastring){
+  var data = datastring.split(";");
+  for(var x=0;x<data.length;x++)this.changeGlobalOption(x,(data[x]==="true"));
+}
+
+
 /*Hook into styling-process, append classes */
 newtheme.styleThemeSpecials = function(){
   var pages = document.getElementsByClassName("ppage");
