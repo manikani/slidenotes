@@ -2397,9 +2397,15 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 				newhtmlbutton.value = actbutton.mdstartcode;
 				//console.log("actbuttonfunction:"+actbuttonfunction);
 				//newhtmlbutton.setAttribute("onclick",""+actbuttonfunction);
-				newhtmlbutton.onclick = function(){
-					slidenote.insertbutton(this.value);
+				if(this.themes[themenr].editorbuttons[x].insertfunction==undefined){
+					newhtmlbutton.onclick = function(){
+						slidenote.insertbutton(this.value);
+					}
+				}else {
+					newhtmlbutton.onclick =
+						slidenote.presentation.themes[themenr].editorbuttons[x].insertfunction;
 				}
+
 				document.getElementById("texteditorbuttons").appendChild(newhtmlbutton);
 			}
 		}else{
@@ -2582,9 +2588,9 @@ Theme.prototype.addGlobalOption = function(type, description, labels, values){
 Theme.prototype.changeGlobalOption = function(optionnr, value){
 	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
 }
-Theme.prototype.addEditorbutton = function(buttoninnerhtml,startcode,endcode){
+Theme.prototype.addEditorbutton = function(buttoninnerhtml,startcode,endcode, insertfunction){
 	if(this.editorbuttons==null)this.editorbuttons = new Array();
-	this.editorbuttons.push({mdstartcode:startcode, mdendcode:endcode,innerhtml:buttoninnerhtml});
+	this.editorbuttons.push({mdstartcode:startcode, mdendcode:endcode,innerhtml:buttoninnerhtml, insertfunction:insertfunction});
 }
 Theme.prototype.init = function(){
 	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
@@ -2628,6 +2634,11 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 		for(var x=0;x<this.length;x++){
 			if(this[x].type===datatype)result=true;
 		}
+		return result;
+	}
+	this.datatypes.elementOfType = function(datatype){
+		var result;
+		for(var x=0;x<this.length;x++)if(this[x].type===datatype)result=this[x];
 		return result;
 	}
 	/*examples:
@@ -3045,6 +3056,14 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	var emdstart="";
 	var emdend="";
 	var multilineselection = false;
+	var actelement = this.parser.CarretOnElement(textarea.selectionEnd);
+	if(actelement!=null && actelement.dataobject!=null){
+		if(this.datatypes.elementOfType(actelement.dataobject.type)!=null &&
+			 this.datatypes.elementOfType(actelement.dataobject.type).mdcode ==false){
+				 alert("mdcode insert not allowed inside datablocks of type "+actelement.dataobject.type);
+				 return;
+			 }
+	}
 	if(emdzeichen=="%head"){
 		emdstart="\n#";
 		emdnr = prompt("h... 1,2,3,4?");

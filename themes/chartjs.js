@@ -75,10 +75,31 @@ newtheme.loadConfigString = function(datastring){
     this.changeDesignOption(x,data[x]);
   }
 }
-
-newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"||chart||pie","||chart||");
-newtheme.addEditorbutton('<img src="themes/chartjs/barbutton.png">',"||chart||bar","||chart||");
-newtheme.addEditorbutton('<img src="themes/chartjs/linebutton.png">',"||chart||line","||chart||");
+var insertfunction = function(){
+  var charttype = document.activeElement.value;
+  var selectionend = slidenote.textarea.selectionEnd;
+  var selectionstart = slidenote.textarea.selectionStart;
+  var actelement = slidenote.parser.CarretOnElement(selectionend);
+  console.log("insert "+charttype+" on ");
+  console.log(actelement);
+  if(actelement!=undefined && actelement.dataobject !=undefined && actelement.dataobject.type ==="chart"){
+    slidenote.textarea.value = slidenote.textarea.value.substring(0,actelement.posinall) +
+                                charttype +
+                                slidenote.textarea.value.substring(slidenote.textarea.value.indexOf("\n",actelement.posinall));
+    console.log("parseneu forced by chartjs-insertbutton");
+    var diff = charttype.length - actelement.mdcode.length;
+    console.log("diff"+diff);
+    slidenote.textarea.selectionEnd = selectionend+diff;
+    slidenote.textarea.selectionStart = selectionstart+diff;
+    slidenote.parseneu();
+    slidenote.textarea.focus();
+  }else{
+    slidenote.insertbutton(charttype);
+  }
+}
+newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"||chart||pie","||chart||", insertfunction);
+newtheme.addEditorbutton('<img src="themes/chartjs/barbutton.png">',"||chart||bar","||chart||", insertfunction);
+newtheme.addEditorbutton('<img src="themes/chartjs/linebutton.png">',"||chart||line","||chart||", insertfunction);
 
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme});
 
