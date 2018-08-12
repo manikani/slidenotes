@@ -52,6 +52,7 @@ function initeditor(){
 			//autofocus tonfocus="initeditor(this.value);
 			texted.onscroll=function(){slidenote.scroll(texted);};
 			texted.onclick = function(){console.log("parseneu forced by click"+this.selectionEnd);slidenote.parseneu();};
+			texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
 			wys.onmouseup=function(event){slidenote.wysiwyg.copyCursorToTextarea(event); console.log("onmouseupend");};
 			wys.onmousedown=function(event){slidenote.wysiwyg.mousedown(event);};
 			wys.onpaste=function(event){

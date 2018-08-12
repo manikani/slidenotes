@@ -2377,6 +2377,9 @@ pagegenerator.prototype.optionsTab = function(tabnr){
 //hideThemes versteckt die Theme-auswahl bei klick auf close
 pagegenerator.prototype.hideThemes = function(){
 	document.getElementById("options").classList.remove("visible");
+	slidenote.textarea.focus();
+	console.log("parseneu forced after optionsclose");
+	slidenote.parseneu();
 }
 //changeThemeStatus erwartet eine themenr und ändert das entsprechende theme
 pagegenerator.prototype.changeThemeStatus = function(themenr, status){
