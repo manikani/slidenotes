@@ -80,6 +80,7 @@ newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"||chart||pi
 newtheme.addEditorbutton('<img src="themes/chartjs/barbutton.png">',"||chart||bar","||chart||");
 newtheme.addEditorbutton('<img src="themes/chartjs/linebutton.png">',"||chart||line","||chart||");
 
+slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){
   //get all data-blocks with chart:

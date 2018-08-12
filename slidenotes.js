@@ -950,33 +950,13 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	for(x=0;x<lines.length;x++){
 		var lineclass="backgroundline";
 		var imgtemptext ="";
-		//checking for images:
-		/*if(imagesinline[x]!=null){
-			//there are images in this line:
-			lineclass+=" imageline";
-
-			for(var im=0;im<imagesinline[x].length;im++){
-				var img = imagesinline[x][im];
-				if(img.src.substring(0,4)!="http" && slidenote.base64images){
-					//base64images is active, so check if image is in database:
-					if(slidenote.base64images.imageByName(img.src)!=null){
-						//base64image found in database:
-						console.log("image found: "+img.src);
-						imgtemptext+= '<img src="'+slidenote.base64images.imageByName(img.src).base64url+'">';
-					}else{
-						//base64image not found in database:
-						console.log("imagesrc:"+img.src);
-						//imgurl = "images/imageupload.png";
-						imgtemptext+= '<img src="images/imageupload.png">';
-					}
-				} else {
-					imgtemptext+='<img src="'+img.src+'">';
-				}
-			}
-		}//end of imagesinline[x]!=null
-		imgtemptext ="";*/
+		var emptyline = "";
+		if(this.lineswithhtml[x]==="data" && (lines[x].length==0 || lines[x]==='<span id="carret"></span>'))emptyline="&nbsp;";
 		lineclass += " "+slidenote.parser.lineswithhtml[x];
-		temptext += imgtemptext +'<span class="linenr">'+x+'</span><span class="'+lineclass+'">'+lines[x]+'</span>';
+		temptext += imgtemptext +'<span class="linenr">'+x+
+								'</span><span class="'+lineclass+'">'+lines[x]+
+								emptyline+
+								'</span>';
 
 		temptext+="<br>\n";
 	}
@@ -1085,6 +1065,8 @@ emdparser.prototype.CarretOnElement = function(carretpos){
 	for(var x=0;x<this.map.insertedhtmlelements.length;x++){
 		var actel = this.map.insertedhtmlelements[x];
 		var actelend = actel.posinall+actel.mdcode.length ;
+		//var linenr = this.lineAtPosition(carretpos);
+		//if(this.map.lineswithhtml[linenr]==="data")
 		if(actel.mdcode.substring(0,1) === "#")actelend = this.map.lineend[actel.line]; //TODO:linepos
 		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall;
 		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
@@ -1451,7 +1433,9 @@ emdparser.prototype.parsenachzeilen = function(){
 				var dataende = x+1;
 				var scanweiter = true;
 				while(dataende<lines.length && scanweiter) if(lines[dataende].substring(0,datatag.length)==datatag)scanweiter=false;else dataende++;
-				if(dataende==lines.length || lines[dataende].substring(0,datatag.length)!=datatag){
+			 	if(!slidenote.datatypes.isvalid(datatyp)){
+					this.perror.push(new parsererror(x,0,lines[x].length-1,"data","not a valid datatype"));
+				} else if(dataende==lines.length || lines[dataende].substring(0,datatag.length)!=datatag){
 					this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol "+datatag));
 					this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol "+datatag));
 					this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
@@ -1478,11 +1462,17 @@ emdparser.prototype.parsenachzeilen = function(){
 					//mapping des gesamten blocks:
 					//this.map.addElement({line:x,pos:0,html:"<data>",mdcode:altelinie,typ:"start",wystextveraenderung:altelinie.length});
 					//this.map.addElement({line:dataende,pos:0,html:"</data>",mdcode:altelinieende,typ:"start",wystextveraenderung:altelinieende.length});
-					this.map.addElement({line:x,pos:0,html:"<data>",mdcode:"",typ:"start",wystextveraenderung:0});
+					var mapstartel = {line:x,pos:0,html:"<data>",mdcode:altelinie,typ:"start",wystextveraenderung:0};
+					var mapendel = {line:dataende,pos:0,html:"</data>",mdcode:altelinieende,typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
+					mapstartel.brotherelement = mapendel;
+
 					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</data>",mdcode:"",typ:"end",wystextveraenderung:0});
 					//datenobjekt speichern:
 					if(this.dataobjects == null)this.dataobjects = new Array();
 					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
+					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
+					this.map.addElement(mapstartel);
+					this.map.addElement(mapendel);
 					console.log("neues dataobjekt hinzugefügt");
 					console.log(this.dataobjects);
 				}
@@ -2630,6 +2620,27 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 	//als letztes die präsentation:
 	this.themeobjekts="";
 	this.presentation = new pagegenerator(this.parser,this.presentationdiv, this);
+
+	//datablock types:
+	this.datatypes = new Array(); //objects with type, mdcode, theme
+	this.datatypes.isvalid = function(datatype){
+		var result=false;
+		for(var x=0;x<this.length;x++){
+			if(this[x].type===datatype)result=true;
+		}
+		return result;
+	}
+	/*examples:
+	slidenote.datatypes = [
+		{type:"chart", mdcode:false, theme:chartjs},
+		{type:"table", mdcode:true, theme:table},
+		{type:"latex", mdcode:false, theme:latex},
+		{type:"flow", mdcode:false, theme:flowjs},
+		{type:"section", mdcode:true, theme:section},
+		{type:"header",mdcode:true, theme:persistantheaderjs}
+	]
+
+	*/
 
 	//edit-modus:
 	this.wysiwygactivated = false;
