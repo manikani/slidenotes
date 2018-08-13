@@ -1613,6 +1613,102 @@ emdparser.prototype.parsenachzeilen = function(){
 
 
 		}//page-break ist jetzt eingefügt
+		//footnote-anchor
+		if(lines[x].indexOf("[^")>0){ //footnote-anchors arent allowed at linestart
+			console.log("footnoteanchor start at line"+x);
+			var pseudozeile = pseudolines[x];
+			while(pseudozeile.indexOf("[^")>-1){
+				var actpos = pseudozeile.indexOf("[^");
+				var endpos = pseudozeile.indexOf("]",actpos);
+				var footname;
+				var error=null;
+				if(endpos!=-1){
+					footname = pseudozeile.substring(actpos+2,endpos);
+					var footident = "[^"+footname+"]:";
+					//search for footnote:
+					var footnoteline=null;
+					for(var fx=x+1;fx<lines.length;fx++){
+						//console.log("footnoteparse fx"+fx);
+						if(lines[fx].substring(0,3)==="---")break;
+						if(lines[fx].substring(0,footident.length)===footident){
+							footnoteline=fx;
+							//console.log("footnoteline:"+footnoteline+"fx"+fx);
+						}
+					}
+					//console.log("footnote "+footident+" line:"+footnoteline);
+					if(footnoteline==null){
+						//error: no footnote found
+						error="no footnote found";
+						this.perror.push(new parsererror(x,actpos,endpos+1,"footnote-anchor",error));
+					}else{
+						//footnote anchor is ready, footnote found on same page at line footnoteline
+						//check if footnote is last element on page or only followed by other footnotes:
+						var islastelement=true;
+						for(var fx=footnoteline;fx<lines.length;fx++){
+							if(this.lines[fx].substring(0,3)==="---")break;
+							if(lines[fx].substring(0,2)!="[^" && this.lineswithhtml!="footnote"){
+								islastelement=false;
+								//console.log("footnote afterline "+fx+":"+lines[fx])
+							}
+						}
+						if(islastelement){
+							//everything is good, save the map-parsing:
+							this.lineswithhtml[footnoteline]="footnote";
+							var fstart = {line:x,pos:actpos,html:"<sup>",mdcode:"[^",
+								typ:"start",wystextveraenderung:2, footnoteline:footnoteline};
+							var fend = {line:x, pos:endpos, html:"</sup>",typ:"end",mdcode:"]",
+								brotherelement:fstart, wystextveraenderung:1};
+							fstart.brotherelement = fend;
+							var fnote = {line:footnoteline, pos:0, typ:"start",
+								html:"<footnote>"+footname+":",mdcode:footident,
+							 	footanchor:fstart, tag:"footnote"};
+							fstart.footer = fnote;
+							this.map.addElement(fstart);
+							this.map.addElement(fend);
+							this.map.addElement(fnote);
+							//do the changes to actual lines:
+							var rstart = lines[x].indexOf("[^");
+							var rend = lines[x].indexOf("]",rstart);
+							//console.log("footnote change linesx:"+rstart+","+rend+"\n"+lines[x]);
+							lines[x] = lines[x].substring(0,rstart)+"<sup>"+
+													lines[x].substring(rstart+2,rend)+"</sup>"+
+													lines[x].substring(rend+1);
+							lines[footnoteline] = "<footnote>"+footname+":"+
+																		lines[footnoteline].substring(footident.length)+"</footnote>";
+
+						}else{
+							//error footnote is not the last element on the page
+							error = "footnote is not last element on the page";
+						}
+					}
+				}else{
+					error= "footnote-anchor not ready yet - missing symbol ]";
+					var nextspace = pseudozeile.indexOf(" ",actpos);
+					this.perror.push(new parsererror(x,actpos,nextspace,"footnote-anchor","missing endsymbol ]"));
+				}
+				if(error!=null){
+					console.log("footnote error:"+error);
+					break;
+				}
+				pseudozeile = pseudozeile.substring(0,actpos)+ "€€"+
+											pseudozeile.substring(actpos+2);
+			}//while-loop
+		}
+		//end of footnote-anchor
+		//footnote
+		if(lines[x].substring(0,2)==="[^"){
+			//footnote shouldnt appear right now, therefore its missing an anchor or else:
+			var pseudozeile = pseudolines[x];
+			var endpos = pseudozeile.indexOf("]:");
+			if(endpos===-1){
+				var nextspace = pseudozeile.indexOf(" ");
+				this.perror.push(new parsererror(x,0,nextspace,"footnote","missing endsymbol ]:"));
+			}else{
+				this.perror.push(new parsererror(x,0,endpos+2,"footnote","missing footanchor"));
+				console.log("footnote missing footanchor");
+			}
+		}
+		//end of footnote
 		//inline code:
 		if(lines[x].indexOf("`")>-1){
 			var codepos =0;
@@ -2662,6 +2758,7 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 
 	//markdowneditor-sachen:
 	this.lasttyping = new Date().getTime();
+	this.lastpressedkey = "";
 }
 
 slidenotes.prototype.choseEditor=function(editor){
@@ -2821,15 +2918,19 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 				if(this.textarea.selectionEnd-this.textarea.selectionStart>0){
 					console.log("parseneu forced because of selection");
 					setTimeout("slidenote.parseneu()",50); //on selection parse anew
+				}else if(this.lastpressedkey==="Dead"){
+					//last key pressed was a dead key, so parse anew:
+					console.log("parseneu forced because of dead-key");
+					setTimeout("slidenote.parseneu()",50);
 				}else{
 					var cursor = document.getElementById("carret");
 					cursor.innerHTML = cursor.innerHTML+""+key;
+					console.log("actkey:"+key+"last key:"+this.lastpressedkey);
 				}
 			}
 
 			//this.parseLater();
 		}
-
 	}
 
 	//from here on only if wysiwyg is activated:
@@ -2890,7 +2991,7 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 	this.lastcarretpos = carretpos;*/
 	if(key=="undefined")key=getKeyOfKeyCode(event.keyCode);//key=String.fromCharCode(event.keyCode);
 	if(this.texteditorerroractivated){
-		var renderkeys = "*_#"
+		var renderkeys = "*_#]:"
 		if(key==="Enter" || key==="Backspace" || key==="Delete" || renderkeys.indexOf(key)>-1){
 			console.log("parseneu forced after key "+key);
 
@@ -2992,6 +3093,12 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 			this.parseneu();
 			this.presentation.showpresentation();
 		}
+		if(this.lastpressedkey==="Dead"){
+			console.log("parseneu forced by dead key");
+			this.parseneu();
+
+		}
+		this.lastpressedkey = key;
 
 	}
 
