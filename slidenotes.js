@@ -2022,6 +2022,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	this.loadTheme("chartjs");
 	this.loadTheme("table");
 	this.loadTheme("imgtourl");
+	this.loadTheme("katex");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
