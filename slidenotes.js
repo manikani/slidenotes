@@ -1660,7 +1660,7 @@ emdparser.prototype.parsenachzeilen = function(){
 								brotherelement:fstart, wystextveraenderung:1};
 							fstart.brotherelement = fend;
 							var fnote = {line:footnoteline, pos:0, typ:"start",
-								html:"<footnote>"+footname+":",mdcode:footident,
+								html:"<p>"+footname+":",mdcode:footident,
 							 	footanchor:fstart, tag:"footnote"};
 							fstart.footer = fnote;
 							this.map.addElement(fstart);
@@ -1673,8 +1673,8 @@ emdparser.prototype.parsenachzeilen = function(){
 							lines[x] = lines[x].substring(0,rstart)+"<sup>"+
 													lines[x].substring(rstart+2,rend)+"</sup>"+
 													lines[x].substring(rend+1);
-							lines[footnoteline] = "<footnote>"+footname+":"+
-																		lines[footnoteline].substring(footident.length)+"</footnote>";
+							lines[footnoteline] = "<p>"+footname+":"+
+																		lines[footnoteline].substring(footident.length)+"</p>";
 
 						}else{
 							//error footnote is not the last element on the page
@@ -2165,6 +2165,7 @@ pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
 	//this.pagestyles.push(new stylepager(new Array("h2","ol","h2","ol"),'<div class="procontra">',"</div>"));
 	//this.pagestyles.push(new stylepager(new Array("h2","text"),'<div class="textblock">','</div>'));
 	//this.pagestyles.push(new stylepager(new Array("h2","text"),'<div class="textblockliste">','</div>',"multiple")); komplexere muster erlauben: alle einschließen
+	this.pagestyles.push(new stylepager(new Array("footnote"),'<footer>','</footer>'));
 
 
 }
