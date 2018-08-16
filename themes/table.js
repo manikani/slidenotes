@@ -2,6 +2,7 @@ var newtheme = new Theme("table");
 newtheme.description = "Tables: a simple table-Extension. Accepts different formats to transform Data-Block into an html-table";
 
 newtheme.addEditorbutton('table',"||table||","||table||");
+slidenote.datatypes.push({type:"table",mdcode:false,theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){
   var datadivs = slidenote.presentationdiv.getElementsByTagName("data");
