@@ -38,6 +38,7 @@ function slidenoteGuardian(slidenote){
   this.notetitle = "slidenotetest"; //the title of the saved slidenote - normaly set via cms
   //helpers for autosave:
   this.lastNoteFormId;
+  this.isencryptingimages = false;
   //this.lastTimeActive = new Date().getTime(); //last time user was active - needed for Timeout before saving
   //can we start the init here? why not?
   this.init();
@@ -115,6 +116,8 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
 }
 
 slidenoteGuardian.prototype.saveNote = async function(destination){
+  var starttime = new Date().getTime();
+  console.log("starting save note to destination "+destination);
   //saves Note to cmsArea -> CMS or to local destination
   //destination is cms or local - will be encrypted nevertheless
   if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null)return;
@@ -135,6 +138,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   let result = ivstring+utf8string;//save iv in front of code
   //save Images:
   let encimgstring="";
+  var imghash = null;
   if(this.slidenote.base64images.notempty){
     if(destination ==="cms"){
       //first get the fields right:
@@ -143,14 +147,24 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
       let newimghash = await this.hash(this.slidenote.base64images.allImagesAsString());
       if(this.cmsImagesHash.value != newimghash){
         console.log("save images with hash:"+newimghash);
-        encimgstring = await this.encryptImages(); //encrypt imagestring
-        this.cmsImagesHash.value = newimghash; //send new hash to cms
+        if(!this.isencryptingimages){
+          console.log("its not encrypting so start:"+this.isencryptingimages);
+          this.isencryptingimages = true;
+          encimgstring = await this.encryptImages(); //encrypt imagestring
+          this.cmsImagesHash.value = newimghash; //send new hash to cms
+          this.isencryptingimages = false; //allow further encrypting
+          var enctime = new Date().getTime() - starttime;
+          console.log("Timecheck: encrypted imgstring in "+enctime+"Ms");
+        }else{ console.log("still encrypting images - do nothing"); return;}
       } else{
         console.log("images did not change:"+newimghash);
       }
     }else if(destination==="local"){
-      //saving images to localStorage - TODO: do we want to check if already saved?
-      encimgstring = await this.encryptImages();
+      //saving images to localStorage - TODO: do we want to check if already saved? Yes, because it can be quite bothersome to wait!
+      imghash = await this.hash(this.slidenote.base64images.allImagesAsString());
+      if(imghash != this.localstorage.getItem("imghash")){
+        encimgstring = await this.encryptImages();
+      }else {imghash = null;}
     }
   }
   if(destination ==="cms"){
@@ -161,19 +175,29 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     //if(imagestring.length>0)this.cmsImages.value = ivstring+imagestring;
     //TODO: images?
     if(encimgstring!=""){
-      this.cmsImages.value=encimgstring;
-      this.sendToCMS("images");
+      var starttimecopy = new Date().getTime();
+      this.cmsImages.value=encimgstring; //dont do it for test purpose
+      var endtimecopy = new Date().getTime();
+      var usedtimecopy = endtimecopy - starttimecopy;
+      console.log("Timecheck: Copied imagestring with length "+encimgstring.length+" in "+usedtimecopy+"Ms");
+      this.sendToCMS("images"); //cant do that like this? because copy is async?
+
     }
     //TODO: sending result to CMS
     this.sendToCMS("note");
   }else if(destination==="local"){
     //TODO: testing max-size of local storage
     this.localstorage.setItem('cryptnote',result); //saving it to local storage
-    this.localstorage.setItem('cryptimagestring',encimgstring);
     this.localstorage.setItem('title',this.notetitle);
-    //TODO: save images localy
-  }
+    if(imghash!=null){
+      this.localstorage.setItem('cryptimagestring',encimgstring);
+      this.localstorage.setItem('imghash',imghash);
+    }
 
+  }
+  var endtime = new Date().getTime();
+  var usedtime = endtime - starttime;
+  console.log("Timecheck: saved node to destination "+destination+" in"+usedtime+"Ms");
 
 }
 
