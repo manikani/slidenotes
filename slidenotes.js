@@ -1259,7 +1259,82 @@ emdparser.prototype.positionAtPage = function(page){
 	console.log("found position at:"+position);
 	return position;
 }
+/* 	renderMapToPresentation is a function which takes the map and lineswithhtml
+*		information to prerender the presentation-page. it renders into pure basic html
+* 	with pagebreaks and such
+*/
+emdparser.prototype.renderMapToPresentation = function(){
+  var lines = this.returnparsedlines(this.sourcecode);
+  var changes = this.map.insertedhtmlelements;
 
+  //add missing parts to changes - eg p-tags, imageline, empty line etc.
+  for(var lwh=0;lwh<lines.length;lwh++){
+    if(this.lineswithhtml[lwh]==null&& lines[lwh].length==0){
+      this.lineswithhtml[lwh]="empty";
+    }else if(this.lineswithhtml[lwh]==null){
+      //TODO: check if only images in line, then its an imageline
+      this.lineswithhtml[lwh]="text";
+      var linestart = this.map.linestart[lwh];
+      changes.push({line:lwh, pos:0, posinall:linestart, html:"<p>", mdcode:"", typ:"start"});
+      var followlines=lwh+1;
+      while(this.lineswithhtml[followlines]==null &&
+              followlines<lines.length &&
+              lines[followlines].length>0 //dont parse in empty lines, break on them
+              ){
+        this.lineswithhtml[followlines]="text";
+        followlines++;
+        //console.log("fll++");
+      }
+    followlines--; //followlines geht jetzt bis zur letzten zeile
+    lineend = this.map.lineend[followlines];
+
+    changes.push({line:followlines, pos:lines[followlines].length,
+      posinall:lineend, html:"</p>", mdcode:"", typ:"start"});
+  }//lineswithhtml==null
+  }
+
+  changes.sort(function (a,b){return a.posinall-b.posinall});
+  //helper function for change:
+  function execute(element){
+    line = lines[element.line];
+    begin = element.pos;
+    end = element.pos + element.mdcode.length;
+    line = line.substring(0,begin)+element.html+line.substring(end);
+    lines[element.line]=line;
+  }
+	console.log(changes);
+  for(var x=changes.length-1;x>=0;x--){
+    var change = changes[x];
+		console.log(change);
+    if(change.tag==="title"){
+			console.log("title found");
+      lines[change.line] = change.html + lines[change.line].substring(change.mdcode.length)+change.htmlend;
+    }else{
+      execute(change);
+    }
+  }
+
+  var temptext ="";
+  for(var lx=0;lx<lines.length;lx++){
+		temptext +=lines[lx];
+		//if(lines[lx].indexOf(">",lines[lx].length-2)==-1 && lines[lx].substring(0,5)!="-----")temptext+="<br>";
+		if(this.lineswithhtml[lx]=="text" && lines[lx].indexOf("</p>")==-1 && lx<lines.length-1)temptext+="<br>";
+		if(this.lineswithhtml[lx]=="code"&& lx<lines.length-1)temptext+="<br>";
+		//if(this.lineswithhtml[x]=="text")alert(lines[x]+lines[x].indexOf("</div>"));
+		//alert(this.lineswithhtml[x]);
+		if(lx<lines.length-1)temptext +="\n";
+
+	}
+	this.parsedcode=temptext;
+  this.parselines(temptext);
+
+}
+
+
+/*  parseMap is the parsefunction which parses the lines of the sourcecode into
+ +  a map (parser.map) and into lineswithhtml (parser.lineswithhtml)
+ + with this information the page can be rendered for mdcodeeditor and page later on
+ */
 emdparser.prototype.parseMap = function(){
   var TimecheckStart = new Date().getTime();
   //new parser parsing only information, does not render anything
@@ -1301,7 +1376,11 @@ emdparser.prototype.parseMap = function(){
       if(lines[x].substring(0,3)==="##")rauten="###";
       var ersatz = "€€€";
       ersatz = ersatz.substring(0,rauten.length);
-      this.map.addElement({line:x,pos:0,html:"<h"+rauten.length+">",mdcode:rauten,typ:"start",wystextveraenderung:rauten.length});
+      this.map.addElement({
+				line:x,pos:0,html:"<h"+rauten.length+">",mdcode:rauten,
+				typ:"start", tag:"title", htmlend:"</h"+rauten.length+">",
+				wystextveraenderung:rauten.length
+			});
 			this.lineswithhtml[x]="h"+rauten.length;
 
     }//end title
@@ -3256,6 +3335,7 @@ pagegenerator.prototype.showpresentation = function(){
 	if(!fullscreen){
 		//this.init();
 		fullscreen=true;
+		if(parsetest)slidenote.parser.renderMapToPresentation();
 		this.init(slidenote.parser, document.getElementById("praesentation"));
 		var test2 = document.getElementsByTagName("code");
 		if(test2!=null)console.log(test2.length+"codes");
