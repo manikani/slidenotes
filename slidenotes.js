@@ -1076,6 +1076,7 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 
 		}
 	}
+	console.log(changes);
 	var backgroundlines = document.getElementsByClassName("backgroundline");
 	if(backgroundlines.length>=cursorline)backgroundlines[cursorline].innerHTML=codeofline;
 };
@@ -1955,7 +1956,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 			this.perror.push(new parsererror(x,1,lines[x].length-1,"list","missing space after *"));
 		}
 		//numeric list
-		console.log("x:"+x+"lwh:"+this.lineswithhtml[x]);
+		//console.log("x:"+x+"lwh:"+this.lineswithhtml[x]);
 		if(this.lineswithhtml[x]!="code"&& this.lineswithhtml[x]!="data" &&
 						//hier kommt die regex hin, die prüft ob eine liste anfängt:
 						//bei performace-problemen hier die regex durch andere prüfung ersetzen.
@@ -2024,7 +2025,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 		}
 		if(lines[x].substring(0,2)=="> "){
 			qlc=x;
-			console.log("quote gefunden: "+lines[qlc]);
+			//console.log("quote gefunden: "+lines[qlc]);
 			//console.log("wasn los? qlc="+qlc+" lines-länge:"+lines.length + "lines[qlc]="+lines[qlc]);
 			//var laengebiszeileglc = laengebiszeile;
 			while(qlc<lines.length && lines[qlc].substring(0,2)=="> " ){ //}&& confirm("weiter in line?"+qlc+"llenght:"+lines.length)){
@@ -2123,7 +2124,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					var altelinieende=lines[dataende];
 					lines[x]="<data>"+lines[x];
 					lines[dataende]+="</data>";
-					console.log("dataende:"+dataende+"zeile:"+lines[dataende]);
+					//console.log("dataende:"+dataende+"zeile:"+lines[dataende]);
 					var rawdata = new Array();
 					//sanitize-code of datablock für wysiwyg und parser:
 					for(var dataz=x+1;dataz<dataende;dataz++){
@@ -2150,8 +2151,8 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
 					this.map.addElement(mapstartel);
 					this.map.addElement(mapendel);
-					console.log("neues dataobjekt hinzugefügt");
-					console.log(this.dataobjects);
+					//console.log("neues dataobjekt hinzugefügt");
+					//console.log(this.dataobjects);
 				}
 			}
 		} //end of datablock, lines[x] fängt jetzt mit <data> an
@@ -2171,13 +2172,13 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 				if(imginimg>-1 && imginimg<imgposend){
 					this.perror.push(new parsererror(x,imgpos,nextspace,"image","image in image"));//
 					error="imginimg";
-					console.log("image in image: imgpos:"+imgpos+"imginimg"+imginimg+"imgposend"+imgposend);
+					//console.log("image in image: imgpos:"+imgpos+"imginimg"+imginimg+"imgposend"+imgposend);
 
 				}
 				if(imgposend==-1 && imginimg==-1){
 					this.perror.push(new parsererror(x,imgpos,nextspace,"image","missing endsymbol )"));//
 					error="imgende";
-					console.log("image: missing endsymbol"+imgpos+"->"+nextspace);
+					//console.log("image: missing endsymbol"+imgpos+"->"+nextspace);
 
 				}
 				if(imgposmid==-1){
@@ -2185,7 +2186,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					error="imgmid";
 				}
 				imgaktpos=imgpos+4;
-				console.log("image imgpos:"+imgpos+"imgaktpos:"+imgaktpos+"nextspace:"+nextspace+"error:"+error);
+				//console.log("image imgpos:"+imgpos+"imgaktpos:"+imgaktpos+"nextspace:"+nextspace+"error:"+error);
 				var imgurl = pseudozeile.substring(imgposmid+2,imgposend);
 				var imgalt = pseudozeile.substring(imgpos+2,imgposmid);
 				//TODO: if-abfrage ob img unter url existiert, sonst fehler
@@ -2194,7 +2195,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					var imgpos2 = lines[x].indexOf("![");
 					var imgpos2end = lines[x].indexOf(")",imgpos2);
 					lines[x] = lines[x].substring(0,imgpos2)+imghtml+lines[x].substring(imgpos2end+1);
-					if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
+					//if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
 					//this.insertedhtmlinline[x].push(new Array(pseudozeile.indexOf("![]("),"![]("+imgurl+")",imghtml));
 					this.map.addElement({line:x,pos:pseudozeile.indexOf("!["),
 															html:imghtml,
@@ -2257,7 +2258,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 				var tmplinktext = pseudozeile.substring(pseudoanf+1,pseudomitte);
 				var tmphtml = '<a href="'+linkurl+'">'+tmplinktext+'</a>';
 				var tmpmdcode = sourcelines[x].substring(pseudoanf,pseudoend+1);
-				console.log("tmpmdcode:"+tmpmdcode + "sourceline:"+sourcelines[x]);
+				//console.log("tmpmdcode:"+tmpmdcode + "sourceline:"+sourcelines[x]);
 				this.map.addElement({line:x,pos:pseudoanf,html:tmphtml,mdcode:tmpmdcode,
 					typ:"link",
 					wystextveraenderung:tmpmdcode.length-tmplinktext.length,
@@ -2303,7 +2304,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 		}//page-break ist jetzt eingefügt
 		//footnote-anchor
 		if(lines[x].indexOf("[^")>0){ //footnote-anchors arent allowed at linestart
-			console.log("footnoteanchor start at line"+x);
+			//console.log("footnoteanchor start at line"+x);
 			var pseudozeile = pseudolines[x];
 			while(pseudozeile.indexOf("[^")>-1){
 				var actpos = pseudozeile.indexOf("[^");
@@ -2375,7 +2376,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					this.perror.push(new parsererror(x,actpos,nextspace,"footnote-anchor","missing endsymbol ]"));
 				}
 				if(error!=null){
-					console.log("footnote error:"+error);
+					//console.log("footnote error:"+error);
 					break;
 				}
 				pseudozeile = pseudozeile.substring(0,actpos)+ "€€"+
@@ -2393,7 +2394,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 				this.perror.push(new parsererror(x,0,nextspace,"footnote","missing endsymbol ]:"));
 			}else{
 				this.perror.push(new parsererror(x,0,endpos+2,"footnote","missing footanchor"));
-				console.log("footnote missing footanchor");
+				//console.log("footnote missing footanchor");
 			}
 		}
 		//end of footnote
@@ -2433,14 +2434,14 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 						this.map.addElement({line:x,pos:codestart+1+hotpositions[hotp][0],html:hotpositions[hotp][1],mdcode:"&",typ:"hotcode",wystextveraenderung:0});
 					}
 					//auch für einfache zeichen vor codeummantelung schützen:
-					console.log("inlinecode hotcode vor change:"+hotcode+" length:"+hotcode.length);
+					//console.log("inlinecode hotcode vor change:"+hotcode+" length:"+hotcode.length);
 					var oldsymbol = new Array("*", "<",">","~","[","]","(",")","|","-","_");
 //					var newsymbol = new Array("&lowast;","&lt;","&gt;","&tilde;","&#91;","&#93;","&#40;","&#41;","&#124;","&#45;");
 					for(var sym=0;sym<oldsymbol.length;sym++)hotcode = this.replace(hotcode,oldsymbol[sym],"€");
-					console.log("inlinecode hotcode nach change:"+hotcode+" length:"+hotcode.length);
-					console.log("inlinecode pseudoline:"+pseudolines[x]);
+					//console.log("inlinecode hotcode nach change:"+hotcode+" length:"+hotcode.length);
+					//console.log("inlinecode pseudoline:"+pseudolines[x]);
 					pseudolines[x]=pseudolines[x].substring(0,textareacodestart)+"€"+hotcode+"€"+pseudolines[x].substring(textareacodeend+1);//+1
-					console.log("inlinecode pseudoline after:"+pseudolines[x]);
+					//console.log("inlinecode pseudoline after:"+pseudolines[x]);
 					//console.log("inlinecode abgeschlossen");
 					codepos=codeend+1; //suche nach dem endzeichen weiter
 
@@ -2540,7 +2541,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 										+ lines[x].substring(pestart+this.parseelemente[pare].emdstart.length, peend)
 										+ this.parseelemente[pare].htmlend + lines[x].substring(peend+this.parseelemente[pare].emdend.length);
 							//positionsbestimmung für wysiwyg:
-							console.log("pseudolines["+x+"] ="+pseudolines[x]);
+							//console.log("pseudolines["+x+"] ="+pseudolines[x]);
 							var posanf = pseudolines[x].indexOf(this.parseelemente[pare].emdstart);
 							var posend = pseudolines[x].indexOf(this.parseelemente[pare].emdend,
 																pseudolines[x].indexOf(this.parseelemente[pare].emdstart)
@@ -2567,13 +2568,13 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 							var ersatzend = "";
 							for(eax=0;eax<this.parseelemente[pare].emdstart.length;eax++)ersatzanf+="€";
 							for(eax=0;eax<this.parseelemente[pare].emdend.length;eax++)ersatzend+="€";
-							console.log(this.parseelemente[pare].emdstart + " wird zu "+ersatzanf);
+							//console.log(this.parseelemente[pare].emdstart + " wird zu "+ersatzanf);
 							pseudolines[x] = pseudolines[x].substring(0,posanf)+ersatzanf
 											+pseudolines[x].substring(posanf+ersatzanf.length,posend)
 											+ersatzend
 											+pseudolines[x].substring(posend+ersatzend.length);
-							console.log("pseudoline[x]"+pseudolines[x]);
-							console.log("pseudoline-end");
+							//console.log("pseudoline[x]"+pseudolines[x]);
+							//console.log("pseudoline-end");
 						}else if(peend>-1 && pestart>-1 && mline>-1){
 							//endzeichen in multiline gefunden:
 							lines[x]= lines[x].substring(0,pestart)+this.parseelemente[pare].htmlstart
