@@ -104,6 +104,18 @@
 .backgroundline .imagesrc.imagenotfound{
 	color:red;
 }
+.backgroundline.footnote{
+	background:lightgrey;
+	display:inline-block;
+	width:100%;
+}
+.backgroundline .firstfootnote{
+	border-top:1px dashed;
+	margin-top:-1px;
+}
+.backgroundline .footnoteanchor{
+	color:blue;
+}
 /*mdcodeeditor imagespreview */
 #texteditorimagespreview{
 	font-family:monospace;
