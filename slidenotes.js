@@ -1259,13 +1259,622 @@ emdparser.prototype.positionAtPage = function(page){
 	return position;
 }
 
-/* parsenachzeilen:
+emdparser.prototype.parseMap = function(){
+  var TimecheckStart = new Date().getTime();
+  //new parser parsing only information, does not render anything
+  function substitutewitheuro(textlength){
+    var signs = "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€";
+    while(textlength>signs.length)signs+=signs;
+    return signs.substring(0,textlength);
+  }
+  var lines = this.returnparsedlines(this.sourcecode);
+  var linestartpos = 0;
+  //sort out <:
+  for(var x=0;x<lines.length;x++){
+    var symbol = "<";
+    var newsymbol = "&lt;";
+    var temptext = lines[x];
+
+    while(temptext.indexOf(symbol)>=0){
+      var actpos = temptext.indexOf(symbol);
+      temptext = temptext.substring(0,actpos)+"€"+temptext.substring(actpos+1);
+      this.map.addElement({
+        line:x,pos:actpos,posinall:linestartpos+actpos,
+        html:"&lt;",mdcode:"<",typ:"<",
+        wystextveraenderung:0
+      });
+    }
+    lines[x]=temptext;
+    linestartpos+=lines[x].length+1; //+1 for \n
+  } //end of <
+
+  //scann all lines:
+  for(var x=0;x<lines.length;x++){
+    var linestart = lines[x].substring(0,1);
+
+    //scan line for title
+    if(linestart === "#"){
+      var rauten="#";
+      //how many? as jakob only wants till ### we just check it this way:
+      if(lines[x].substring(0,2)==="##")rauten="##";
+      if(lines[x].substring(0,3)==="##")rauten="###";
+      var ersatz = "€€€";
+      ersatz = ersatz.substring(0,rauten.length);
+      this.map.addElement({line:x,pos:0,html:"<h"+rauten.length+">",mdcode:rauten,typ:"start",wystextveraenderung:rauten.length});
+			this.lineswithhtml[x]="h"+rauten.length;
+
+    }//end title
+    //scan for generic list:
+    if(lines[x].substring(0,2)=="* " || lines[x].substring(0,2)=="- ") {//}||
+        //lines[x].substring(2,4)=="  *"|| lines[x].substring(2,4=="  - ")){
+			glc=x;
+			//var laengebiszeileglc = laengebiszeile;
+			var listzeichen = lines[x].substring(0,2);
+			this.map.addElement({line:x,pos:0,html:"<ul>",mdcode:"",typ:"start",wystextveraenderung:0});
+			var linessearch = lines[glc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+			while(glc < lines.length && lines[glc]!=null && (lines[glc].substring(0,2)==listzeichen || linessearch==0)){
+				if(lines[glc].substring(0,2)==listzeichen){
+					lines[glc] = "€€"+ lines[glc].substring(2);
+					this.map.addElement({line:glc,pos:0,html:"<li>",mdcode:listzeichen,typ:"start",wystextveraenderung:2});
+          this.map.addElement({line:glc,pos:lines[glc].length,html:"</li>",mdcode:"",typ:"end",wystextveraenderung:2});
+					this.lineswithhtml[glc]="ul";
+				} //else if(lines[glc].substring(0,2)=="  "){
+				//	lines[glc]=lines[glc].substring(2);
+			  //		this.map.addElement({line:glc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
+			//	}
+ 				glc++;
+				if(glc<lines.length){
+					linessearch = lines[glc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+				}
+			}
+			glc--;
+			//lines[x]="€€"+lines[x].substring(0,2);
+			//muss ich oben machen
+      this.map.addElement({
+            line:glc, pos:lines[x].length,
+            html:"</ul>",mdcode:"",typ:"end",tag:"endofunorderedlist",
+            wystextveraenderung:0});
+			//lines[glc]=lines[glc]+"</ul>";
+			letztezeile=glc;
+		}
+		//end of ul-scan
+    //TODO: einrückung
+    //numeric list scan:
+    if(this.lineswithhtml[x]!="code"&& this.lineswithhtml[x]!="data" &&
+						//hier kommt die regex hin, die prüft ob eine liste anfängt:
+						//bei performace-problemen hier die regex durch andere prüfung ersetzen.
+						//lines[x].search(/[0-9]+\.\s/)==0)
+						lines[x].search(/^([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\))\s/)==0)
+						{
+			//es gibt eine liste, prüfen mit welchem zeichen/welcher logik:
+			var numlistregexlist = [/^[0-9]+\.\s/, //1.
+													/^[0-9]+\.\)\s/, //1.)
+												 	/^[0-9]+\)\s/, //1)
+											 		/^[a-z]\)\s/, //a)
+													/^[IVX]+\)\s/ ]; //I)
+			var numlistregex;
+			var nlregnr
+			for (var nlrit = 0; nlrit < numlistregexlist.length;nlrit++)if(lines[x].search(numlistregexlist[nlrit])==0)nlregnr=nlrit;
+			numlistregex=numlistregexlist[nlregnr];
+			//numlistregex ist jetzt die gefundene regex
+			var listzeichenarr = [". ", ".) ", ") ", ") ", ") "];
+			var listzeichen = listzeichenarr[nlregnr];
+			var start;
+			if(nlregnr<2)start=lines[x].substring(0,lines[x].indexOf("."));
+				else if(nlregnr==2)start=lines[x].substring(0,lines[x].indexOf(")"));
+			var starttext = "<ol";
+			if(start>0)starttext+=' start="'+start+'"';
+			starttext +=">";
+			this.map.addElement({line:x,pos:0,html:starttext,mdcode:"",typ:"start",wystextveraenderung:0});
+			nlc=x;
+			var linessearch = lines[nlc].search(numlistregex); //lines[nlc].search(/[0-9]+\.\s/);
+			var linessearch2 = lines[nlc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+			while(nlc <lines.length && (linessearch ==0 || linessearch2 ==0)){
+				if(linessearch==0){
+					var tmpmdcode = lines[nlc].substring(0,lines[nlc].indexOf(listzeichen)+listzeichen.length);//". ")+2);
+					this.map.addElement({line:nlc,pos:0,html:"<li>",mdcode:tmpmdcode,
+					typ:"start",wystextveraenderung:tmpmdcode.length});
+          var substitute = "€€€€€€€€€€€€€€€€€€€€€€€€";
+          substitute = substitute.substring(0,tmpmdcode.length);
+					lines[nlc] = substitute+lines[nlc].substring(lines[nlc].indexOf(listzeichen)+listzeichen.length);
+					this.lineswithhtml[nlc]="ol";
+				} /*else if(lines[nlc].substring(0,2)=="  "){
+					//linessearch==2, also leerzeichen gefunden. leerzeichen rausnehmen:
+					//dann wird beim nächsten durchlauf neue liste in liste angelegt
+          //stimmt nicht - funktioniert so nur beim ersten mal :(
+					lines[nlc]=lines[nlc].substring(2);
+					this.map.addElement({line:nlc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
+				}*/
+				nlc++;
+				if(nlc<lines.length){
+					linessearch = lines[nlc].search(numlistregex);///[0-9]+\.\s/); //else linessearch=null;
+					linessearch2 = lines[nlc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
+				}
+			}
+			nlc--;
+
+			//lines[x] = starttext + lines[x];
+			//lines[nlc]+= "</ol>";
+      this.map.addElement({
+        line:nlc, pos:lines[nlc].length, html:"</ol>",
+        mdcode:"", typ:"end",wystextveraenderung:0});
+			letztezeile=nlc;
+			//folgendes geht nicht mehr so, wenn eingerückte listen gibt:
+			//for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="ol";
+		} //end of numeric list scan
+      //TODO: Error-parsing for lists? do we want that?
+
+      //scan for quotes quotes
+  		if(linestart==">" && !(lines[x].substring(0,2)=="> ")){
+  		    this.perror.push(new parsererror(x,1,lines[x].length,"quotes","missing space after >"));
+  		}
+  		if(lines[x].substring(0,2)=="> "){
+  			qlc=x;
+  			console.log("quote gefunden: "+lines[qlc]);
+  			//console.log("wasn los? qlc="+qlc+" lines-länge:"+lines.length + "lines[qlc]="+lines[qlc]);
+  			while(qlc<lines.length && lines[qlc].substring(0,2)=="> " ){ //}&& confirm("weiter in line?"+qlc+"llenght:"+lines.length)){
+  				lines[qlc] = "€€"+lines[qlc].substring(2);
+  				//this.veraenderungen.push(new Array("quote",laengebiszeileglc,2));
+  				//laengebiszeileglc += lines[qlc].length;
+  				qlc++;
+  			}
+  			//if(confirm("abbrechen?"))break;
+  			//console.log("quote gefunden von"+x+" bis:"+qlc)
+  			qlc--;
+  			//lines[x]="<quote>"+lines[x];
+
+  			if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
+  			this.map.addElement({line:x,pos:0,html:"<quote>",mdcode:"> ",typ:"start",wystextveraenderung:2});
+
+  			for(var ql=x;ql<qlc;ql++)this.map.addElement({line:ql,pos:lines[ql].length,
+          html:"<br>",mdcode:"",typ:"end",
+          wystextveraenderung:0
+        })//lines[ql]+="<br>";
+  			//console.log("quotes br-tags abgeschlossen");
+  			//lines[qlc]+="</quote>";
+        this.map.addElement({line:qlc,pos:lines[qlc].length,
+          html:"</quote>",mdcode:"",typ:"end",
+          wystextveraenderung:0
+        })
+  			for(var qil=x+1;qil<=qlc;qil++){
+  				this.map.addElement({line:qil,pos:0,html:"",mdcode:"> ",typ:"start",wystextveraenderung:2});
+  			}
+  			letztezeile = qlc;
+  			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
+  		}//lines[x] fängt jetzt mit <quote> an
+      //codeblock:
+      if(lines[x].length>3 && lines[x].substring(0,3)==="```"){
+        var codeende = x+1;
+        while(codeende < lines.length){
+          if(lines[codeende].substring(0,3)==="```")break;
+          codeende++;
+        }
+        if(codeende===lines.length || lines[codeende].substring(0,3)!="```"){
+          //error: no codeend found
+          this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol ```"));
+        }else{
+          //codeend found:
+          this.map.addElement({
+            line:x,pos:0,html:"<code>",mdcode:lines[x],typ:"start",
+            tag:"codestart", wystextveraenderung:lines[x].length
+          });
+          this.map.addElement({
+            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"start",
+            tag:"codeende",wystextveraenderung:lines[codeende].length
+          });
+          for(var cx = x;cx<=codeende;cx++){
+            lines[cx]=substitutewitheuro(lines[cx].length); //substitute line to avoid further parsing
+            this.lineswithhtml[cx]="code"; //mark lines as codelines
+          }
+
+        }
+      }//end of codeblock
+      //datablock:
+      if(lines[x].length>5 && lines[x].substring(0,2)==="||" && this.lineswithhtml[x]!="data"){
+        var datahead;
+        var datatyp;
+        var rawdata;
+        if(lines[x].indexOf("||",2)<0){
+          //error datahead was not correct:
+          this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol ||"));
+        }else{
+          //datahead is correct:
+          datahead = lines[x];
+          datatyp = datahead.substring(2,datahead.indexOf("||",2));
+          if(!slidenote.datatypes.isvalid(datatyp)){
+            this.perror.push(new parsererror(x,0,lines[x].length-1,"data","not a valid datatype"));
+          }else{
+            var datatag = "||"+datatyp+"||";
+            var dataende = x+1;
+            while(dataende<lines.length){
+              if(lines[dataende].substring(0,datatag.length)===datatag)break;
+              dataende++;
+            }
+            if(dataende==lines.length|| lines[dataende].substring(0,datatag.length)!=datatag){
+              //error no dataend found
+              this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol "+datatag));
+    					this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol "+datatag));
+
+            }else{
+              var rawdata = new Array();
+              for(var rdx=x+1;rdx<dataende;rdx++){
+                rawdata.push(lines[rdx]);
+                if(slidenote.datatypes.elementOfType(datatyp).mdcode==false) //is mdcode allowed? if not:
+                          lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing
+              }
+              for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data"; //fill lineswithhtml with data
+              var mapstartel = {line:x,pos:0,html:"<data>",mdcode:lines[x],typ:"start",wystextveraenderung:0};
+    					var mapendel = {line:dataende,pos:0,html:"</data>",mdcode:lines[dataende],typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
+    					mapstartel.brotherelement = mapendel;
+    					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</data>",mdcode:"",typ:"end",wystextveraenderung:0});
+    					//save dataobject:
+    					if(this.dataobjects == null)this.dataobjects = new Array();
+    					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
+    					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
+    					this.map.addElement(mapstartel); //save parsing to map
+    					this.map.addElement(mapendel); //
+    					console.log("neues dataobjekt hinzugefügt");
+    					console.log(this.dataobjects);
+            } //end of dataend found
+          }//end of is valid datatype
+        }//end of datablockhead found
+      }//end of datablock
+      //image:
+			//console.log("imagesearch in line:"+lines[x]);
+			//console.log("index:"+lines[x].indexOf("!["));
+      if(lines[x].indexOf("![")>-1){
+				//console.log("image found");
+        var imgaktpos=0;
+        while(lines[x].indexOf("![",imgaktpos)>-1 ){
+          var imgpos = lines[x].indexOf("![");
+          var imgposmid = lines[x].indexOf("](",imgpos);
+          var imgposend = lines[x].indexOf(")",imgpos);
+          var imginimg = lines[x].indexOf("![",imgpos+1);
+          var nextspace = lines[x].indexOf(" ",imgpos);
+          if(nextspace==-1)nextspace = lines[x].length;
+          var error = "";
+          if(imginimg>-1 && imginimg<imgposend){
+            this.perror.push(new parsererror(x,imgpos,nextspace,"image","image in image"));//
+  					error="imginimg";
+  					console.log("image in image: imgpos:"+imgpos+"imginimg"+imginimg+"imgposend"+imgposend);
+          }
+          if(imgposend==-1 && imginimg==-1){
+            this.perror.push(new parsererror(x,imgpos,nextspace,"image","missing endsymbol )"));//
+  					error="imgende";
+  					console.log("image: missing endsymbol"+imgpos+"->"+nextspace);
+          }
+          if(imgposmid==-1){
+            this.perror.push(new parsererror(x,imgpos,lines[x].length-1,"image","missing midsymbol )"));//
+            error="imgmid";
+          }
+          imgaktpos = imgpos+2; //next scan after found imagepos regardless of result
+          if(error.length==0){
+            var imgurl = lines[x].substring(imgposmid+2,imgposend);
+            var imgalt = lines[x].substring(imgpos+2,imgposmid);
+            var imghtml = '<img alt="'+imgalt+'" src="'+imgurl+'">';
+            //add element to map:
+            this.map.addElement({
+              line:x, pos:imgpos, html: imghtml,
+              mdcode:lines[x].substring(imgpos,imgposend+1),
+              typ:"image", wystextveraenderung:5+imgurl.length+imgalt.length,
+              src:imgurl, midpos:imgposmid, endpos:imgposend,
+              alt:imgalt
+            });
+            //check if its the only image because its fast - or shouldnt because of datablock?
+            //if(imgpos==0 && lines[x].length==imgposend+1)this.lineswithhtml[x]="image";
+            //image is now parsed - get rid of it:
+            lines[x]=lines[x].substring(0,imgpos)+substitutewitheuro(imgposend+1-imgpos)+lines[x].substring(imgposend+1);
+          }//end of error.length = 0
+        }//end of image-while
+      }//end of imageblock
+      //linkblock:
+      if(lines[x].indexOf("](")>-1){
+        var linkpos = 0;
+        while(lines[x].indexOf("](",linkpos)>-1){
+          var linkmid = lines[x].indexOf("](",linkpos);
+          var linkstart = lines[x].indexOf("[");
+          var linkend = lines[x].indexOf(")",linkmid);
+          var nextspace = lines[x].indexOf(" ",linkmid);
+          var error="";
+          if(nextspace==-1)nextspace=lines[x].length;
+          if(linkstart==-1||linkstart>linkmid){
+            error= "linkstart not found:";
+            this.perror.push(new parsererror(x,linkmid,nextspace,"link","missing startsymbol ["));
+          }
+          if(linkend==-1){
+            error="linkend not found";
+            this.perror.push(new parsererror(x,linkmid,nextspace,"link","missing endsymbol ]"));
+          }
+          if(error===""){
+            //no error found - do your things:
+            var linktext = lines[x].substring(linkstart,linkmid);
+            var linkurl = lines[x].substring(linkmid+2,linkend);
+            var linkmapelstart = {
+              line:x, pos:linkstart,
+              html: '<a href="'+linkurl+'">',
+              mdcode: "[",
+              typ:"link",
+              tag:"linkstart",
+              linkurl:linkurl,
+              linktext:linktext
+            };
+            var linkmapelend = {
+              line:x, pos:linkmid,
+              html:"</a>",
+              mdcode:']('+linkurl+')',
+              typ:"link",
+              tag:"linkend",
+              brotherelement:linkmapelstart
+            };
+            linkmapelstart.brotherelement = linkmapelend;
+            this.map.addElement(linkmapelstart);
+            this.map.addElement(linkmapelend);
+            //get rid of the non-parsing part of the link:
+            lines[x]=lines[x].substring(0,linkstart)+"€"+
+                      lines[x].substring(linkstart+1,linkmid)+
+                      "€€"+substitutewitheuro(linkurl.length)+"€"+
+                      lines[x].substring(linkend+1);
+          }
+          linkpos = linkmid+2; //scan further after actual link regardless of result
+        }//end of while link in line
+      }//end of linkblock
+      //pagebreak:
+      if(lines[x].substring(0,3)==="---"){
+        var error="";
+
+          //search for missing ---
+          var checkforminus = "----------------------------------------------";
+          while(checkforminus.length<lines[x].length)checkforminus+=checkforminus;
+          if(lines[x]!=checkforminus.substring(0,lines[x].length)){
+            error = "not only minus found";
+            this.perror.push(new parsererror(x,0,lines[x].length,"pagebreak","not only - in pagebreak"));
+          }else{
+            this.lineswithhtml[x] = "pagebreak";
+            this.map.addElement({
+              line:x,pos:0,html:"<hr>",mdcode:lines[x],typ:"pagebreak",
+              wystextveraenderung:lines[x].length
+            });
+            this.map.pageend.push({line:x});
+            this.map.pagestart.push({line:x+1});
+            lines[x]=substitutewitheuro(lines[x].length);
+          }
+
+      }//end of pagebreak
+      //footnote-anchor:
+      if(lines[x].indexOf("[^")>0){ //footnote-anchors arent allowed at linestart
+
+          while(lines[x].indexOf("[^")>-1){
+            var actpos = lines[x].indexOf("[^");
+    				var endpos = lines[x].indexOf("]",actpos);
+    				var footname;
+    				var error=null;
+    				if(endpos!=-1){
+    					footname = lines[x].substring(actpos+2,endpos);
+    					var footident = "[^"+footname+"]:";
+    					//search for footnote:
+    					var footnoteline=null;
+    					for(var fx=x+1;fx<lines.length;fx++){
+    						//console.log("footnoteparse fx"+fx);
+    						if(lines[fx].substring(0,3)==="---")break;
+    						if(lines[fx].substring(0,footident.length)===footident){
+    							footnoteline=fx;
+    							//console.log("footnoteline:"+footnoteline+"fx"+fx);
+    						}
+    					}
+    					//console.log("footnote "+footident+" line:"+footnoteline);
+    					if(footnoteline==null){
+    						//error: no footnote found
+    						error="no footnote found";
+    						this.perror.push(new parsererror(x,actpos,endpos+1,"footnote-anchor",error));
+    					}else{
+    						//footnote anchor is ready, footnote found on same page at line footnoteline
+    						//check if footnote is last element on page or only followed by other footnotes:
+    						var islastelement=true;
+    						for(var fx=footnoteline;fx<lines.length;fx++){
+    							if(this.lines[fx].substring(0,3)==="---")break;
+    							if(lines[fx].substring(0,2)!="[^" && this.lineswithhtml!="footnote"){
+    								islastelement=false;
+    								//console.log("footnote afterline "+fx+":"+lines[fx])
+    							}
+    						}
+    						if(islastelement){
+    							//everything is good, save the map-parsing:
+    							this.lineswithhtml[footnoteline]="footnote";
+    							var fstart = {line:x,pos:actpos,html:"<sup>",mdcode:"[^",
+    								typ:"start",wystextveraenderung:2, footnoteline:footnoteline, tag:"footnote-anchor"};
+    							var fend = {line:x, pos:endpos, html:"</sup>",typ:"end",mdcode:"]",
+    								brotherelement:fstart, wystextveraenderung:1, tag:"footnote-anchor"};
+    							fstart.brotherelement = fend;
+    							var fnote = {line:footnoteline, pos:0, typ:"start",
+    								html:"<p>"+footname+":",mdcode:footident,
+    							 	footanchor:fstart, tag:"footnote"};
+    							fstart.footer = fnote;
+    							this.map.addElement(fstart);
+    							this.map.addElement(fend);
+    							this.map.addElement(fnote);
+                  //delete footnote-tag in footnoteline to prevent further parsing of it:
+                  lines[footnoteline]=substitutewitheuro(footident.length)+lines[footnoteline].substring(footident.length);
+
+    						}else{
+    							//error footnote is not the last element on the page
+    							error = "footnote is not last element on the page";
+                  //this.perror.push(new parsererror(footnoteline,0,lines[x].length,"footnote",error));
+    						}
+    					}
+    				}else{
+    					error= "footnote-anchor not ready yet - missing symbol ]";
+    					var nextspace = lines[x].indexOf(" ",actpos);
+    					this.perror.push(new parsererror(x,actpos,nextspace,"footnote-anchor","missing endsymbol ]"));
+    				}
+    				if(error!=null){
+    					console.log("footnote error:"+error);
+    					break; //dont look further for other footnote-anchor
+    				}
+    				lines[x] = lines[x].substring(0,actpos)+ "€€"+
+    											lines[x].substring(actpos+2);
+          }//while footnote in line
+      }//end of footnote-anchor
+      //footnote
+  		if(lines[x].substring(0,2)==="[^"){
+  			//footnote shouldnt appear right now, therefore its missing an anchor or else:
+  			var endpos = lines[x].indexOf("]:");
+  			if(endpos===-1){
+  				var nextspace = lines[x].indexOf(" ");
+  				this.perror.push(new parsererror(x,0,nextspace,"footnote","missing endsymbol ]:"));
+  			}else{
+  				this.perror.push(new parsererror(x,0,endpos+2,"footnote","missing footanchor"));
+  				console.log("footnote missing footanchor");
+  			}
+  		}
+  		//end of footnote
+      //inline code: //TODO: has to move up because it negates images and such
+      if(lines[x].indexOf("`")>-1){
+        var codepos=0;
+        while(lines[x].indexOf("`",codepos)>-1){
+          codepos = lines[x].indexOf("`",codepos);
+          var codestart = codepos;
+          var codeend = lines[x].indexOf("`",codestart);
+          var nextspace = lines[x].indexOf(" ",codestart);
+          if(nextspace==-1)nextspace = lines[x].length;
+          if(codeend ==-1){
+            //codeend not in actual line - continue looking next lines? no - inlinecode is just for the same line
+            this.perror.push(new parsererror(x,codepos,nextspace,"inlinecode","missing endsymbol `"));
+          }else{
+            //codeend found in same line:
+            var mapcstart = {
+              line:x, pos:codestart, html:"<code>",mdcode:"`",
+              typ:"start", wystextveraenderung:1,
+              tag: "inlinecodestart"
+            };
+            var mapcend = {
+              line:x, pos:codeend, html:"</code>", mdcode:"`",
+              typ:"end", wystextveraenderung:1,
+              tag:"inlinecodeend", brotherelement:mapcstart
+            };
+            mapcstart.brotherelement=mapcend;
+            this.map.addElement(mapcstart);
+            this.map.addElement(mapcend);
+            //prevent further parsing of inline-code:
+            lines[x]=lines[x].substring(0,codestart)+
+                      substitutewitheuro(codeend+1-codestart)+
+                      lines[x].substring(codeend+1);
+          }//end of codeend found in same line
+
+          codepos++; //continue scan regardless of result
+        }//end of while
+
+      }//end of inline code
+  }//end of for(x<lines) / parseperlines
+  //simple-element-block
+  //now parse the simple-elements:
+  for(var x=0;x<lines.length;x++){
+      //check if line has to be parsed:
+      //dont parse if lineswithhtml is one of the following:
+      var checkstring = "pagebreak, code";
+      if(checkstring.indexOf(this.lineswithhtml[x])>-1)continue; //jump to next line
+      checkstring += "h1,h2,h3,ul,ol,quote"; //dont parse further this line if next line is one of these
+      var breakline = null;
+      for (var chkx=x;chkx<lines.length;chkx++){
+        if(checkstring.indexOf(this.lineswithhtml[chkx])>-1){
+          breakline = chkx;
+          break;
+        }
+
+      }
+      if(breakline==null)breakline=lines.length;//if no breakline found - its lines.length
+      //check for link has to be with found positions in found line, so not collect here
+      for(var pare=0;pare<this.parseelemente.length;pare++){
+        var pelement = this.parseelemente[pare];
+        var mdstart = pelement.emdstart;
+        var mdend = pelement.emdend;
+        var startpos = 0;
+        var endline = x;
+        var endpos = null;
+        //check if pelement is in line:
+        while(lines[x].indexOf(mdstart,startpos)>-1){
+          startpos = lines[x].indexOf(mdstart,startpos);
+          endpos = lines[x].indexOf(mdend,startpos+mdstart.length);
+          var found=false;
+          if(endpos>-1){
+            //endpos found in line
+            endline = x;
+            found=true;
+          } else{
+            //search for lines: endpos is -1
+            endline=x+1;
+            while(!found && endline<breakline){
+                endpos=lines[endline].indexOf(mdend,endpos);
+                if(endpos>-1){
+                  //check if mdend is * or _
+                  if(mdend.length===1 && lines[endline].substring(endpos+1,endpos+2)===mdend){
+                    endpos+=2; //continue loop in same line
+                    continue;
+                  }else{
+                    //found endsymbol
+                    found=true;
+                  }
+                }else{
+                  endline++;
+                }
+            }//end of while endpos-1
+            if(!found){
+              //error: next line is not parseable:
+              this.perror.push(new parsererror(x,startpos,lines[x].length,mdstart,"missing endsymbol "+mdend));
+              startpos+=mdstart.length;
+              continue; //next while-loop
+            }
+          }//end of multiline-part
+          //start and end are collected. TODO: check if one is inside a link-tag:
+          //dont bother with link right now. links suck
+          if(found){
+            var mapstart = {
+              line:x, pos:startpos, html:pelement.htmlstart,
+              mdcode:mdstart, typ:"start",wystextveraenderung:mdstart.length
+            };
+            var mapend = {
+              line:endline, pos:endpos, html:pelement.htmlend, mdcode:mdend,
+							typ:"end",
+              wystextveraenderung:mdend.length, brotherelement:mapstart
+            };
+            mapstart.brotherelement = mapend;
+            this.map.addElement(mapstart);
+            this.map.addElement(mapend);
+            lines[x]=lines[x].substring(0,startpos)+substitutewitheuro(mdstart.length)+lines[x].substring(startpos+mdstart.length);
+            lines[endline]=lines[endline].substring(0,endpos)+substitutewitheuro(mdend.length)+lines[endline].substring(endpos+mdend.length);
+          }//end of found
+          startpos+=mdstart.length; //search for next element regardless of result
+        }//end of while start in this line found
+
+      }//end of iterating through parseelements
+  }//end parsing simple elements per line
+  //add last pageend:
+  this.map.pageend.push({line:lines.length})
+  //save cursorpos:
+	this.parsedcursorpos = slidenote.textarea.selectionEnd;
+
+  console.log("finished parsing elements");
+  console.log(this.lineswithhtml);
+  console.log(this.map);
+  var TimecheckEnd = new Date().getTime();
+  var TimecheckUsed = TimecheckEnd - TimecheckStart;
+  console.log("parsed in "+TimecheckUsed+" Ms");
+
+}
+
+
+/* parsenachzeilen: - soll ersetzt werden, kommt weg
  * parst emd-text zeilenweise (this.sourcecode)
  * speichert geparsten und mit html versehenen code in this.parsedcode
  * speichert gefundene fehler in this.perror - array
  * speichert zeilenmuster in this.lineswithhtml (h1-4, ul, ol, quote, table, code, text )
 */
-emdparser.prototype.parsenachzeilen = function(){
+var parsetest = true;
+emdparser.prototype.parsenachzeilen = function(parsemaptest){
+	//testweise mal ausstellen die funktion und stattdessen parseMap aufrufen:
+	if(parsetest){
+	this.parseMap();
+	return;
+	}
 	//erstmal nach zeilen, dann ist auch die * aufzählung weg:
 	//var lines = new Array();
 	var lines = this.returnparsedlines(this.sourcecode);
