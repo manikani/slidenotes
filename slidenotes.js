@@ -1523,7 +1523,7 @@ emdparser.prototype.parseMap = function(){
   			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
   		}//lines[x] fängt jetzt mit <quote> an
       //codeblock:
-      if(lines[x].length>3 && lines[x].substring(0,3)==="```"){
+      if(lines[x].length>=3 && lines[x].substring(0,3)==="```"){
         var codeende = x+1;
         while(codeende < lines.length){
           if(lines[codeende].substring(0,3)==="```")break;
@@ -1813,7 +1813,7 @@ emdparser.prototype.parseMap = function(){
         while(lines[x].indexOf("`",codepos)>-1){
           codepos = lines[x].indexOf("`",codepos);
           var codestart = codepos;
-          var codeend = lines[x].indexOf("`",codestart);
+          var codeend = lines[x].indexOf("`",codestart+1);
           var nextspace = lines[x].indexOf(" ",codestart);
           if(nextspace==-1)nextspace = lines[x].length;
           if(codeend ==-1){
@@ -1838,6 +1838,7 @@ emdparser.prototype.parseMap = function(){
             lines[x]=lines[x].substring(0,codestart)+
                       substitutewitheuro(codeend+1-codestart)+
                       lines[x].substring(codeend+1);
+											//console.log("inlinecodeline after change:"+lines[x])
           }//end of codeend found in same line
 
           codepos++; //continue scan regardless of result
@@ -2536,7 +2537,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 		//darf auch nicht mehr weil sonst img und link untergehen. wenn also erwünscht ist dann muss link und img erneut gescannt werden
 	}//for lines[x]
 		//ansatz für einfache parselemente per zeile:
-		console.log("zeilendurchlauf beendet. starte einfache parseelemente. pseudolines:");
+		//console.log("zeilendurchlauf beendet. starte einfache parseelemente. pseudolines:");
 		//console.log(pseudolines);
 		function getFirstStartInLineX(mdcode,line,parser){
 			var posInPseudoLine = pseudolines[line].indexOf(mdcode);
@@ -3642,7 +3643,7 @@ slidenotes.prototype.parseneu = function(){
 	var parszeit = zwischenzeit - startzeit;
 	var renderzeit = endzeit - zwischenzeit;
 	var gesamtzeit = endzeit - startzeit;
-	console.log("Parsen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
+	console.log("Timecheck: Parsen von "+this.textarea.value.length+" Zeichen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
 	if(slidenoteguardian)slidenoteguardian.autoSaveToLocal(new Date().getTime());
 };
 slidenotes.prototype.renderwysiwyg = function(){
