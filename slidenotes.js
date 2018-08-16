@@ -722,7 +722,9 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 			 //a simple thing - just do the changes later on:
 			 //end should be changed after element
 			 if(element.typ==="start" || element.typ==="<") changes.push(element);
-			 if(element.typ==="start" && element.brotherelement && element.brotherelement.line!=element.line){
+			 if(element.typ==="start" &&
+								 element.brotherelement &&
+								 element.brotherelement.line!=element.line){
 				 console.log("element"+element.mdcode+element.typ+element.line+" brotherelement:"+element.brotherelement.mdcode+element.brotherelement.typ+element.brotherelement.line);
 				 console.log(element);
 				 changes.push({
@@ -849,7 +851,59 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 				 typ:"end"
 			 });
 		 }
+		 if(element.tag ==="footnote-anchor"){
+			 if(element.typ==="start"){
+				 changes.push({
+					 line:element.line,
+					 posinall:element.posinall,
+					 pos:element.pos,
+					 html:'<span class="footnoteanchor">',
+					 mdcode:element.mdcode,
+					 typ:"start"
+				 });
+			 }else{
+				 changes.push({
+					 line:element.line,
+					 posinall:element.posinall+1,
+					 pos:element.pos+1,
+					 html:"</span>",
+					 mdcode:element.mdcode,
+					 typ:"end"
+				 });
+			 }
+		 }
+		 if(element.tag ==="footnote"){
+			 if(this.lineswithhtml[element.line-1]!="footnote"){
+				 changes.push({
+					 line:element.line,
+					 posinall:element.posinall,
+					 pos:0,
+					 html:'<span class="footnote firstfootnote">',
+					 mdcode:element.mdcode,
+					 typ:"start"
+				 });
+			 }else{
+				 changes.push({
+					 line:element.line,
+					 posinall:element.posinall,
+					 pos:0,
+					 html:'<span class="footnote">',
+					 mdcode:element.mdcode,
+					 typ:"start"
+				 });
+			 }
+			 changes.push({
+				 line:element.line,
+				 posinall:this.map.lineend[element.line],
+				 pos:lines[element.line].length,
+				 html:'</span>',
+				 mdcode:"",
+				 typ:"end"
+			 });
+		 } //footnote
+		 if(element.typ==="pagebreak"){
 
+		 }
 	 }
 	 //add error-spans:
 	 this.perror.sort(function(a,b){return a.row-b.row});
@@ -943,7 +997,21 @@ emdparser.prototype.renderCodeeditorBackground = function(){
  	//doppelsternchenfehler anzeigen lassen:
  	for(x=0;x<doppelsternchen.length;x++)lines[this.perror[doppelsternchen[x]].line]+='<span class="proposedsymbol">' + this.perror[doppelsternchen[x]].proposeEnding() + '</span>';
 	//adding pagenr to pagebreak:
-	for(x=0;x<this.map.pagestart.length;x++)lines[this.map.pagestart[x].line-1]+='<span class="pagenr">    »»» new page #'+x+'</span>';
+	for(x=0;x<this.map.pagestart.length;x++){
+		var pline =this.map.pagestart[x].line-1;
+		if(pline<0)pline=0;
+		var pbpos = lines[pline].length;
+		if(pline>0 || this.lineswithhtml[pline]==="pagebreak")lines[pline]+='<span class="pagenr">    »»» new page #'+x+'</span>';
+		changes.push({
+			line:pline,
+			posinall:this.map.lineend[pline],//this.map.linestart[this.perror[er].line]+lines[this.perror[er].line].length,
+			pos:pbpos,
+			html:'<span class="pagenr">    »»» new page #'+x+'</span>',
+			mdcode:"",
+			typ:"pagenr",
+			tag:"pagebreak pagenr"
+		});
+	}
 	console.log(this.map.pagestart);
 	//putting it inside line-spans and returning as whole text:
 	var temptext = "";
