@@ -135,6 +135,15 @@ function insertbutton(code){
 	if(slidenote!=null)slidenote.insertbutton(code);
 }
 
+function parsetest(){
+	parsetest = true;
+	console.log("parse mit parsemap");
+	slidenote.parseneu();
+	parsetest = false;
+	console.log("parse mit parsenachzeilen");
+	slidenote.parseneu();
+}
+
 --></script>
 </head>
 <body onload="initeditor()">
