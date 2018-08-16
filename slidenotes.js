@@ -2206,6 +2206,17 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					//this.veraenderungen.push(new Array("image",laengebiszeile+imgpos,imgposend-imgpos));
 					var pseudoimgpos = pseudozeile.indexOf("![");
 					pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€"+pseudozeile.substring(pseudoimgpos+2);
+					//image is ready parsed, so get rid of of it totaly:
+				//	var pseudoersatz = "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€";
+				//	while(pseudoersatz.length<imgurl.length+imgalt.length)pseudoersatz+=pseudoersatz;
+				//	pseudoersatz = pseudoersatz.substring(0,imgurl.length+5+imgalt.length);
+				//	pseudozeile = pseudozeile.substring(0,pseudoimgpos)+pseudoersatz+pseudozeile.substring(imgposend+1);
+	/*				pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€"+
+												pseudozeile.substring(pseudoimgpos+2,imgposmid)+
+												pseudoersatz+
+												pseudozeile.substring(imgposend+1);
+*/
+					pseudolines[x]=pseudozeile;
 				}else {
 					//alert(error);
 					//lines[x]=lines[x].substring(0,imgpos)+lines[x].substring(imgpos+4);
@@ -2263,7 +2274,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 			}
 		}//ende link
 		//page-break
-		if(lines[x].indexOf("-----")==0){
+		if(lines[x].indexOf("---")==0){
 			if(lines[x].length>5){
 				var pagebreakcheck = lines[x].substring(5);
 				var pagebreakonlyminus = true;
@@ -2332,9 +2343,9 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 							//everything is good, save the map-parsing:
 							this.lineswithhtml[footnoteline]="footnote";
 							var fstart = {line:x,pos:actpos,html:"<sup>",mdcode:"[^",
-								typ:"start",wystextveraenderung:2, footnoteline:footnoteline};
+								typ:"start",wystextveraenderung:2, footnoteline:footnoteline, tag:"footnote-anchor"};
 							var fend = {line:x, pos:endpos, html:"</sup>",typ:"end",mdcode:"]",
-								brotherelement:fstart, wystextveraenderung:1};
+								brotherelement:fstart, wystextveraenderung:1, tag:"footnote-anchor"};
 							fstart.brotherelement = fend;
 							var fnote = {line:footnoteline, pos:0, typ:"start",
 								html:"<p>"+footname+":",mdcode:footident,
@@ -2446,10 +2457,30 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 	}//for lines[x]
 		//ansatz für einfache parselemente per zeile:
 		console.log("zeilendurchlauf beendet. starte einfache parseelemente. pseudolines:");
-		console.log(pseudolines);
+		//console.log(pseudolines);
+		function getFirstStartInLineX(mdcode,line,parser){
+			var posInPseudoLine = pseudolines[line].indexOf(mdcode);
+			var onelement = parser.CarretOnElement(parser.map.linestart[line]+posInPseudoLine);
+			var startInLinesX = 0;
+			while(onelement!=null && onelement.typ===image){
+				startInLines
+			}
+
+		}
 	for(var x=0;x<lines.length;x++){
 		for(var pare=0;pare<this.parseelemente.length;pare++){
-					var pestart=lines[x].indexOf(this.parseelemente[pare].emdstart);
+					var posInPseudoLine = pseudolines[x].indexOf(this.parseelemente[pare].emdstart);
+					var onelement = this.CarretOnElement(this.map.linestart[x]+posInPseudoLine);
+					var startInLinesX = 0;
+					//console.log("onelement:"+(onelement!=null)+" pos:"+pseudolines[x].indexOf(this.parseelemente[pare].emdstart)+ "el:"+this.parseelemente[pare].emdstart);
+					while(onelement!=null && onelement.typ==="image"){
+						//console.log("on element"+onelement.typ + "pos"+posInPseudoLine);
+						//continue; //dont parse on image!
+						startInLinesX=lines[x].indexOf(this.parseelemente[pare].emdstart,startInLinesX)+this.parseelemente[pare].emdstart.length;
+						posInPseudoLine = pseudolines[x].indexOf(this.parseelemente[pare].emdstart,posInPseudoLine+this.parseelemente[pare].emdstart.length);
+						onelement = this.CarretOnElement(this.map.linestart[x]+posInPseudoLine);
+					}
+					var pestart=lines[x].indexOf(this.parseelemente[pare].emdstart,startInLinesX);
 					//var peend = lines[x].indexOf(this.parseelemente[pare].emdend,pestart+1);
 					var peend = lines[x].indexOf(this.parseelemente[pare].emdend,pestart+this.parseelemente[pare].emdstart.length);
 					var aktppos = 0;
@@ -2598,25 +2629,30 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 	} //ende ansatz zeilendurchlaufen
 	//this.parsewysiwyghtml();
 	//
-	console.log(this.lineswithhtml);
+	//console.log(this.lineswithhtml);
 	for(var lwh=0;lwh<lines.length;lwh++){
-		if(this.lineswithhtml[lwh]==null){
-			console.log("text nach lwh"+lwh);
+		if(this.lineswithhtml[lwh]==null && lines[lwh].length==0){
+			this.lineswithhtml[lwh]="empty";
+		}	else if(this.lineswithhtml[lwh]==null){
+			//console.log("text nach lwh"+lwh);
 			this.lineswithhtml[lwh]="text";
 			//lines[lwh]='<div class="text">'+lines[lwh];
 			lines[lwh]='<p>'+lines[lwh];
-			if(this.insertedhtmlinline[lwh]==null)this.insertedhtmlinline=new Array();
-			this.insertedhtmlinline[lwh].push(new Array(0,"","<p>"));
+			//if(this.insertedhtmlinline[lwh]==null)this.insertedhtmlinline=new Array();
+			//this.insertedhtmlinline[lwh].push(new Array(0,"","<p>")); //i have to get rid of insertedhtmlinline
 			this.map.addElement({line:lwh, pos:0, html:"<p>", mdcode:"", typ:"start", wystextveraenderung:0});
 			var followlines=lwh+1;
-			console.log("lineswithhtmllength:"+this.lineswithhtml.length);
-				while(this.lineswithhtml[followlines]==null && followlines<lines.length){
+			//console.log("lineswithhtmllength:"+this.lineswithhtml.length);
+				while(this.lineswithhtml[followlines]==null &&
+								followlines<lines.length &&
+								lines[followlines].length>0
+								){
 					this.lineswithhtml[followlines]="text";
 					followlines++;
-					console.log("fll++");
+					//console.log("fll++");
 				}
 			followlines--; //followlines geht jetzt bis zur letzten zeile
-			console.log("lwh->followlines"+lwh+" -> "+followlines);
+			//console.log("lwh->followlines"+lwh+" -> "+followlines);
 			//lines[followlines]+="</div>";
 			if(this.insertedhtmlinline[followlines]==null)this.insertedhtmlinline[followlines]=new Array();
 			//this.insertedhtmlinline[followlines].push(new Array(lines[followlines].length,"","</p>"));
