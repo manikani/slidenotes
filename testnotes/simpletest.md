@@ -20,6 +20,26 @@ __Doppelter Unterstrich mit *einfachem Stern* gemischt__, **Doppelstern mit ~~du
 1. nummerierte liste
 2. nummerierte liste
 3. nummerierte liste
+##Noch ne einfache Aufzählung:
+1.) nummerierte Liste
+2.) nummerierte Liste
+3.) nummerierte Liste
+
+##und noch eine:
+4) nummerierte liste mit start=4
+5) blablub
+6) blubbla
+---
+#Einfache Listen und Verschachtelungen:
+- einfache Liste mit Minus
+- einfache Liste mit Minus
++ Unterpunkt mit Plus
+- einfache Liste mit Minus
+* Unterpunkt mit Sternchen
+- einfache Liste mit Minus
+  - Unterpunkt eingerückt mit Minus
+  - Weiterer Unterpunkt eingerückt mit Minus
+		- Unterpunkt mit Minus und eingerückten zwei Tabs
 -----
 #quote und code
 > Zitat Anfang
