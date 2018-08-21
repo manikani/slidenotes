@@ -211,6 +211,17 @@ mapping.prototype.WystextToSource = function(position){
 	return aktpos;
 }
 
+mapping.prototype.pageAtPosition = function(position){
+	var result = 0;
+
+	for(var x=0;x<this.pagestart.length;x++){
+		if(this.linestart[this.pagestart[x].line]<=position)result = x;
+		//console.log(this.pagestart[x].line+"<"+position);
+	}
+	console.log("Page at Position"+position+"-"+x);
+	return result;
+
+}
 /*alter teil des Programms:*/
 
 /* einfaches parse-objekt wie bspw. Sternchen und ähnliches
@@ -1252,10 +1263,10 @@ emdparser.prototype.positionAtPage = function(page){
 	for(var x=0;x<page;x++){
 		if(aktpos>-1){
 			position=aktpos;
-			aktpos=this.sourcecode.indexOf("\n-----",aktpos+6);
+			aktpos=this.sourcecode.indexOf("\n---",aktpos+4);
 		}
 	}
-	if(aktpos>position)position=aktpos+7;
+	if(aktpos>position)position=aktpos+5;
 	console.log("found position at:"+position);
 	return position;
 }
@@ -1275,7 +1286,11 @@ emdparser.prototype.renderMapToPresentation = function(){
       //TODO: check if only images in line, then its an imageline
       this.lineswithhtml[lwh]="text";
       var linestart = this.map.linestart[lwh];
-      changes.push({line:lwh, pos:0, posinall:linestart, html:"<p>", mdcode:"", typ:"start"});
+      changes.push({
+				line:lwh, pos:0, posinall:linestart,
+				html:"<p>", mdcode:"", typ:"start",
+				weight:0
+			});
       var followlines=lwh+1;
       while(this.lineswithhtml[followlines]==null &&
               followlines<lines.length &&
@@ -1289,11 +1304,20 @@ emdparser.prototype.renderMapToPresentation = function(){
     lineend = this.map.lineend[followlines];
 
     changes.push({line:followlines, pos:lines[followlines].length,
-      posinall:lineend, html:"</p>", mdcode:"", typ:"start"});
+      posinall:lineend, html:"</p>", mdcode:"", typ:"start", weight:10});
   }//lineswithhtml==null
   }
 
-  changes.sort(function (a,b){return a.posinall-b.posinall});
+  changes.sort(function (a,b){
+		if(a.posinall!=b.posinall) return a.posinall-b.posinall;
+		if(a.weight!=undefined && b.weight!=undefined) return a.weight - b.weight;
+		var x = a.weight;
+		var y = b.weight;
+		if(x===undefined)x=1;
+		if(y===undefined)y=1;
+		return x-y;
+	});
+	console.log("changes of parsetopresentation"); console.log(changes);
   //helper function for change:
   function execute(element){
     line = lines[element.line];
@@ -1373,7 +1397,7 @@ emdparser.prototype.parseMap = function(){
       var rauten="#";
       //how many? as jakob only wants till ### we just check it this way:
       if(lines[x].substring(0,2)==="##")rauten="##";
-      if(lines[x].substring(0,3)==="##")rauten="###";
+      if(lines[x].substring(0,3)==="###")rauten="###";
       var ersatz = "€€€";
       ersatz = ersatz.substring(0,rauten.length);
       this.map.addElement({
@@ -1384,7 +1408,198 @@ emdparser.prototype.parseMap = function(){
 			this.lineswithhtml[x]="h"+rauten.length;
 
     }//end title
-    //scan for generic list:
+		//scan for lists:
+		/*	SCAN FOR LISTS (ul and ol)
+		*		This part needs regex, and because lists can be recursive
+		*  	ol and ul should be both treaded as list.
+		* 	findthemall: regex which finds every possible combination of list-md-code:
+		*  numlistregexlist: every valid combination as separate regexlist (has to start without spaces)
+		*		linetosearch: as we go with spaces in front, we have to get rid of them before
+		* 								we check against a valid regex
+		*		Big TODO: Can i prevent regex as much as possible?
+		*/
+
+		var findthemall = /^(\s*)([\+\-\*]|(\s*)([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/;
+		var listspaces = -1;
+		if(this.lineswithhtml[x]==undefined || this.lineswithhtml[x].substring(0,7)==="sublist")
+		listspaces = lines[x].search(findthemall);
+		//console.log("listsearch:"+lines[x]+"->"+listspaces);
+		if(listspaces>-1){
+		  //setting listspaces to right pos:
+		  listspaces = lines[x].search(/\S/);
+		  if(listspaces==-1)listspaces=0; //is it really necesary?
+		  var linetosearch = lines[x].substring(listspaces);
+		  //found a new list:
+		  var numlistregexlist = [
+													/^[0-9]+\.\s/, //1. - regex#0 ul
+		                      /^[0-9]+\.\)\s/, //1.) - regex#1 ul
+		                      /^[0-9]+\)\s/, //1) - regex#2 ul
+		                      /^[a-z]\)\s/, //a) - regex#3 ul
+		                      /^[IVX]+\)\s/, //I) - regex#4 ul
+		                      /^\-\s/, //"- " - regex#5 ol
+		                      /^\*\s/,  //"* " -regex#6 ol
+													/^\+\s/   //"+ "- regex#7 ol
+												];
+
+		  var nlregnr;
+		  //get the right regex to search for:
+		  for(var nlrit=0;nlrit < numlistregexlist.length;nlrit++){
+		    if(linetosearch.search(numlistregexlist[nlrit])===0){
+		      nlregnr = nlrit;
+		      break;
+		    }
+		  }
+		  //nlregnr is now the right regex to find the list in further lines
+		  var listregex = numlistregexlist[nlregnr]; //save the regex for easier writing
+		  var listtyp = "ul";
+		  if(nlregnr < 5){ //5 and upward are ul, else is ol, check if you add another regex above
+		    listtyp = "ol";
+		  }
+		  var start ="";
+		  if(listtyp === "ol"){
+		    //get start for ol:
+		    if(nlregnr<2)start = ' start="'+lines[x].substring(listspaces,lines[x].indexOf("."))+'" ';
+		    if(nlregnr>=2)start = ' start="'+lines[x].substring(listspaces,lines[x].indexOf(")"))+'" ';
+		  }
+		  var liststarthtml = "<"+listtyp+start+">";
+			// add ul/ol-tag element to map:
+		  this.map.addElement({
+		    line:x, pos:0, html:liststarthtml, mdcode:"", typ:"start",
+		    wystextveraenderung:0, weight:1
+		  });
+		  var listzeichenarr = [". ", ".) ", ") ", ") ", ") ", "- ", "* ", "+ "];
+		  var listzeichen = listzeichenarr[nlregnr];
+		  var listmdcode = lines[x].substring(0,lines[x].indexOf(listzeichen)+listzeichen.length);
+			//add first li-tag element to map:
+		  this.map.addElement({
+		    line:x, pos:0, html:"<li>", mdcode: listmdcode,
+		    typ:"start", wystextveraenderung:listmdcode.length,
+		    tag:listtyp+"-li-start", weight:2
+		  });
+		  //ol/ul-start-tag + first li-tag are now set
+			//get weight of list - as to mean which number of recursion are we in
+			var listweight = 0;
+			//sublist-check in lineswithhtml:
+			if(this.lineswithhtml[x]&& this.lineswithhtml[x].substring(0,7)==="sublist"){ //only on lineswithhtml == list are we on a sublist.
+				//console.log(this.map.insertedhtmlinline[x-1][0])
+				listweight+=this.lineswithhtml[x].length - 7;
+			}
+			//console.log("listweight:"+listweight+"lineswithhtml:"+this.lineswithhtml[x]);
+		  var listx = x+1;
+		  var sublist = false;
+		  var listfound = true; //= (linetosearch.search(listregex)===0);
+		  var otherlistfound = true;// = (linetosearch.search(findthemall)===0);
+			//get rid of list-md-code in line:
+			lines[x] = substitutewitheuro(listmdcode.length)+lines[x].substring(listmdcode.length);
+			//console.log("found list "+listtyp+" in line "+x+" with start "+liststarthtml+"\nnew lines-x:"+lines[x]);
+			//start looking for further list till end of list
+		  for(listx=x+1;listx<lines.length;listx++){
+		    linetosearch=lines[listx].substring(listspaces); //get line to search for
+		    listfound = (linetosearch.search(listregex)===0);
+		    otherlistfound = (linetosearch.search(findthemall)===0);
+				//console.log("listsearch: listfound:"+listfound+"otherlistfound:"+otherlistfound);
+		    if(!listfound && otherlistfound && !sublist){
+		      //other listtype found: add br to last line
+		      this.map.addElement({
+		        line:listx-1, pos:lines[listx-1].length, html:"<br>", mdcode:"",
+		        typ:"end", wystextveraenderung:0,
+		        tag:listtyp+"-sublist-start-br", weight:3+listweight
+		      });
+		      sublist = true;
+					//add sublist to lineswithhtml:
+					if(this.lineswithhtml[listx]&&this.lineswithhtml[listx].substring(0,7)==="sublist"){
+						this.lineswithhtml[listx]+="€€€€€";//with this we add 5 to the linesweight;
+					} else{
+						this.lineswithhtml[listx]="sublist€€€€€";
+					}
+		    } else if(!listfound && otherlistfound){
+		        //other listtype found, but we are in a sublist, so just continue search:
+						//add sublist to lineswithhtml:
+						if(this.lineswithhtml[listx] && this.lineswithhtml[x].substring(0,7)==="sublist"){
+							this.lineswithhtml[listx]+="€€€€€";//with this we add 5 to the linesweight;
+						} else{
+							this.lineswithhtml[listx]="sublist€€€€€";
+						}
+
+		    } else if(listfound && sublist){
+		      //found other element of origlist, so close sublist in previous line:
+		      this.map.addElement({
+		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
+		        typ:"end", wystextveraenderung:0,
+		        tag:listtyp+"-sublist-end-li", weight:3+listweight,
+						whitespaces:listspaces
+		      });
+		      sublist = false;
+					//get mdcode for list-start-element:
+					listmdcode = lines[listx].substring(0,lines[listx].indexOf(listzeichen)+listzeichen.length);
+		      this.map.addElement({
+		        line:listx, pos:0, html:"<li>", mdcode:listmdcode,
+		        typ:"start", wystextveraenderung:listmdcode.length,
+		        tag:listtyp+"-start-li", weight:0,
+						whitespaces:listspaces
+		      });
+					//get rid of mdcode in line:
+					//console.log("linelistx before change"+lines[listx]);
+					lines[listx] = substitutewitheuro(listmdcode.length)+lines[listx].substring(listmdcode.length);
+					//console.log("linelistx after change:"+lines[listx]);
+		    } else if(listfound && !sublist){
+		      //found other element of origlist without being in a sublist
+		      this.map.addElement({
+		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
+		        typ:"end", wystextveraenderung:0,
+		        tag:listtyp+"-sublist-end-li", weight:3+listweight,
+						whitespaces:listspaces
+		      });
+					//get mdcode for list-start-element:
+					listmdcode = lines[listx].substring(0,lines[listx].indexOf(listzeichen)+listzeichen.length);
+		      this.map.addElement({
+		        line:listx, pos:0, html:"<li>", mdcode:listmdcode,
+		        typ:"start", wystextveraenderung:listmdcode.length,
+		        tag:listtyp+"-start-li", weight:0,
+						whitespaces:listspaces
+		      });
+					//get rid of mdcode in line:
+					//console.log("linelistx before change"+lines[listx]);
+					lines[listx] = substitutewitheuro(listmdcode.length)+lines[listx].substring(listmdcode.length);
+					//console.log("linelistx after change:"+lines[listx]);
+		    } else{
+		      //no listelement in line - add /li and end the loop
+		      this.map.addElement({
+		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
+		        typ:"end", wystextveraenderung:0,
+		        tag:listtyp+"-end-li", weight:3+listweight,
+						whitespaces:listspaces
+		      });
+		      break;
+		    }
+
+		  }//for-to-loop
+			var test=false;
+		  if(sublist && test){
+		    //last line is still a sublist, so one /li is missing
+		    this.map.addElement({
+		      line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
+		      typ:"end", wystextveraenderung:0,
+		      tag:listtyp+"sublist-end-li", weight:2,
+					whitespaces:listspaces
+		    });
+		  }
+		  //all li and /li tags should be set by now. close ol/ul tag:
+		  //var sublistweight = 0;
+		  //if(sublist)sublistweight=3;
+		  this.map.addElement({
+		    line:listx-1, pos:lines[listx-1].length, html:"</"+listtyp+">", mdcode:"",
+		    typ:"end", wystextveraenderung:0,
+		    tag:listtyp+"-end-li", weight:4+listweight
+		  });
+			//set lineswithhtml:
+			for(var lx=x;lx<listx;lx++){
+				if(this.lineswithhtml[lx]==undefined)this.lineswithhtml[lx]="list";
+			}
+
+		}// end of list block
+
+    /*  //old scan for generic list:
     if(lines[x].substring(0,2)=="* " || lines[x].substring(0,2)=="- ") {//}||
         //lines[x].substring(2,4)=="  *"|| lines[x].substring(2,4=="  - ")){
 			glc=x;
@@ -1411,7 +1626,7 @@ emdparser.prototype.parseMap = function(){
 			//lines[x]="€€"+lines[x].substring(0,2);
 			//muss ich oben machen
       this.map.addElement({
-            line:glc, pos:lines[x].length,
+            line:glc, pos:lines[glc].length,
             html:"</ul>",mdcode:"",typ:"end",tag:"endofunorderedlist",
             wystextveraenderung:0});
 			//lines[glc]=lines[glc]+"</ul>";
@@ -1445,26 +1660,56 @@ emdparser.prototype.parseMap = function(){
 			var starttext = "<ol";
 			if(start>0)starttext+=' start="'+start+'"';
 			starttext +=">";
-			this.map.addElement({line:x,pos:0,html:starttext,mdcode:"",typ:"start",wystextveraenderung:0});
+			this.map.addElement({
+				line:x,pos:0,html:starttext,mdcode:"",typ:"start",
+				wystextveraenderung:0, weight:1
+			});
 			nlc=x;
+			var sublist = false;
 			var linessearch = lines[nlc].search(numlistregex); //lines[nlc].search(/[0-9]+\.\s/);
 			var linessearch2 = lines[nlc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
 			while(nlc <lines.length && (linessearch ==0 || linessearch2 ==0)){
+				if(linessearch==0 && sublist){
+					//sublist found, add missing li-end-tag
+					this.map.addElement({
+							line:nlc-1, pos:lines[nlc-1].length, html:"</li>",
+							mdcode:"", typ:"end", wystextveraenderung:0,
+							tag:"ol-sub-end-li", weight:4
+					});
+					sublist = false;
+				}
 				if(linessearch==0){
 					var tmpmdcode = lines[nlc].substring(0,lines[nlc].indexOf(listzeichen)+listzeichen.length);//". ")+2);
-					this.map.addElement({line:nlc,pos:0,html:"<li>",mdcode:tmpmdcode,
-					typ:"start",wystextveraenderung:tmpmdcode.length});
+					this.map.addElement({
+						line:nlc,pos:0,html:"<li>",mdcode:tmpmdcode,
+						typ:"start",wystextveraenderung:tmpmdcode.length,
+						tag:"ol-li-start", weight:2
+					});
+					this.map.addElement({
+						line:nlc, pos:lines[nlc].length, html:"</li>", mdcode:"",
+						typ:"end",wystextveraenderung:0, tag:"ol-li-end",
+						weight:1
+					});
           var substitute = "€€€€€€€€€€€€€€€€€€€€€€€€";
           substitute = substitute.substring(0,tmpmdcode.length);
 					lines[nlc] = substitute+lines[nlc].substring(lines[nlc].indexOf(listzeichen)+listzeichen.length);
 					this.lineswithhtml[nlc]="ol";
-				} /*else if(lines[nlc].substring(0,2)=="  "){
+				} else if(!sublist){
+					//found other listtype/unterlist - parse further but add li-tags
+					sublist = true;
+					this.map.addElement({
+						line:nlc, pos:0, html:"<li>", mdcode:"",
+						typ:"start",wystextveraenderung:0,
+						tag:"ol-sub-li", weight:0
+					});
+				}
+					else if(lines[nlc].substring(0,2)=="  "){
 					//linessearch==2, also leerzeichen gefunden. leerzeichen rausnehmen:
 					//dann wird beim nächsten durchlauf neue liste in liste angelegt
           //stimmt nicht - funktioniert so nur beim ersten mal :(
 					lines[nlc]=lines[nlc].substring(2);
 					this.map.addElement({line:nlc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
-				}*/
+				}
 				nlc++;
 				if(nlc<lines.length){
 					linessearch = lines[nlc].search(numlistregex);///[0-9]+\.\s/); //else linessearch=null;
@@ -1475,15 +1720,26 @@ emdparser.prototype.parseMap = function(){
 
 			//lines[x] = starttext + lines[x];
 			//lines[nlc]+= "</ol>";
+			var lastweight = 3;
+			if(sublist){
+				lastweight=6;
+				this.map.addElement({
+					line:nlc, pos:lines[nlc].length, html:"</li>",
+					mdcode:"", typ:"end", wystextveraenderung:0,
+					tag:"ol-sub-end-li", weight:5
+				});
+			}
       this.map.addElement({
         line:nlc, pos:lines[nlc].length, html:"</ol>",
-        mdcode:"", typ:"end",wystextveraenderung:0});
+        mdcode:"", typ:"end",wystextveraenderung:0,
+				tag:"ol-end", weight:lastweight
+			});
 			letztezeile=nlc;
 			//folgendes geht nicht mehr so, wenn eingerückte listen gibt:
 			//for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="ol";
 		} //end of numeric list scan
       //TODO: Error-parsing for lists? do we want that?
-
+			End old listscan */
       //scan for quotes quotes
   		if(linestart==">" && !(lines[x].substring(0,2)=="> ")){
   		    this.perror.push(new parsererror(x,1,lines[x].length,"quotes","missing space after >"));
@@ -1599,6 +1855,46 @@ emdparser.prototype.parseMap = function(){
           }//end of is valid datatype
         }//end of datablockhead found
       }//end of datablock
+			//all blocks are scanned. now for one-line-elements - eg image, link, code...
+
+			//inline code: has to be first of all one-line-elements to prevent parsing inside of it
+			if(lines[x].indexOf("`")>-1){
+				var codepos=0;
+				while(lines[x].indexOf("`",codepos)>-1){
+					codepos = lines[x].indexOf("`",codepos);
+					var codestart = codepos;
+					var codeend = lines[x].indexOf("`",codestart+1);
+					var nextspace = lines[x].indexOf(" ",codestart);
+					if(nextspace==-1)nextspace = lines[x].length;
+					if(codeend ==-1){
+						//codeend not in actual line - continue looking next lines? no - inlinecode is just for the same line
+						this.perror.push(new parsererror(x,codepos,nextspace,"inlinecode","missing endsymbol `"));
+					}else{
+						//codeend found in same line:
+						var mapcstart = {
+							line:x, pos:codestart, html:"<code>",mdcode:"`",
+							typ:"start", wystextveraenderung:1,
+							tag: "inlinecodestart"
+						};
+						var mapcend = {
+							line:x, pos:codeend, html:"</code>", mdcode:"`",
+							typ:"end", wystextveraenderung:1,
+							tag:"inlinecodeend", brotherelement:mapcstart
+						};
+						mapcstart.brotherelement=mapcend;
+						this.map.addElement(mapcstart);
+						this.map.addElement(mapcend);
+						//prevent further parsing of inline-code:
+						lines[x]=lines[x].substring(0,codestart)+
+											substitutewitheuro(codeend+1-codestart)+
+											lines[x].substring(codeend+1);
+											//console.log("inlinecodeline after change:"+lines[x])
+					}//end of codeend found in same line
+
+					codepos++; //continue scan regardless of result
+				}//end of while
+
+			}//end of inline code
       //image:
 			//console.log("imagesearch in line:"+lines[x]);
 			//console.log("index:"+lines[x].indexOf("!["));
@@ -1701,7 +1997,6 @@ emdparser.prototype.parseMap = function(){
       //pagebreak:
       if(lines[x].substring(0,3)==="---"){
         var error="";
-
           //search for missing ---
           var checkforminus = "----------------------------------------------";
           while(checkforminus.length<lines[x].length)checkforminus+=checkforminus;
@@ -1714,15 +2009,14 @@ emdparser.prototype.parseMap = function(){
               line:x,pos:0,html:"<hr>",mdcode:lines[x],typ:"pagebreak",
               wystextveraenderung:lines[x].length
             });
-            this.map.pageend.push({line:x});
-            this.map.pagestart.push({line:x+1});
+            this.map.pageend.push({line:x-1, posinall: this.map.lineend[x-1]});
+            this.map.pagestart.push({line:x+1, posinall: this.map.linestart[x+1]});
             lines[x]=substitutewitheuro(lines[x].length);
           }
 
       }//end of pagebreak
       //footnote-anchor:
       if(lines[x].indexOf("[^")>0){ //footnote-anchors arent allowed at linestart
-
           while(lines[x].indexOf("[^")>-1){
             var actpos = lines[x].indexOf("[^");
     				var endpos = lines[x].indexOf("]",actpos);
@@ -1774,6 +2068,8 @@ emdparser.prototype.parseMap = function(){
     							this.map.addElement(fnote);
                   //delete footnote-tag in footnoteline to prevent further parsing of it:
                   lines[footnoteline]=substitutewitheuro(footident.length)+lines[footnoteline].substring(footident.length);
+									//delete footnote-anchor-tag to prevent further parsing of it:
+									lines[x]=lines[x].substring(0,actpos)+substitutewitheuro(endpos+1-actpos)+lines[x].substring(endpos+1);
 
     						}else{
     							//error footnote is not the last element on the page
@@ -1807,44 +2103,7 @@ emdparser.prototype.parseMap = function(){
   			}
   		}
   		//end of footnote
-      //inline code: //TODO: has to move up because it negates images and such
-      if(lines[x].indexOf("`")>-1){
-        var codepos=0;
-        while(lines[x].indexOf("`",codepos)>-1){
-          codepos = lines[x].indexOf("`",codepos);
-          var codestart = codepos;
-          var codeend = lines[x].indexOf("`",codestart+1);
-          var nextspace = lines[x].indexOf(" ",codestart);
-          if(nextspace==-1)nextspace = lines[x].length;
-          if(codeend ==-1){
-            //codeend not in actual line - continue looking next lines? no - inlinecode is just for the same line
-            this.perror.push(new parsererror(x,codepos,nextspace,"inlinecode","missing endsymbol `"));
-          }else{
-            //codeend found in same line:
-            var mapcstart = {
-              line:x, pos:codestart, html:"<code>",mdcode:"`",
-              typ:"start", wystextveraenderung:1,
-              tag: "inlinecodestart"
-            };
-            var mapcend = {
-              line:x, pos:codeend, html:"</code>", mdcode:"`",
-              typ:"end", wystextveraenderung:1,
-              tag:"inlinecodeend", brotherelement:mapcstart
-            };
-            mapcstart.brotherelement=mapcend;
-            this.map.addElement(mapcstart);
-            this.map.addElement(mapcend);
-            //prevent further parsing of inline-code:
-            lines[x]=lines[x].substring(0,codestart)+
-                      substitutewitheuro(codeend+1-codestart)+
-                      lines[x].substring(codeend+1);
-											//console.log("inlinecodeline after change:"+lines[x])
-          }//end of codeend found in same line
 
-          codepos++; //continue scan regardless of result
-        }//end of while
-
-      }//end of inline code
   }//end of for(x<lines) / parseperlines
   //simple-element-block
   //now parse the simple-elements:
@@ -1910,12 +2169,14 @@ emdparser.prototype.parseMap = function(){
           if(found){
             var mapstart = {
               line:x, pos:startpos, html:pelement.htmlstart,
-              mdcode:mdstart, typ:"start",wystextveraenderung:mdstart.length
+              mdcode:mdstart, typ:"start",wystextveraenderung:mdstart.length,
+							weight:1
             };
             var mapend = {
               line:endline, pos:endpos, html:pelement.htmlend, mdcode:mdend,
 							typ:"end",
-              wystextveraenderung:mdend.length, brotherelement:mapstart
+              wystextveraenderung:mdend.length, brotherelement:mapstart,
+							weight:1
             };
             mapstart.brotherelement = mapend;
             this.map.addElement(mapstart);
@@ -1932,7 +2193,7 @@ emdparser.prototype.parseMap = function(){
   this.map.pageend.push({line:lines.length})
   //save cursorpos:
 	this.parsedcursorpos = slidenote.textarea.selectionEnd;
-
+	this.map.insertedhtmlelements.sort(function(a,b){return a.posinall-b.posinall});
   console.log("finished parsing elements");
   console.log(this.lineswithhtml);
   console.log(this.map);
@@ -3643,7 +3904,7 @@ slidenotes.prototype.parseneu = function(){
 	var parszeit = zwischenzeit - startzeit;
 	var renderzeit = endzeit - zwischenzeit;
 	var gesamtzeit = endzeit - startzeit;
-	console.log("Timecheck: Parsen von "+this.textarea.value.length+" Zeichen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
+	console.log("Timecheck: Parsen von "+this.textarea.value.length+" Zeichen und "+this.parser.map.insertedhtmlelements.length+" Elementen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
 	if(slidenoteguardian)slidenoteguardian.autoSaveToLocal(new Date().getTime());
 };
 slidenotes.prototype.renderwysiwyg = function(){
