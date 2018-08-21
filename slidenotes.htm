@@ -135,13 +135,32 @@ function insertbutton(code){
 	if(slidenote!=null)slidenote.insertbutton(code);
 }
 
-function parsetest(){
-	parsetest = true;
-	console.log("parse mit parsemap");
-	slidenote.parseneu();
+function parsetesting(){
+	var parsetext = slidenote.textarea.value;
 	parsetest = false;
 	console.log("parse mit parsenachzeilen");
 	slidenote.parseneu();
+	parsetest = true;
+	console.log("parse mit parsemap");
+	slidenote.parseneu();
+	console.log("parsetest multiply textarea-value by 5");
+	for(var x=0;x<5;x++)slidenote.textarea.value += parsetext;
+	parsetest = false;
+	console.log("parse mit parsenachzeilen");
+	slidenote.parseneu();
+	parsetest = true;
+	console.log("parse mit parsemap");
+	slidenote.parseneu();
+	console.log("parsetest multiply textarea-value by 10");
+	for(var x=0;x<5;x++)slidenote.textarea.value += parsetext;
+	parsetest = false;
+	console.log("parse mit parsenachzeilen");
+	slidenote.parseneu();
+	parsetest = true;
+	console.log("parse mit parsemap");
+	slidenote.parseneu();
+
+
 }
 
 --></script>
