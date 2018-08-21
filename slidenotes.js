@@ -3252,7 +3252,7 @@ pagegenerator.prototype.finalizeHtml = function(){
 	this.presentation.innerHTML = this.presentationhtml;
 	console.log("präsentation ins div geschrieben:"+this.presentation.innerHTML);
 	this.pagedivs = document.getElementsByClassName("ppage");
-	if(this.aktpage>this.pagedivs.length)this.aktpage=0;
+	if(this.aktpage === undefined || this.aktpage>this.pagedivs.length)this.aktpage=0;
 	this.pagedivs[this.aktpage].classList.add("active");
 	//alert(this.pages.toString());
 }
@@ -3355,7 +3355,7 @@ pagegenerator.prototype.showPage = function(page){
 	if(page>=this.pages.length)page= this.pages.length-1;
 	if(page<0)page=0;
 	this.aktpage = page;
-	//console.log("aktpage:"+this.aktpage+" pagedivslength:"+this.pagedivs.length);
+	console.log("aktpage:"+this.aktpage+" pagedivslength:"+this.pagedivs.length+" page:"+page);
 	this.pagedivs[page].classList.add("active");
 }
 
@@ -3594,21 +3594,24 @@ var fullscreen = false;
 pagegenerator.prototype.showpresentation = function(){
 	var praesesrahmen = document.getElementById("praesentationrahmen");
 	var quelle = document.getElementById("quelltext");
+	var cursorpos = slidenote.textarea.selectionEnd;
 	if(!fullscreen){
 		//this.init();
 		fullscreen=true;
 		if(parsetest)slidenote.parser.renderMapToPresentation();
 		this.init(slidenote.parser, document.getElementById("praesentation"));
-		var test2 = document.getElementsByTagName("code");
-		if(test2!=null)console.log(test2.length+"codes");
+		//var test2 = document.getElementsByTagName("code");
+		//if(test2!=null)console.log(test2.length+"codes");
 		this.stylePages();
-		var test = document.getElementsByTagName("code");
-		if(test!=null)console.log(test.length+"codes code1: ");
+		//var test = document.getElementsByTagName("code");
+		//if(test!=null)console.log(test.length+"codes code1: ");
 		//console.log("querycodeanzahl:"+document.querySelectorAll(".presentation code")[0].innerHTML);
 
 		//this.sanitizeSonderzeichen();
 		//console.log("querycodeanfang:"+document.querySelectorAll(".presentation code")[0].innerHTML.substring(0,20));
-		this.showPage(presentation.emdparsobjekt.pageAtPosition(quelle.selectionStart)[0]);
+		//this.showPage(presentation.emdparsobjekt.pageAtPosition(quelle.selectionStart)[0]);
+		console.log("show page:"+this.emdparsobjekt.map.pageAtPosition(cursorpos) + " pos:"+cursorpos);
+		this.showPage(this.emdparsobjekt.map.pageAtPosition(cursorpos));
 		praesesrahmen.classList.add("fullscreen");
 		praesesrahmen.tabIndex=1; //make it tabable to get keystrokes
 		praesesrahmen.focus(); //focus it to get keystrokes
@@ -3620,11 +3623,11 @@ pagegenerator.prototype.showpresentation = function(){
 		fullscreen=false;
 		praesesrahmen.tabIndex = undefined; //undo tabable so it cant get accessed by accident/screenreader
 		//presentation.ausgabediv.classList.remove("active");
-
-		quelle.selectionEnd = presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
+		console.log("map.linestart"+this.aktpage+":"+slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line]);
+		quelle.selectionEnd = slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line];//presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
 		quelle.selectionStart = quelle.selectionEnd;
 		quelle.focus();
-		quelle.selectionEnd = presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
+		quelle.selectionEnd = slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line];//presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
 		console.log("parse neu ein");
 		slidenote.parseneu();
 		praesesrahmen.classList.remove("fullscreen");
