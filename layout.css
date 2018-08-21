@@ -41,9 +41,6 @@
 	color: red;
 	border-bottom:3px solid red;
 }
-.backgroundline{
-	white-space: pre-wrap;
-}
 .proposedsymbol{
 	color:grey;
 	background:white;
@@ -55,6 +52,10 @@
 	color: red;
 }
 /*mdcodeeditor*/
+.backgroundline{
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
 .backgroundline.h1{
 	color:blue;
 	font-weight: bold;
