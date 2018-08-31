@@ -208,6 +208,11 @@ function parsetesting(){
 				Select an local image file to upload, then click on image to use it in this slidenote
 				<input type="file" id="fileInput">
 			</div>
+			<div id="imageResizeOptions">
+				<input type="radio" name="imageResize" value="1024x768" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Background/Big (1024x768)</label>
+				<input type="radio" name="imageResize" value="400x300" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Medium (400x300)</label>
+				<input type="radio" name="imageResize" value="100x50" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Icon (100x50)</label>
+			</div>
 			<div id="filePreview"></div>
 			<h1>Files in Database (click on image to reuse)</h1>
 			<div id="fileOld"></div>
