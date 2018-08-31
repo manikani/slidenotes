@@ -12,6 +12,7 @@ function base64Image(name,base64url){
 //objekt base64images
 slidenote.base64images = {
   base64images : new Array(),
+  lastuploadedimage : null,
   preselectedname: null,
   quality: 0.8,
   imagetype: "image/jpeg",
@@ -99,10 +100,69 @@ slidenote.base64images = {
   },
   notempty: function(){
     return (this.base64images.length>0);
+  },
+  resizeImage: function(img){
+    var maxwidth = slidenote.base64images.maxwidth;
+    var width = maxwidth;
+    var maxheight = slidenote.base64images.maxheight;
+    if(img.width<maxwidth){
+      console.log("image has only width:"+img.width);
+      document.getElementById("downsizedimage").src = img.src;
+      return;
+    }
+     var canvas = document.createElement('canvas'),
+         ctx = canvas.getContext("2d"),
+         oc = document.createElement('canvas'),
+         octx = oc.getContext('2d');
+
+     canvas.width = maxwidth; // destination canvas size
+     canvas.height = canvas.width * img.height / img.width;
+
+     if(canvas.height > maxheight){
+       canvas.height = maxheight;
+       canvas.width = canvas.height * img.width / img.height;
+       width = canvas.width;
+     }
+
+     var cur = {
+       width: Math.floor(img.width * 0.5),
+       height: Math.floor(img.height * 0.5)
+     }
+
+     oc.width = cur.width;
+     oc.height = cur.height;
+
+     octx.drawImage(img, 0, 0, cur.width, cur.height);
+
+     while (cur.width * 0.5 > width) {
+       cur = {
+         width: Math.floor(cur.width * 0.5),
+         height: Math.floor(cur.height * 0.5)
+       };
+       octx.drawImage(oc, 0, 0, cur.width * 2, cur.height * 2, 0, 0, cur.width, cur.height);
+     }
+
+     ctx.drawImage(oc, 0, 0, cur.width, cur.height, 0, 0, canvas.width, canvas.height);
+     //document.getElementById("downsizedimage").src = canvas.toDataURL();
+     document.getElementById("downsizedimage").src = canvas.toDataURL(slidenote.base64images.imagetype,slidenote.base64images.quality);
+  },//end of resizeImage
+  changeMaxSize: function(size){
+    if(size){
+      var mw = size.substring(0,size.indexOf("x"));
+      var mh = size.substring(size.indexOf("x")+1);
+      this.maxwidth = mw;
+      this.maxheight = mh;
+      var targetimg = document.getElementById("downsizedimage");
+      if(targetimg){
+        if(this.lastuploadedimage)this.resizeImage(this.lastuploadedimage);
+      }
+    }else{
+      this.maxwidth=1024;
+      this.maxheight=768;
+    }
   }
 
-
-};
+};//end of new object slidenote.base64images
 
 newtheme.styleThemeSpecials = function(){
   console.log("imgtourl - scan for images and replace them with data-urls");
@@ -137,6 +197,7 @@ newtheme.init = function(){
         fprew.innerHTML="";
         var b64img = new Image();
         b64img.src = b64image.base64url;
+        b64img.id = "downsizedimage";
         b64img.onclick=function(){
           document.getElementById("imagesblock").classList.remove("visible");
           slidenote.textarea.focus();
@@ -164,49 +225,7 @@ newtheme.init = function(){
 
   					var img = new Image();
             img.onload = function() {
-              var maxwidth = slidenote.base64images.maxwidth;
-              var width = maxwidth;
-              var maxheight = slidenote.base64images.maxheight;
-              if(img.width<maxwidth){
-                console.log("image has only width:"+img.width);
-                document.getElementById("downsizedimage").src = img.src;
-                return;
-              }
-               var canvas = document.createElement('canvas'),
-                   ctx = canvas.getContext("2d"),
-                   oc = document.createElement('canvas'),
-                   octx = oc.getContext('2d');
-
-               canvas.width = maxwidth; // destination canvas size
-               canvas.height = canvas.width * img.height / img.width;
-
-               if(canvas.height > maxheight){
-                 canvas.height = maxheight;
-                 canvas.width = canvas.height * img.width / img.height;
-                 width = canvas.width;
-               }
-
-               var cur = {
-                 width: Math.floor(img.width * 0.5),
-                 height: Math.floor(img.height * 0.5)
-               }
-
-               oc.width = cur.width;
-               oc.height = cur.height;
-
-               octx.drawImage(img, 0, 0, cur.width, cur.height);
-
-               while (cur.width * 0.5 > width) {
-                 cur = {
-                   width: Math.floor(cur.width * 0.5),
-                   height: Math.floor(cur.height * 0.5)
-                 };
-                 octx.drawImage(oc, 0, 0, cur.width * 2, cur.height * 2, 0, 0, cur.width, cur.height);
-               }
-
-               ctx.drawImage(oc, 0, 0, cur.width, cur.height, 0, 0, canvas.width, canvas.height);
-               //document.getElementById("downsizedimage").src = canvas.toDataURL();
-               document.getElementById("downsizedimage").src = canvas.toDataURL(slidenote.base64images.imagetype,slidenote.base64images.quality);
+              slidenote.base64images.resizeImage(img);
             }
             var targetimg = new Image();
             targetimg.id = "downsizedimage";
@@ -214,9 +233,11 @@ newtheme.init = function(){
             targetimg.onclick = function(){slidenote.base64images.addImage(this.name,this.src);};
 
   					fileDisplayArea.appendChild(targetimg);
+
             //load image
             img.src = reader.result;
-
+            //save last uploaded image in orig size:
+            slidenote.base64images.lastuploadedimage = img;
             //add to slidenote:
             //slidenote.base64images.addImage(nombre,reader.result);
 
