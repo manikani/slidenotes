@@ -4160,6 +4160,8 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 			var imguploadscreen = document.getElementById("imagesblock");
 			if(imguploadscreen.classList.contains("visible")){
 				imguploadscreen.classList.remove("visible");
+				this.textarea.selectionEnd = this.textarea.selectionEnd +1;
+				this.textarea.selectionStart = this.textarea.selectionEnd;
 			}else{
 				this.parseneu();
 				this.presentation.showpresentation();
