@@ -724,7 +724,7 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 changes.push(cursorchange);
 
 	 //looking for simple changes:
-	 var mdsimples = "***__~~<`"; //< is also a simple change
+	 var mdsimples = "***__~~<&`"; //< is also a simple change
 	 for(var x=0;x<this.map.insertedhtmlelements.length;x++){
 		 var element = this.map.insertedhtmlelements[x];
 		 //iterate through map and get changes we have to do to orig-text:
@@ -1367,23 +1367,30 @@ emdparser.prototype.parseMap = function(){
     while(textlength>signs.length)signs+=signs;
     return signs.substring(0,textlength);
   }
-  var lines = this.returnparsedlines(this.sourcecode);
+	var sourcecode = this.sourcecode;
+	//sourcecode  = sourcecode.replace(/(\S)([_])(\S)/g,"$1€$3");
+	//sourcecode  = sourcecode.replace(/([^\s_])([_])(\S)/g,"$1€$3");
+	//console.log("Timecheck: replace T_T needed:"+(new Date().getTime() - TimecheckStart));
+  var lines = this.returnparsedlines(sourcecode);
   var linestartpos = 0;
   //sort out <:
   for(var x=0;x<lines.length;x++){
-    var symbol = "<";
-    var newsymbol = "&lt;";
+    var symbols = ["<", "&", '\\***', "\\**", "\\*", "\\__", "\\_", "\\~~", "\\![", "\\```","\\`"];
+    var newsymbols = ["&lt;","&amp;", "***", "**","*","__","_", "~~", "![","```", "`"];
     var temptext = lines[x];
-
-    while(temptext.indexOf(symbol)>=0){
-      var actpos = temptext.indexOf(symbol);
-      temptext = temptext.substring(0,actpos)+"€"+temptext.substring(actpos+1);
-      this.map.addElement({
-        line:x,pos:actpos,posinall:linestartpos+actpos,
-        html:"&lt;",mdcode:"<",typ:"<",
-        wystextveraenderung:0
-      });
-    }
+		for(var s=0;s<symbols.length;s++){ //its not working for some reason so avoid it
+			var symbol = symbols[s];
+			var newsymbol = newsymbols[s];
+	    while(temptext.indexOf(symbol)>=0){
+	      var actpos = temptext.indexOf(symbol);
+	      temptext = temptext.substring(0,actpos)+substitutewitheuro(symbol.length)+temptext.substring(actpos+symbol.length);
+	      this.map.addElement({
+	        line:x,pos:actpos,posinall:linestartpos+actpos,
+	        html:newsymbol,mdcode:symbol,typ:"<",
+	        wystextveraenderung:0
+	      });
+	    }
+		}
     lines[x]=temptext;
     linestartpos+=lines[x].length+1; //+1 for \n
   } //end of <
@@ -4051,7 +4058,7 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 	this.lastcarretpos = carretpos;*/
 	if(key=="undefined")key=getKeyOfKeyCode(event.keyCode);//key=String.fromCharCode(event.keyCode);
 	if(this.texteditorerroractivated){
-		var renderkeys = "*_#]:"
+		var renderkeys = "*_#]:\\";
 		if(key==="Enter" || key==="Backspace" || key==="Delete" || renderkeys.indexOf(key)>-1){
 			console.log("parseneu forced after key "+key);
 
@@ -4163,7 +4170,8 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 			this.parseneu();
 
 		}
-		this.lastpressedkey = key;
+		if(this.lastpressedkey ==="Dead" && key ==="Shift")this.lastpressedkey = "Dead";
+			else	this.lastpressedkey = key;
 
 	}
 
