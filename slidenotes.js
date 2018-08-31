@@ -4150,8 +4150,13 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 			return;
 		}
 		if(key==="Escape"){
-			this.parseneu();
-			this.presentation.showpresentation();
+			var imguploadscreen = document.getElementById("imagesblock");
+			if(imguploadscreen.classList.contains("visible")){
+				imguploadscreen.classList.remove("visible");
+			}else{
+				this.parseneu();
+				this.presentation.showpresentation();
+			}
 		}
 		if(this.lastpressedkey==="Dead"){
 			console.log("parseneu forced by dead key");
