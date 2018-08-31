@@ -792,22 +792,38 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 			 imagesinline[element.line].push(element);
 			 //check if image is over http and if so if it exists:
 			 var imgparsefalse = false;
+			 var imagenotfound = " ";
 			 if(element.src.substring(0,4)==="http"){
-				 var imgtocheck = new Image();
-				 imgtocheck.src = element.src;
-				 imgtocheck.onerror = function(){
-					 //alert("image not found")
-					 console.log("image not found:"+this.src);
-					 var imgsrcs = document.getElementsByClassName("imagesrc");
-					 for(var i=0;i<imgsrcs.length;i++){
-						 console.log("imgsrcs innerhtml:"+imgsrcs[i].innerHTML);
-						 if(imgsrcs[i].innerHTML === this.src || imgsrcs[i].innerHTML+"/"===this.src){
-							 imgsrcs[i].classList.add("imagenotfound");
-						 }
-					 }
+				 	 if(slidenote.HTTPImagesNotFound === undefined)slidenote.HTTPImagesNotFound = "";
+					 if(slidenote.HTTPImagesNotFound.indexOf(element.src)>-1){
+						 imagenotfound+="imagenotfound";
 
+					 } else{
+						 var imgtocheck = new Image();
+						 console.log("image httpsrc: "+element.src);
+						 imgtocheck.onerror = function(){
+							 //alert("image not found")
+							 console.log("image not found:"+this.src);
+							 imagenotfound += "imagenotfound";
+							 if(slidenote.HTTPImagesNotFound==undefined)slidenote.HTTPImagesNotFound = "";
+							 slidenote.HTTPImagesNotFound += this.src;
+							 var imgsrcs = document.getElementsByClassName("imagesrc");
+							 for(var i=0;i<imgsrcs.length;i++){
+								 console.log("imgsrcs innerhtml:"+imgsrcs[i].innerHTML);
+								 if(imgsrcs[i].innerHTML === this.src || imgsrcs[i].innerHTML+"/"===this.src){
+									 imgsrcs[i].classList.add("imagenotfound");
+								 }
+							 }
+					 		}
+							imgtocheck.src = element.src;
 				 };
 				 //imgtocheck.onload = function(){alert("image geladen")};
+			 }else {
+				 //image is not over http - check if it exists in database:
+				 if(slidenote.base64images && slidenote.base64images.imageByName(element.src)==null){
+					 console.log("image not in database:"+element.src);
+					 imagenotfound+="imagenotfound";
+				 }
 			 }
 			 //add span for image-tag to get highlightning
 			 changes.push({
@@ -841,7 +857,7 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 				 line:element.line,
 				 posinall:element.posinall+2+element.alt.length+2,
 				 pos:element.midpos+2,
-				 html:'<span class="imagesrc">',
+				 html:'<span class="imagesrc'+imagenotfound+'">',
 				 mdcode:"",
 				 typ:"image-src"
 			 });
@@ -2066,6 +2082,7 @@ emdparser.prototype.parseMap = function(){
   var TimecheckEnd = new Date().getTime();
   var TimecheckUsed = TimecheckEnd - TimecheckStart;
   console.log("parsed in "+TimecheckUsed+" Ms");
+	//adding img-preparse:
 
 }
 

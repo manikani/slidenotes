@@ -19,3 +19,7 @@
 #slidenotediv #imagesblock.visible{
   display:block;
 }
+.imagenotfound{
+  color:red;
+  weight:bold;
+}
