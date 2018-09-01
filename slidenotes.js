@@ -21,6 +21,7 @@ var mapobject = {	//link:
 function mapping (parser) {
 	 this.insertedhtmlelements = new Array();
 	 this.insertedhtmlinline = new Array();
+	 this.insertedimages = new Array();
 	 this.lastline=0;
 	 //this.linepos = [0];
 	 this.linestart = [0];
@@ -57,6 +58,7 @@ mapping.prototype.addElement = function(element2){
 	if(element.posinall==null)element.posinall=element.pos+this.linestart[element.line];
 	this.insertedhtmlelements.push(element);
 	this.insertedhtmlinline[element.line].push(element);
+	if(element.typ === "image")this.insertedimages.push(element);
 };
 mapping.prototype.addVeraenderung = function(element){
 	if(element.posinall==null)element.posinall=element.pos+this.linestart[element.line];
@@ -1293,13 +1295,43 @@ emdparser.prototype.positionAtPage = function(page){
 emdparser.prototype.renderMapToPresentation = function(){
   var lines = this.returnparsedlines(this.sourcecode);
   var changes = this.map.insertedhtmlelements;
-
-  //add missing parts to changes - eg p-tags, imageline, empty line etc.
+	//find imagelines:
+	for(var im=0;im<this.map.insertedimages.length;im++){
+		var actimg = this.map.insertedimages[im];
+		if(this.lineswithhtml[actimg.line]==="imageline")continue; //do nothing if imageline is set yet to avoid duplicates
+		//find images-md-code in line:
+		var imgLength = 0;
+		var imgMdCode = "";
+		var imagesInLine = new Array();
+		for(var el=0;el<this.map.insertedhtmlinline[actimg.line].length;el++){
+			if(this.map.insertedhtmlinline[actimg.line][el].typ ==="image"){
+				imgLength += this.map.insertedhtmlinline[actimg.line][el].mdcode.length;
+				imagesInLine.push(this.map.insertedhtmlinline[actimg.line][el]);
+				imgMdCode += this.map.insertedhtmlinline[actimg.line][el].mdcode;
+			}
+		}
+		if(imgLength === lines[actimg.line].length){
+			//there are only images in this line, because md-code is just image-md-code
+			this.lineswithhtml[actimg.line]="imageline";
+			console.log("simple imageline found"+actimg.line);
+		} else{
+			//there could be spaces inside this line
+			console.log("not so simple imageline found"+actimg.line);
+			var imgline = lines[actimg.line];
+			imgline = imgline.replace(/\s/g,"");
+			imgMdCode = imgMdCode.replace(/\s/g,"");
+			console.log("imageline:"+imgline+"\nimgMdCode:"+imgMdCode);
+			if(imgline.length === imgMdCode.length){
+				this.lineswithhtml[actimg.line]="imageline";
+			}
+		}
+	}//end imagelines
+  //add missing parts to changes - eg p-tags, imageblock, empty line etc.
   for(var lwh=0;lwh<lines.length;lwh++){
     if(this.lineswithhtml[lwh]==null&& lines[lwh].length==0){
       this.lineswithhtml[lwh]="empty";
     }else if(this.lineswithhtml[lwh]==null){
-      //TODO: check if only images in line, then its an imageline
+
       this.lineswithhtml[lwh]="text";
       var linestart = this.map.linestart[lwh];
       changes.push({
@@ -1308,21 +1340,43 @@ emdparser.prototype.renderMapToPresentation = function(){
 				weight:0
 			});
       var followlines=lwh+1;
-      while(this.lineswithhtml[followlines]==null &&
-              followlines<lines.length &&
-              lines[followlines].length>0 //dont parse in empty lines, break on them
+      while(lines[followlines].length>0 &&//dont parse in empty lines, break on them
+							(this.lineswithhtml[followlines]==null || this.lineswithhtml[followlines]==="imageline") &&
+              followlines<lines.length
               ){
         this.lineswithhtml[followlines]="text";
         followlines++;
         //console.log("fll++");
       }
-    followlines--; //followlines geht jetzt bis zur letzten zeile
-    lineend = this.map.lineend[followlines];
+	    followlines--; //followlines geht jetzt bis zur letzten zeile
+	    var lineend = this.map.lineend[followlines];
 
-    changes.push({line:followlines, pos:lines[followlines].length,
-      posinall:lineend, html:"</p>", mdcode:"", typ:"start", weight:10});
-  }//lineswithhtml==null
-  }
+	    changes.push({line:followlines, pos:lines[followlines].length,
+	      posinall:lineend, html:"</p>", mdcode:"", typ:"start", weight:10});
+	  	}//lineswithhtml==null
+			if(this.lineswithhtml[lwh]==="imageline"){
+				//search for imageblock:
+				var followlines = lwh+1;
+				while(lines[followlines].length>0 && followlines < lines.length &&
+					(this.lineswithhtml[followlines]==null || this.lineswithhtml[followlines]=="imageline")
+				){
+					this.lineswithhtml[followlines]="imageblock";
+					followlines++;
+				}
+				followlines--;
+				if(lwh<followlines){
+					this.lineswithhtml[lwh]="imageblock";
+					var lineend = this.map.lineend[followlines];
+					changes.push({
+						line:lwh, pos:0, posinall: this.map.linestart[lwh],
+						html:'<div class="imageblock">',mdcode:"",typ:"start",
+						weight:0
+					});
+					changes.push({line:followlines, pos:lines[followlines].length,
+					posinall:lineend, html:"</div>", mdcode:"", typ:"end",weight:10});
+				}
+			}//end of imageblock-search
+	} //end of for
 
   changes.sort(function (a,b){
 		if(a.posinall!=b.posinall) return a.posinall-b.posinall;
@@ -2082,7 +2136,7 @@ emdparser.prototype.parseMap = function(){
   var TimecheckEnd = new Date().getTime();
   var TimecheckUsed = TimecheckEnd - TimecheckStart;
   console.log("parsed in "+TimecheckUsed+" Ms");
-	//adding img-preparse:
+
 
 }
 
