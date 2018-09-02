@@ -1340,9 +1340,8 @@ emdparser.prototype.renderMapToPresentation = function(){
 				weight:0
 			});
       var followlines=lwh+1;
-      while(lines[followlines].length>0 &&//dont parse in empty lines, break on them
-							(this.lineswithhtml[followlines]==null || this.lineswithhtml[followlines]==="imageline") &&
-              followlines<lines.length
+      while(followlines<lines.length && lines[followlines].length>0 &&//dont parse in empty lines, break on them
+							(this.lineswithhtml[followlines]==null || this.lineswithhtml[followlines]==="imageline")
               ){
         this.lineswithhtml[followlines]="text";
         followlines++;
@@ -1357,7 +1356,7 @@ emdparser.prototype.renderMapToPresentation = function(){
 			if(this.lineswithhtml[lwh]==="imageline"){
 				//search for imageblock:
 				var followlines = lwh+1;
-				while(lines[followlines].length>0 && followlines < lines.length &&
+				while(followlines < lines.length && lines[followlines].length>0 &&
 					(this.lineswithhtml[followlines]==null || this.lineswithhtml[followlines]=="imageline")
 				){
 					this.lineswithhtml[followlines]="imageblock";
@@ -1374,6 +1373,14 @@ emdparser.prototype.renderMapToPresentation = function(){
 					});
 					changes.push({line:followlines, pos:lines[followlines].length,
 					posinall:lineend, html:"</div>", mdcode:"", typ:"end",weight:10});
+					//add brs to lines:
+					for(var brx=lwh;brx<followlines;brx++)
+					changes.push({
+						line:brx, pos:lines[brx].length,
+						posinall:this.map.lineend[brx],
+						html:"<br>", mdcode:"", typ:"end", weight:9
+					});
+
 				}
 			}//end of imageblock-search
 	} //end of for
