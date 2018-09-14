@@ -3106,7 +3106,8 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	//daher erneutes scannen wie oben nur mit lines:
 	this.init();
 	//Grundthemes laden:
-	this.loadTheme("emdcode");
+	this.loadTheme("blocks");
+	this.loadTheme("stickytitles");
 	this.loadTheme("procontra");
 	this.loadTheme("azul");
 	this.loadTheme("redalert");
