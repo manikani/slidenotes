@@ -1105,9 +1105,15 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 
 		}
 	}
-	console.log(changes);
+	//console.log(changes);
 	var backgroundlines = document.getElementsByClassName("backgroundline");
 	if(backgroundlines.length>=cursorline)backgroundlines[cursorline].innerHTML=codeofline;
+	//console.log("backgroundline neu:"+codeofline);
+	//console.log(backgroundlines[cursorline]);
+	//console.log(slidenote.textarea.clientWidth + " : "+slidenote.texteditorerrorlayer.clientWidth)
+	for(var x=0;x<slidenote.presentation.themes.length;x++){
+		if(slidenote.presentation.themes[x].active)slidenote.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
+	}
 };
 
 emdparser.prototype.renderCodeeditorImagePreview = function(){
@@ -3106,6 +3112,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	//daher erneutes scannen wie oben nur mit lines:
 	this.init();
 	//Grundthemes laden:
+	this.loadTheme("contextfield");
 	this.loadTheme("blocks");
 	this.loadTheme("stickytitles");
 	this.loadTheme("procontra");
@@ -3343,6 +3350,12 @@ pagegenerator.prototype.addTheme = function (theme){
 	//this.stylePages();
 	theme.init();
 }
+
+/*getThemeByName returns the Theme found by name:
+*/
+pagegenerator.prototype.getThemeByName = function(name){
+	for(var x=0;x<this.themes.length;x++)if(this.themes[x].classname ===name)return this.themes[x];
+}
 	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
 	*/
 pagegenerator.prototype.showThemes = function(tabnr){
@@ -3482,7 +3495,8 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 		if(vorschau!=null)vorschau.classList.add(this.themes[themenr].classname);
 
 	}
-	this.themes[themenr].active = status;
+	//this.themes[themenr].active = status;
+	this.themes[themenr].changeThemeStatus(status);
 	if(this.themes[themenr].editorbuttons!=null){
 		if(status){
 			for(var x=0;x<this.themes[themenr].editorbuttons.length;x++){
@@ -3698,6 +3712,9 @@ Theme.prototype.init = function(){
 	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
 	//wird nach zufügen des Themes aufgerufen
 }
+Theme.prototype.changeThemeStatus = function(status){
+	this.active = status;
+}
 Theme.prototype.saveConfigString = function(){
 	//Hook-Funktion, gedacht zum Überschreiben in .js-Datei des Themes
 	//wird von slidenoteguardian benutzt um Configs zu speichern
@@ -3855,6 +3872,7 @@ slidenotes.prototype.parseneu = function(){
 	console.log("Timecheck: Parsen von "+this.textarea.value.length+" Zeichen und "+this.parser.map.insertedhtmlelements.length+" Elementen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
 	if(slidenoteguardian)slidenoteguardian.autoSaveToLocal(new Date().getTime());
 };
+
 slidenotes.prototype.renderwysiwyg = function(){
 	//nur wysiwyg neu aufbauen
 	var st = this.wysiwygarea.scrollTop;
