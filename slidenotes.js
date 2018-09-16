@@ -1176,7 +1176,7 @@ emdparser.prototype.CarretOnElement = function(carretpos){
 		//var linenr = this.lineAtPosition(carretpos);
 		//if(this.map.lineswithhtml[linenr]==="data")
 		if(actel.mdcode.substring(0,1) === "#")actelend = this.map.lineend[actel.line]; //TODO:linepos
-		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall;
+		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall+actel.brotherelement.mdcode.length;
 		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
 		if(actel.posinall<carretpos && actelend > carretpos){
 			//element getroffen:
@@ -1270,9 +1270,9 @@ emdparser.prototype.pageAtPosition = function(position, mode){
 	var aktpos = 0;
 	var altpos = 0;
 	var pagecount = 0;
-	while(this.sourcecode.indexOf("\n-----",aktpos)<position && aktpos>-1){
+	while(this.sourcecode.indexOf("\n---",aktpos)<position && aktpos>-1){
 		altpos = aktpos;
-		aktpos = this.sourcecode.indexOf("\n-----",aktpos+6);
+		aktpos = this.sourcecode.indexOf("\n---",aktpos+6);
 		pagecount++;
 	}
 	if(pagecount>0)pagecount--; //pagecount auf richtige seite bringen
@@ -3586,11 +3586,17 @@ pagegenerator.prototype.showpresentation = function(){
 		fullscreen=false;
 		praesesrahmen.tabIndex = undefined; //undo tabable so it cant get accessed by accident/screenreader
 		//presentation.ausgabediv.classList.remove("active");
-		console.log("map.linestart"+this.aktpage+":"+slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line]);
-		quelle.selectionEnd = slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line];//presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
-		quelle.selectionStart = quelle.selectionEnd;
-		quelle.focus();
-		quelle.selectionEnd = slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line];//presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
+		//console.log("map.linestart"+this.aktpage+":"+slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line]);
+		var oldPage = slidenote.parser.pageAtPosition(quelle.selectionEnd, "pagenr");
+		console.log("oldpage:"+oldPage+"aktpage:"+this.aktpage);
+		if(oldPage != this.aktpage){
+			quelle.selectionEnd = slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line];//presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
+			quelle.selectionStart = quelle.selectionEnd;
+			quelle.focus();
+			quelle.selectionEnd = slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line];//presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
+		} else{
+			quelle.focus();
+		}
 		console.log("parse neu ein");
 		slidenote.parseneu();
 		praesesrahmen.classList.remove("fullscreen");
