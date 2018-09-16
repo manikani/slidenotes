@@ -1065,6 +1065,10 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 emdparser.prototype.renderNewCursorInCodeeditor = function(){
 	var cursorposinall = slidenote.textarea.selectionEnd;
 	var cursorline = this.lineAtPosition(cursorposinall);
+	if(cursorline == 0){ //error in line0 - quickfix TODO: Why does it not work in line0?
+		slidenote.parseneu();
+		return;
+	}
 	var cursorposinline = cursorposinall - this.map.linestart[cursorline];
 	console.log("new cursor at line:"+cursorline+", posinall:"+cursorposinall+", pos:"+cursorposinline);
 	var codeofline = this.sourcecode.substring(this.map.linestart[cursorline],this.map.lineend[cursorline]);
