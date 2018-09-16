@@ -21,6 +21,11 @@ newtheme.changeThemeStatus = function(status){
       document.getElementById("editorblock").appendChild(this.contextFieldContainer);
     }
   }
+  if(!this.active){
+    //delete contextfieldcontainer:
+    var cfc = document.getElementById("contextfieldcontainer");
+    if(cfc)cfc.parentNode.removeChild(cfc);
+  }
 }
 
 newtheme.styleThemeMDCodeEditor = function(){
@@ -49,8 +54,17 @@ newtheme.styleThemeMDCodeEditor = function(){
       } else{
         //no image found - use upload-image
         var noimagetext = document.createElement("div");
-        noimagetext.innerHTML = "No image uploaded by this name <br>";
+        noimagetext.innerHTML = "No image uploaded by the name <i>"+onObject.src+"</i> <br>";
+        var uploadlink = document.createElement("a");
+        uploadlink.href="#";
+        uploadlink.name = onObject.src;
+        uploadlink.onclick=function(){
+          slidenote.base64images.preselectedname = this.name;
+          document.getElementById("imagesblock").classList.add("visible");
+        };
+        uploadlink.innerHTML = "Upload an Image to the slidenote";
         Field.appendChild(noimagetext);
+        Field.appendChild(uploadlink);
         cfimage.src = "images/imageupload.png";
       }
 
@@ -61,9 +75,9 @@ newtheme.styleThemeMDCodeEditor = function(){
       var cftheme = slidenote.datatypes.elementOfType(onObject.dataobject.type).theme;
       console.log("on object has dataobject. Theme:");
       console.log(cftheme);
-      console.log(typeof cftheme.helpText + " - " +cftheme.helpText(onObject.dataobject.type));
+      console.log(typeof cftheme.helpText + " - " +cftheme.helpText(onObject.dataobject));
       if(cftheme.helpText && typeof cftheme.helpText ==="function"){
-        Field.innerHTML = cftheme.helpText(onObject.dataobject.head);
+        Field.innerHTML = cftheme.helpText(onObject.dataobject);
 
       }
     }//end of type = dataObject

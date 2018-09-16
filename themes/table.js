@@ -1,6 +1,15 @@
 var newtheme = new Theme("table");
 newtheme.description = "Tables: a simple table-Extension. Accepts different formats to transform Data-Block into an html-table";
 
+newtheme.helpText = function(head){
+  var result = "Each row makes a new row in the table, each separator in a row makes a new cell/column<br>"+
+                "Accepted Separators are:<br>"+
+                "&quot;,&quot; &quot;, &quot; &quot;;&quot; &quot;|&quot; and TAB<br>"+
+                "First row is used for Labels";
+
+  return result;
+}
+
 newtheme.addEditorbutton('table',"||table||","||table||");
 slidenote.datatypes.push({type:"table",mdcode:false,theme:newtheme});
 
