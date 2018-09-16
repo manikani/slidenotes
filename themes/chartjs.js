@@ -1,5 +1,26 @@
 var newtheme = new Theme("chartjs");
 newtheme.description = "Charts with Chart.js - takes datatags ||chart||line, ||chart||pie, ||chart||bar";
+
+newtheme.helpText = function(head){
+  var result = "";
+  var type = head.substring(9);
+  result += "<h2>Chart Overview:</h2>"+
+            "<i><b>extras:</b></i><br>"+
+            "#Title <br>";
+  if(type==="line"||type==="bar")result+="##X-Axis<br>"+
+            "##Y-Axis<br>";
+  result += "###Datasetlabel (if you use more then one dataset)<br> ";
+  result += "<b><i>datastructures:</i></b><br>"+
+            "values have to be entered by numbers only, labels are free to choose<br>"+
+            "<i>simple structure:</i><br>"+
+            "label<b>:</b>value<i>:value</i> (for second dataset, not mandatory)<br> example: &quot;January:20&quot;<br>"+
+            "<br>"+
+            "<i>database structure:</i><br>"+
+            "first row: labels, second row: data of first dataset,<i>() third row: data of second dataset)</i><br>"+
+            "labels and values can be separated by tabs, by &quot;,&quot; and by &quot;;&quot;<br>"+
+            "if you use more than one dataset, the first element of a row is used as datasetlabel";
+  return result;
+}
 //newtheme.active = false;
 //dateien nachladen:
 var jsfile = document.createElement('script');
