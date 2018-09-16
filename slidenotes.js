@@ -3058,7 +3058,8 @@ stylepager.prototype.encapsuleHtml = function(pagelines,pagetaglines){
 	//alert(pagetaglines.toString());
 	//console.log("encapsulehtml pagetaglines-length:"+pagetaglines.length);
 	var startend = this.find(pagetaglines,0);
-	//console.log("startend:"+startend);
+	console.log("encapsulehtml startend:"+startend.start + "-"+startend.end+"muster:"+this.muster);
+	console.log(pagetaglines);
 	//alert(pagetaglines.toString() + "\n" +startend.toString());
 	//alert(pagetaglines==null);
 	var aktline=0;
@@ -3562,6 +3563,7 @@ pagegenerator.prototype.showpresentation = function(){
 		//this.init();
 		fullscreen=true;
 		if(parsetest)slidenote.parser.renderMapToPresentation();
+		document.getElementById("praesentation").innerHMTL = "";
 		this.init(slidenote.parser, document.getElementById("praesentation"));
 		//var test2 = document.getElementsByTagName("code");
 		//if(test2!=null)console.log(test2.length+"codes");
