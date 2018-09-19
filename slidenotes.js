@@ -1172,19 +1172,29 @@ emdparser.prototype.CarretOnElement = function(carretpos){
 	var element;
 	for(var x=0;x<this.map.insertedhtmlelements.length;x++){
 		var actel = this.map.insertedhtmlelements[x];
+		var actelstart = actel.posinall;
 		var actelend = actel.posinall+actel.mdcode.length ;
 		//var linenr = this.lineAtPosition(carretpos);
 		//if(this.map.lineswithhtml[linenr]==="data")
-		if(actel.mdcode.substring(0,1) === "#")actelend = this.map.lineend[actel.line]; //TODO:linepos
+		if(actel.mdcode.substring(0,1) === "#"){actelstart --; actelend = this.map.lineend[actel.line];} //TODO:linepos
 		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall+actel.brotherelement.mdcode.length;
 		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
-		if(actel.posinall<carretpos && actelend > carretpos){
+		if(actel.html ==="<data>"){actelstart--;actelend++;}
+
+		if(actelstart<carretpos && actelend > carretpos){
 			//element getroffen:
 			var allowed = "###***__~~"
 
 			element = actel;
 		}
 
+	}
+	if(element == null){
+		var line = this.lineAtPosition(carretpos);
+		var linetype = this.lineswithhtml[line];
+		if(linetype === "pagebreak" || linetype === "h1" && this.map.insertedhtmlinline[line].length ===1){
+			element = this.map.insertedhtmlinline[line][0];
+		}
 	}
 	return element;
 }
@@ -4275,8 +4285,8 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 		}
 	}else if(emdzeichen.substring(0,2)=="||"){
 		emdstart=emdzeichen+"\n";
-		emdend="\n"+emdzeichen.substring(0,emdzeichen.indexOf("||",2)+2);
-	}else if(emdzeichen==="-----"){
+		emdend="\n"+emdzeichen.substring(0,emdzeichen.indexOf("||",2)+2) +"\n";
+	}else if(emdzeichen==="---"){
 		emdstart = "\n"+emdzeichen+"\n";
 		emdend = "";
 	}else{ //einfache zeichen:

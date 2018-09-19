@@ -1,5 +1,16 @@
 /*css additions for contextfields*/
 #contextfieldimage{
-  max-width: 50px;
-  max-height: 50px;
+  max-width: 150px;
+  max-height: 150px;
+}
+
+#contextfieldcontainer {
+    position: absolute;
+    right: 0;
+    max-width: 36%;
+    top: 25%;
+    background: white;
+    z-index: 100;
+    border: 1px dashed;
+    padding: 5px;
 }

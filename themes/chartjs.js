@@ -8,8 +8,8 @@ newtheme.helpText = function(dataobject){
   result += "<h2>Chart Overview:</h2>"+
             //"<i><b>extras:</b></i><br>"+
             "#Title <br>";
-  if(type==="line"||type==="bar")result+="##X-Axis<br>"+
-            "##Y-Axis<br>";
+  if(type==="line"||type==="bar")result+="##X-Axis-Label<br>"+
+            "##Y-Axis-Label<br>";
   result += "###Datasetlabel (if you use more than one dataset)<br> ";
   result += "<b><i>datastructures:</i></b><br>"+
             "values have to be entered by numbers only, labels are free to choose<br>"+

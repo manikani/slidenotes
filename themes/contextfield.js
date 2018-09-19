@@ -37,6 +37,8 @@ newtheme.styleThemeMDCodeEditor = function(){
   console.log("styleThemeMDCodeEditor mit Objekt:"); console.log(onObject);
   if(onObject){
     if(onObject.typ === "image"){
+      Field.innerHTML = "![<i>imagealttext</i>](<b>imagename or url</b>)<br>"
+      + "Example: ![](my_image1)<br> Current image:<br>";
       var cfimage = new Image();
       cfimage.id = "contextfieldimage";
       cfimage.name = onObject.src;
@@ -81,7 +83,20 @@ newtheme.styleThemeMDCodeEditor = function(){
 
       }
     }//end of type = dataObject
-  }//end of isset onObject
+    if(onObject.typ ==="pagebreak"){
+      Field.innerHTML = "--- 3 or more minus set a pagebreak, starting a new slide and ending the last."+
+      "<br> To put an image to the background you can put it as sole element on next line."+
+      "<br> Example: <br>---<br>![](mybackgroundimage)<br>";
+    }
+    if(onObject.tag ==="title"){
+      Field.innerHTML = "<h1>#Title</h1><h2>##Subtitle</h2><h3>###Subsubtitle</h3>";
+
+    }
+  } else { //end of isset onObject
+    //no object found
+
+
+  }//end of isset onObject else
 }
 
 
