@@ -310,16 +310,22 @@ function emdparser(text){
 	//var aktpos = 0;
 	this.parselines(text);  //parsing the sourcecode on init into lines
 	this.perror = new Array(); //array with parsing-errors as objects/array
-	this.parseelemente = new Array(); //array with simple parseelements which can go over lines
-	//erstelle einfache parseobjekte:
-	this.parseelemente.push(new parseobjekt('***','***',"<b><i>","</i></b>","bolditalic"));
-	this.parseelemente.push(new parseobjekt('**','**',"<b>","</b>","bold"));
-	this.parseelemente.push(new parseobjekt('__','__',"<b>","</b>","bold"));
-	this.parseelemente.push(new parseobjekt('*','*',"<i>","</i>","italic"));
-	this.parseelemente.push(new parseobjekt('_','_',"<i>","</i>","italic"));
-	this.parseelemente.push(new parseobjekt("~~","~~","<strike>","</strike>","strike"));
-	//this.parseelemente.push(new parseobjekt("`","`","<code>","</code>","code")); //darf auch nicht über eine zeile hinausgehen
-	//this.parseelemente.push(new parseobjekt("-----","\n","<hr>","","pagebreak")); //ist ein zeilending, kein einfaches element
+	if(slidenote && slidenote.parseelemente){
+		this.parseelemente = slidenote.parseelemente; //makes parseelemente changeable through themes
+		//because emdparser will be defined anew every parseneu - so it has to be saved in slidenote which stays stable
+	} else {
+		//standard-parseelemente if no parseelmenetearray is defined in slidenote
+		this.parseelemente = new Array(); //array with simple parseelements which can go over lines
+		//erstelle einfache parseobjekte:
+		this.parseelemente.push(new parseobjekt('***','***',"<b><i>","</i></b>","bolditalic"));
+		this.parseelemente.push(new parseobjekt('**','**',"<b>","</b>","bold"));
+		this.parseelemente.push(new parseobjekt('__','__',"<b>","</b>","bold"));
+		this.parseelemente.push(new parseobjekt('*','*',"<i>","</i>","italic"));
+		this.parseelemente.push(new parseobjekt('_','_',"<i>","</i>","italic"));
+		this.parseelemente.push(new parseobjekt("~~","~~","<strike>","</strike>","strike"));
+		//this.parseelemente.push(new parseobjekt("`","`","<code>","</code>","code")); //darf auch nicht über eine zeile hinausgehen
+		//this.parseelemente.push(new parseobjekt("-----","\n","<hr>","","pagebreak")); //ist ein zeilending, kein einfaches element
+	}
 	//wysiwyg-erweiterung:
 	//insertedhtmlinline wird benutzt, um später die position genauer herauszufinden
 	this.insertedhtmlinline = new Array(); //array with inserted htmlcodes
@@ -3141,6 +3147,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	this.loadTheme("table");
 	this.loadTheme("imgtourl");
 	this.loadTheme("katex");
+	this.loadTheme("switchparseelements");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
@@ -3549,7 +3556,7 @@ pagegenerator.prototype.changeDesignOption = function(themenr,optionnr, value){
 }
 pagegenerator.prototype.changeGlobalOption = function(themenr,optionnr, value){
 	this.themes[themenr].changeGlobalOption(optionnr, value);
-	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
+	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+value);
 }
 
 
