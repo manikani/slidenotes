@@ -77,7 +77,7 @@ newtheme.styleThemeMDCodeEditor = function(){
       var cftheme = slidenote.datatypes.elementOfType(onObject.dataobject.type).theme;
       console.log("on object has dataobject. Theme:");
       console.log(cftheme);
-      console.log(typeof cftheme.helpText + " - " +cftheme.helpText(onObject.dataobject));
+      //console.log(typeof cftheme.helpText + " - " +cftheme.helpText(onObject.dataobject));
       if(cftheme.helpText && typeof cftheme.helpText ==="function"){
         Field.innerHTML = cftheme.helpText(onObject.dataobject);
 
