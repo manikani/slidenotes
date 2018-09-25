@@ -1,0 +1,82 @@
+#Slidenotes 
+#Presentations made on the fly
+---
+#What is Slidenotes?
+
+Slidenotes is our new aproach to write presentations. 
+By writing a Presentation you should focus on the content, not on the Design. But in most of the solutions its otherwise - you spend the most of the time by designing your content. Put it left, a little smaller, insert an image here, a table there... not to speak of Charts! 
+---
+#So whats different in slidenotes?
+
+We think that the input is what matters. 
+Therefore we take your input and with a little programagic change it into beautiful slides. 
+---
+#How we do that
+
+Our Algorithm parses your content with all the information you have given. Out of that information it builds the new slidenote. 
+So to give you the most freedom while staying inside of our goal to make it easy you can use our own interpretation of markdown[^1] and flavour your text with that kind of information. We chose markdown because its super easy to learn, its fast to write and offers some flexibility. 
+Where Markdown is not enough we enhanced the syntax you can use, always with our goal in mind to keep it simple
+ 
+ 
+ 
+ 
+[^1]: Markdownhomepage
+---
+#Basic Markdown Syntax:
+
+To enhance your notes with simple flavour we use the markdown-syntax. With embracing words or sentences in **\* ** you can alter the text to be *\*italic\* *, **\**bold\** ** or ***\***both\******, with \~~ you make it ~~stroke-through~~.
+
+A Line starting with # marks a Title, starting with ## its a Subtitile. You can go down to three #.  
+
+Ordered and unordered Lists are as easy as writing them down in simple textform. You can use 1., 2.), 3) or a)... whatever style you prefer to make numerous lists. For unordered Lists just use \* or - or + at the beginning of a line. And if you want to make sublists (lists in lists) just mix two list-styles and you are done. 
+
+You see, we don't want you to learn much - we keep it simple so you can focus on whats important - your content. But with small enhancements you can preformat your notes while typing them - without depending on external buttons.  
+---
+#Images
+Of course you can also implement Images in your notes. Again we took the basic for it from markdown: `![image-alt-text](imageurl)` 
+But we know, that while you write your notes often you dont have the image ready to use. So what? Just write a placeholder like `![](image to use)` and add them later with a simple click in our editor. You can thereby name your images anew for your presentation and reuse this imagename wherever you like inside your presentation. So if you use `![](mylogo)` for example you can reuse it and still upload it only once. 
+
+And there is more: Images are always embeded inside the html-page. So you can send them as one document without depending on servers and stuff. But of course you can use your online-images if you like to... 
+---
+#Data and how to represent them
+Slidenotes.io wants to make the best out of the existing. We dont want to reinvent the wheel over and over again, so we decided to use good libraries wherever it makes sense - to give you the best experience of all the available choices. Where we find nothing meeting our high criteria of quality we write our own. 
+So to represent Data we included yet:
+- Charts (pie, bar and line) with chart.js
+- Tables 
+- Code-highlightning with hljs.js
+- Latex with katex.js
+
+Again it is meant to be as easy to use as possible: we dont want you to have to reformat your data again and again till its meeting our criteria: every Data-Format we implement we do it with your comfort in mind. So it does not matter if you want to write your data by hand or just copy-paste them out of OpenOffice Calc or Microsoft Excel-Sheet. Again - you should focus on your content, not how to format your content to get a nice graph out of it.  
+---
+#Quotes and references
+Of course you can use quotes. To mark a line as a quote just put a > at the begining of the line - just like in Thunderbird or any other good email-client. References are easy made with `[^ref]` and then in the last line a simple `[^ref]: just an example` whereas *ref* can be anything of your choice. 
+---
+#Our Editor
+You can use any editor you like - but we have build quite a good Texteditor specialy for our usecase.
+It helps you in a lot of ways to make it even simpler for you. Although its an online-Editor we had four things in mind while programming it: Comfort, Speed, Speed and Speed. 
+Yes, we know that nothing sucks more than have to write in an online editor which slows down your writing process. Most of the Online-Editors we know have this problem: They tend to get slower and slower and slower...
+Well, we tested our Editor and even if you have a slidenote with over 100 slides with a lot of elements it still is fast. 
+Our Technique is quite different then most online-Editors as we chose a simple Textarea as the Base of our Editor and not a content-editable Div. But that is why our Editor is so f'ing fast. You will love it.
+---
+#Security
+Security is a big issue nowadays and it still is not a criteria most people have in mind. We know that a lot of information is send via email or other unsecured lines. That is crazy if you think about which type of information is send. Companys build a house and pay security-staff to prevent data-theft by breaking in the house - but still send their contracts, their presentations and other stuff unencrypted via email to their clients. 
+As crazy as it sounds there is one simple reason for it: 
+Implementation of encryption often is complicated to use and so people avoid using it. 
+---
+#Slidenotes to the rescue
+For slidenotes.io we think about security. Datatheft is a reality nowadays and you have to be protected against it. So basically we choose that encryption or not-encryption is not a choice anymore nowadays. Therefore slidenotes.io will allways encrypt your data whenever it saves it. Be it on your local storage or in the cloud - we protect your data to be save!
+
+To keep it simple and fast we use webcrypto - a standard implementet in all mayor browsers since 2017. All you need to do is choose a password and memorize it. Without the password it is nearly impossible[^¹] to get to your content. So even when some super-hackers got to hack slidenotes.io and get to your content - it is encrypted and therefore just garbage for them. Not even us can read your data. So choose wisely about your password as we can't help you to recover it! 
+
+
+.......................................
+[^¹]: A good Password with a length of bigger than 10 alphanumeric characters not containing words needs more than 200 years to crack 
+---
+#That sounds nice. Can I see a working example?
+
+##Of Course you can!
+##Go to tryit.slidenotes.io and see for yourself!
+---
+
+
+
