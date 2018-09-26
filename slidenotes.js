@@ -3294,6 +3294,7 @@ pagegenerator.prototype.stylePages = function(){
 		}
 	}
 	this.presentationhtml = this.presentation.innerHTML;
+	//console.log("final output\n"+this.presentationhtml);
 
 }
 //sanitizeSonderzeichen: war gedacht um Sonderzeichen in HTML-Code umzuwandeln. wird nicht gebraucht und ist gefährlich
