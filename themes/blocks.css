@@ -1,0 +1,43 @@
+/*vertical is float, horizontal is none */
+
+.imageblock {
+  display:inline-block;
+}
+.imageblock.vertical {
+  float:left;
+  margin: 15px;
+}
+.imageblock.horizontal {
+  display:block;
+}
+
+.testdiv{
+  display:inline-block;
+}
+
+.blocks .ppage.active{
+  visibility: visible;
+  display:grid;
+}
+.blocks .ppage{
+  display:grid;
+}
+.blocks .gridx3, .blocks .gridx2, .blocks .gridx1 {
+  display: grid;
+  position:absolute;
+  top:0;
+  left:0;
+  visibility: hidden;
+}
+.blocks .gridx3{
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.blocks .gridx2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.blocks .gridx1 {
+  display: grid;
+  grid-template-columns: 1fr;
+}
