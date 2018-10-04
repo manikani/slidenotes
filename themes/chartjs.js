@@ -238,7 +238,7 @@ newtheme.styleThemeSpecials = function(){
       //- jetzt unterscheiden ob bar usw.:
       //if(dataobject.head.substring("||chart||".length, 3)=="bar")
       //es gibt: line,bar, pie
-      var posiblecharttypes = ["line","pie","bar"];
+      var posiblecharttypes = ["line","pie","bar", "horizontalBar", "polarArea"];
       console.log("headsubstring:"+dataobject.head.substring(9));
       var headsub = dataobject.head.substring(9);
       for(var pct=0;pct<posiblecharttypes.length;pct++){
@@ -248,6 +248,8 @@ newtheme.styleThemeSpecials = function(){
         console.log(headsub.substring(0,posiblecharttypes[pct].length))
       }
       console.log("charttype:"+charttype);
+      //horizontale bars sollen verschiedene schreibweisen können:
+      if((charttype=="bar" || (charttype==null && headsub.indexOf("bar")>=0)) && headsub.indexOf("horizontal")>=0)charttype="horizontalBar";
       if(charttype==null)charttype="line"; //falls kein charttype gewählt wurde
       var showscales=true;
       if(charttype=="pie")showscales=false;
@@ -262,9 +264,10 @@ newtheme.styleThemeSpecials = function(){
       var containerdiv = document.createElement("div");
       containerdiv.classList.add("chart-container");
       containerdiv.style.height="300px";
+      //containerdiv.style.width="200px";
       ausgabediv.appendChild(containerdiv);
       //ausgabediv.style.width="500px";
-      ausgabediv.style.height="50px";
+      //ausgabediv.style.height="50px";
       ausgabediv.style.position="relative";
       ausgabediv.classList.add("chart-container");
       containerdiv.appendChild(ausgabecan);
@@ -312,6 +315,7 @@ newtheme.styleThemeSpecials = function(){
 
       var ausgabeoptions = {
           //responsive:false,
+          responsive:true,
           maintainAspectRatio: false,
           title: {
                display:(datatitle!=null),
