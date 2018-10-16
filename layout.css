@@ -129,9 +129,16 @@
 .ppage{
 	display:none;
 	width:100%;
+	visibility: hidden;
+	position:absolute;
+	top:0;
+	left:0;
+	height:100vh;
+	overflow:auto;
 }
 .ppage.active{
 	display:block;
+	visibility: visible;
 }
 
 #praesentationrahmen{
@@ -157,9 +164,7 @@
 h1{
 	text-align: center;
 }
-.listblock ol{
-	width:100%;
-}
+
 #texteditorbuttons input {
 	width:unset;
 }

@@ -13,12 +13,19 @@ newtheme.buildgrid = function(gridcontainer){
   var heightleft = 0;
   for(var x=0;x<gridelemente.length;x++){
   	var gridel = gridelemente[x];
-    console.log("gridarea before change:"+gridel.style.gridArea);
+    console.log("grid: start with element:"+gridel.innerHTML);
+    console.log("grid: element has clientHeight:"+gridel.clientHeight);
+    //console.log("gridarea before change:"+gridel.style.gridArea);
+    if(gridel.classList.contains("bgimg")){
+      //background-image found - dont insert into gridarray
+      continue;
+    }
   	if(!gridel.style.gridArea){
       gridel.style.gridArea="gridel"+x;
       gridel.areaname = "gridel"+x;
     }
-    console.log("gridel-gridarea:"+gridel.style.gridArea);
+    console.log("grid: again clientHeight"+gridel.clientHeight);
+    //console.log("gridel-gridarea:"+gridel.style.gridArea);
   	if(gridel.classList.contains("vertical")){
   	 //element is vertical:
   		if(gridarray[gridy]==null)gridarray[gridy] = new Array();
@@ -26,8 +33,16 @@ newtheme.buildgrid = function(gridcontainer){
   			gridx=0;gridy++;
   			gridarray[gridy]=new Array();
   		}
+      if(gridx===1 && heightleft>0 && maxheight>heightleft
+          && this.clientHeight(gridel, "60%")>heightleft){
+        //element does not fit next to neighbour:
+        console.log("grid: vertical does not fit into column - go to next row");
+        //gridx=0;gridy++;
+        //gridarray[gridy]=new Array();
+        gridx=0;
+      }
   		gridarray[gridy][gridx]=gridel;
-  		maxheight=this.clientHeight(gridel) *1;
+  		maxheight=this.clientHeight(gridel) *1.5;
   		heightleft = maxheight;
       console.log("grid: vertical found with maxheight:"+maxheight);
       console.log("grid: clientHeight:"+gridel.clientHeight);
@@ -38,14 +53,20 @@ newtheme.buildgrid = function(gridcontainer){
   		}
   	}else if(gridel.classList.contains("horizontal")){
   	 //element is horizontal - always break:
-  		if(gridx>0){ gridx=0;gridy++; maxheight=0;heightleft=0;}
+     console.log("grid:horizontal element found");
+  		if(gridx>0){
+        gridx=0;
+        if(heightleft===maxheight)gridy++; //vertical starts in same row
+        maxheight=0;
+        heightleft=0;
+      }
   		gridarray[gridy]=[gridel];
   		gridy++;
   	}else{
   		//element is flexible:
   		if(gridx==0){
   			//easiest case: just print it into the whole row:
-        console.log("grid: add element easy to row"+gridy);
+        console.log("grid: add element easy to row"+gridy +" with clientHeight"+gridel.clientHeight);
   			gridarray[gridy]=[gridel];
   			gridy++;
   		}else if(gridx==1){
@@ -133,22 +154,25 @@ newtheme.buildgrid = function(gridcontainer){
   }
   console.log("area to use:"+area);
   gridcontainer.style.gridTemplateAreas = area;
+  //gridcontainer.style.gridTemplateRows = "repeat("+gridarray.length+", 1fr )";
   gridcontainer.classList.add("gridx"+colums);
+  for(var x=0;x<gridelemente.length;x++)gridelemente[x].classList.add("griditem");
 }
 
 newtheme.clientHeight = function(element, width){
-  var el = document.createElement("div");
+  //var el = document.createElement("div");
+  var el = element.cloneNode(true);
   el.classList.add("testdiv");
-  el.innerHTML = element.innerHTML;
-  if(element.getElementsByTagName("img")>0){
-    var images = element.getElementsByTagName("img");
-    for(var ix=0;ix<images.length;ix++){
-      var image = new Image();
-      image.src = images[ix].src;
-      console.log("grid: new image-size:"+image.naturalHeight);
-      el.appendChild(image);
-    }
-  }
+  //el.innerHTML = element.innerHTML;
+  //if(element.getElementsByTagName("img")>0){
+  //  var images = element.getElementsByTagName("img");
+  //  for(var ix=0;ix<images.length;ix++){
+  //    var image = new Image();
+  //    image.src = images[ix].src;
+  //    console.log("grid: new image-size:"+image.naturalHeight);
+  //    el.appendChild(image);
+  //  }
+  //}
   //document.getElementsByTagName("body")[0].appendChild(el);
   slidenote.presentationdiv.appendChild(el);
   if(width)el.style.width = width;
@@ -173,11 +197,11 @@ newtheme.addBlockClassesToElements = function(gridcontainer){
   var nodes = gridcontainer.children;
   for(var e=0;e<nodes.length;e++){
     var node = nodes[e];
-    if(node.className === "imageblock"){
+    if(node.className === "imageblock" || node.nodeName==="IMG"){
       //imageblock: get clientWidth and clientHeight;
       var cliw = this.clientWidth(node); //does not work like this:
       //cliw = 0;
-      var imagesinblock = node.getElementsByTagName("img");
+      //var imagesinblock = node.getElementsByTagName("img");
       //console.log(imagesinblock);
       //for(var ix=0;ix<imagesinblock.length;ix++)if(imagesinblock[ix].naturalWidth>cliw)cliw=imagesinblock[ix].naturalWidth;
       //console.log("grid: imagesinblock[0].naturalWidth:"+imagesinblock[0].naturalWidth);
@@ -186,28 +210,44 @@ newtheme.addBlockClassesToElements = function(gridcontainer){
       console.log("grid: imagew:"+cliw+"imageh:"+clih);
       if(!landscape)node.classList.add("vertical");
       if(landscape)node.classList.add("horizontal");
+      //if(e===0){
+        //image is first element, so image as background
+      //  node.classList.add("bgimg");
+      //}
     }// end of imageblock
     console.log("nodeName: "+node.nodeName);
     if(node.nodeName === "OL" || node.nodeName === "UL"){
-      console.log("ol found");
+      console.log("grid: list found clientwidth:"+node.clientWidth);
       //lists: go through listelements li.
       //if listelements are longer than 30% of page its horizontal
       var lis = node.getElementsByTagName("li");
       console.log("blocks: lis.length" +lis.length);
-      console.log("blocks: lis[0]"+lis[0].innerHTML.length);
+      console.log("blocks: lis[0].length"+lis[0].innerHTML.length);
       var maxw = 0;
       for(var l=0;l<lis.length;l++){
         if(lis[l].innerHTML.length>maxw)maxw = lis[l].innerHTML.length;
       }
-      var screenw = pagenode.clientWidth;
+      var screenw = document.getElementsByTagName("body")[0].clientWidth; //pagenode.clientWidth;
       var maxChar = screenw / 8;
-      maxChar = maxChar * 0.3; //30%
-      maxChar = 20;
+      console.log("maxChar dynamic:"+maxChar);
+      maxChar = maxChar * 0.5; //50%
+      if(maxChar===0)maxChar = 20;
       console.log("maxChar:"+maxChar);
-      if(maxw<maxChar)node.classList.add("vertical"); else node.classList.add("horizontal");
-    };
-    if(node.tagName==="footer"){
+      if(maxw<maxChar && lis.length>3){
+        node.classList.add("vertical");
+      }else{
+         node.classList.add("horizontal");
+      }
+    }//end of if list
+    if(node.tagName==="FOOTER"){
       node.classList.add("horizontal");
+      node.areaname="footer";
+      node.style.gridArea = "footer";
+    }
+    console.log("blocks:classlist of element"+node.classList);
+    if(node.classList.contains("listblock")){
+      //tread listblocks always as vertical? just try it:
+      node.classList.add("vertical");
     }
   }//end of nodes
 }
@@ -227,7 +267,17 @@ newtheme.styleThemeSpecials = function(){
         });
       }
   }
-  if(this.imagestoload===0)setTimeout(this.styleGrid(), 1000);
+  if(this.imagestoload===0){
+    //does not work:setTimeout(this.styleGrid(), 1000);
+    //try with image:
+    var tmpimage = new Image();
+    tmpimage.onload = function(){
+      slidenote.presentation.getThemeByName("blocks").styleGrid();
+      this.parentNode.removeChild(this);
+    }
+    tmpimage.src = "images/lapa.jpg";
+    document.getElementsByClassName("presentation")[0].appendChild(tmpimage);
+  }
 }
 
 newtheme.preLoad = function(){

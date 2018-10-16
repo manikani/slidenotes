@@ -1807,7 +1807,12 @@ emdparser.prototype.parseMap = function(){
                 if(slidenote.datatypes.elementOfType(datatyp).mdcode==false) //is mdcode allowed? if not:
                           lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing
               }
-              for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data"; //fill lineswithhtml with data
+							if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){
+              	for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data"; //fill lineswithhtml with data
+							}else{
+								this.lineswithhtml[x]="data";
+								this.lineswithhtml[dataende]="data";
+							}
               var mapstartel = {line:x,pos:0,html:"<data>",mdcode:lines[x],typ:"start",wystextveraenderung:0};
     					var mapendel = {line:dataende,pos:0,html:"</data>",mdcode:lines[dataende],typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
     					mapstartel.brotherelement = mapendel;
@@ -1818,6 +1823,7 @@ emdparser.prototype.parseMap = function(){
     					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
     					this.map.addElement(mapstartel); //save parsing to map
     					this.map.addElement(mapendel); //
+							lines[dataende] = substitutewitheuro(lines[dataende].length); //prevent further parsing
     					console.log("neues dataobjekt hinzugefügt");
     					console.log(this.dataobjects);
             } //end of dataend found
@@ -3148,6 +3154,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	this.loadTheme("imgtourl");
 	this.loadTheme("katex");
 	this.loadTheme("switchparseelements");
+	this.loadTheme("sections");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
@@ -3228,6 +3235,18 @@ pagegenerator.prototype.finalizeHtml = function(){
 	this.pagedivs = document.getElementsByClassName("ppage");
 	if(this.aktpage === undefined || this.aktpage>this.pagedivs.length)this.aktpage=0;
 	this.pagedivs[this.aktpage].classList.add("active");
+	//add bgimg-class to background-images:
+	var allimages = this.presentation.getElementsByTagName("IMG");
+	for(var i=0;i<slidenote.parser.map.insertedimages.length;i++){
+		var image = slidenote.parser.map.insertedimages[i];
+		var pg = slidenote.parser.map.pageAtPosition(image.posinall);
+		var pagestartline = slidenote.parser.map.pagestart[pg].line;
+		console.log("image"+i+" line:"+image.line +"pgstart:"+pagestartline);
+		if(image.line === pagestartline){
+			allimages[i].classList.add("bgimg");
+		}
+
+	}
 	//alert(this.pages.toString());
 }
 

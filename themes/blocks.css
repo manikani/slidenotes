@@ -22,13 +22,34 @@
 .blocks .ppage{
   display:grid;
 }
+
+.blocks .bgimg.griditem{
+    grid-row: 1 / last-line;
+    grid-column: 1 / last-line;
+    width: 100%;
+}
+
+.blocks .griditem{
+
+}
+
+/*background-images:*/
+img.bgimg {
+  object-fit: cover;
+  max-width:100vw;
+  max-height:100vh;
+}
+
 .blocks .gridx3, .blocks .gridx2, .blocks .gridx1 {
   display: grid;
   position:absolute;
+  grid-gap: 15px;
   top:0;
   left:0;
-  visibility: hidden;
+/*  visibility: hidden;*/
+
 }
+
 .blocks .gridx3{
   grid-template-columns: 1fr 1fr 1fr;
 }
