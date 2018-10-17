@@ -5,7 +5,7 @@ newtheme.helpText = function(dataobject){
   var result = "<h2>Section-block</h2>"+
           "Content inside ||section|| Lines are considered a section.<br>"+
           "With sections you can organize your content more specific. "+
-          "You can use every MD-Code inside a section."+
+          "You can use every MD-Code inside a section except new page."+
           "If the first Line of a section is an image it serves as the "+
           "background";
   return result;
@@ -39,7 +39,16 @@ newtheme.styleThemeSpecials = function(){
               sectiondata.style.minHeight = sectiondata.childNodes[1].naturalHeight;
               blocktheme.buildgrid(sectiondata);
             }
-          }
+      }//end of image as background
+      //section left or right?
+      if(dataobject.head.indexOf("left")>-1){
+        //seems we found a left
+        sectiondata.classList.add("left");
+      }else if(dataobject.head.indexOf("right")>-1){
+        //we found a right
+        sectiondata.classList.add("right");
+      }
+
 
     }
   }

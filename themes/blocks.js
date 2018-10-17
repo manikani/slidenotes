@@ -11,6 +11,7 @@ newtheme.buildgrid = function(gridcontainer){
   var gridy = 0;
   var maxheight = 0;
   var heightleft = 0;
+  var sections = new Array();
   for(var x=0;x<gridelemente.length;x++){
   	var gridel = gridelemente[x];
     console.log("grid: start with element:"+gridel.innerHTML);
@@ -43,6 +44,11 @@ newtheme.buildgrid = function(gridcontainer){
       }
   		gridarray[gridy][gridx]=gridel;
   		maxheight=this.clientHeight(gridel) *1.5;
+      if(gridel.classList.contains("section")&&
+          (gridel.classList.contains("left") || gridel.classList.contains("right"))){
+        maxheight = window.innerHeight;
+        sections.push(gridel);
+      }
   		heightleft = maxheight;
       console.log("grid: vertical found with maxheight:"+maxheight);
       console.log("grid: clientHeight:"+gridel.clientHeight);
@@ -142,6 +148,20 @@ newtheme.buildgrid = function(gridcontainer){
   			if(y>=1)gridarea[x][y]=gridarray[x][1].areaname;
   		}
   	}
+  }
+  //nearly ready - look out for right-sections to put them on the right side instead of left side:
+  for(var sec=0;sec<sections.length;sec++){
+    if(sections[sec].classList.contains("right")){
+      var secname = sections[sec].areaname;
+      //double-array-loop:
+      for(var gax=0;gax<gridarea.length;gax++){
+        var secpos = gridarea[gax].indexOf(secname);
+        if(secpos>-1){
+          gridarea[gax].splice(secpos,1);
+          gridarea[gax].push(secname);
+        }
+      }
+    }
   }
   console.log("gridarea:");
   console.log(gridarea);
@@ -248,6 +268,12 @@ newtheme.addBlockClassesToElements = function(gridcontainer){
     if(node.classList.contains("listblock")){
       //tread listblocks always as vertical? just try it:
       node.classList.add("vertical");
+    }
+    if(node.classList.contains("section")&&
+        (node.classList.contains("left")||node.classList.contains("right"))
+          ){
+      node.classList.add("vertical");
+
     }
   }//end of nodes
 }
