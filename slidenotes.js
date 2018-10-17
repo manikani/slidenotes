@@ -1804,8 +1804,13 @@ emdparser.prototype.parseMap = function(){
               var rawdata = new Array();
               for(var rdx=x+1;rdx<dataende;rdx++){
                 rawdata.push(lines[rdx]);
-                if(slidenote.datatypes.elementOfType(datatyp).mdcode==false) //is mdcode allowed? if not:
+                if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){ //is mdcode allowed? if not:
                           lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing
+								}else{ //mdcode is allowed
+									if(lines[rdx].substring(0,3)=="---"){ //even if mdcode is allowed - if its a new page-sign:
+										lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing so that a section is not broken by page
+									}
+								}
               }
 							if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){
               	for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data"; //fill lineswithhtml with data
