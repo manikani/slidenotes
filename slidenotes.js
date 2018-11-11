@@ -3601,6 +3601,7 @@ pagegenerator.prototype.showpresentation = function(){
 	var praesesrahmen = document.getElementById("praesentationrahmen");
 	var quelle = document.getElementById("quelltext");
 	var cursorpos = slidenote.textarea.selectionEnd;
+	//this.cursorposBeforePresentation = cursorpos;
 	if(!fullscreen){
 		//this.init();
 		fullscreen=true;
@@ -3631,7 +3632,7 @@ pagegenerator.prototype.showpresentation = function(){
 		praesesrahmen.tabIndex = undefined; //undo tabable so it cant get accessed by accident/screenreader
 		//presentation.ausgabediv.classList.remove("active");
 		//console.log("map.linestart"+this.aktpage+":"+slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line]);
-		var oldPage = slidenote.parser.pageAtPosition(quelle.selectionEnd, "pagenr");
+		var oldPage = slidenote.parser.map.pageAtPosition(quelle.selectionEnd);//slidenote.parser.pageAtPosition(quelle.selectionEnd, "pagenr");
 		console.log("oldpage:"+oldPage+"aktpage:"+this.aktpage);
 		if(oldPage != this.aktpage){
 			quelle.selectionEnd = slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line];//presentation.emdparsobjekt.positionAtPage(presentation.aktpage);
