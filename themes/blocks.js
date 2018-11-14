@@ -162,7 +162,7 @@ newtheme.buildgrid = function(gridcontainer){
         }
       }
     }
-  }
+  }//end of for-to-sections.length
   console.log("gridarea:");
   console.log(gridarea);
   //the area-array is now filled with the right values - build an area out of it:
