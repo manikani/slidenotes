@@ -1,13 +1,17 @@
 /* load and save module
 * handles the interaction with all what has to do with loading and saving
-* saves slidenotes localy
+* saves slidenotes localy in localStorage
 * saves slidenotes in cms
+* exports slidenote to filesystem
 * encrypts slidenote before saving
-* loads slidenotes from local destination
+* loads slidenotes from localStorage
 * loads slidenotes from cms
+* imports slidenotes from filesystem
+* imports md-code from filesystem
 * decrypts slidenote after loading
-* saves config to cms/local destination
-* loads config from cms/local destination
+* saves config to cms/localStorage destination
+* loads config from cms/localStorage destination
+* Dependencies: FileSaver.js for saving exports
 */
 
 function slidenoteGuardian(slidenote){
@@ -40,6 +44,13 @@ function slidenoteGuardian(slidenote){
   this.lastNoteFormId;
   this.isencryptingimages = false;
   //this.lastTimeActive = new Date().getTime(); //last time user was active - needed for Timeout before saving
+
+  //add FileSaver.js to meet Dependencie:
+  var jsfile = document.createElement('script');
+  jsfile.setAttribute("type","text/javascript");
+  jsfile.setAttribute("src", "themes/filesaver/FileSaver.js");
+  document.getElementsByTagName("head")[0].appendChild(jsfile);
+
   //can we start the init here? why not?
   this.init();
 }
@@ -57,7 +68,7 @@ slidenoteGuardian.prototype.init = function(){
   }
   if(this.localstorage.getItem("config")!=null){
     //i cant do it directly because its quite obvious that some themes are not added yet
-    //for testing purpose i should just wait 5 seconds
+    //for testing purpose i should just wait 2 seconds
     setTimeout('slidenoteguardian.loadConfig("local")',2000);
   }
   document.getElementById("optionsclose").addEventListener("click",function(event){
@@ -69,6 +80,30 @@ slidenoteGuardian.prototype.init = function(){
       document.getElementById("pwpromptfield").focus();
     }
   })
+  //Adding import-Function to fileinput:
+  var fileInput = document.getElementById("importfile");
+  fileInput.addEventListener('change', function(e){
+    let file = this.files[0];
+    let nombre = file.name; //.slidenote
+    console.log("file "+nombre + " selected");
+    if(nombre.substring(nombre.length-10)===".slidenote"){
+      //its an encrypted slidenote
+      var reader = new FileReader();
+      reader.onload = function(e){
+        slidenoteguardian.importFromEncryptedFile(reader.result);
+      }
+      reader.readAsText(file);
+    } else if(nombre.substring(nombre.length-2)==="md"|| nombre.substring(nombre.length-3)==="txt"){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        slidenoteguardian.insertImport(reader.result);
+      }
+      reader.readAsText(file);
+    } else {
+      //Filetype not supported
+    }
+  })
+
 }
 
 slidenoteGuardian.prototype.loadNote = async function(destination){
@@ -122,7 +157,15 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   //destination is cms or local - will be encrypted nevertheless
   if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null)return;
   let slidenotetext = this.slidenote.textarea.value;
-  let encResult = await this.encrypt(slidenote.textarea.value);
+  let encResult;
+  if(destination ==="filesystem"){
+    let exportstring = this.slidenote.textarea.value +
+                        "\n||€€imagepart€€||\n" +
+                      this.slidenote.base64images.allImagesAsString();
+     encResult = await this.encryptForExport(exportstring);
+  }else{
+    encResult = await this.encrypt(slidenote.textarea.value);
+  }
   let encTextBuffer = encResult.encbuffer;
   let iv = encResult.iv;
   //getting only displayable chars without control-chars:
@@ -193,6 +236,13 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
       this.localstorage.setItem('cryptimagestring',encimgstring);
       this.localstorage.setItem('imghash',imghash);
     }
+
+  }else if(destination ==="filesystem"){
+    //export/save it to the local filesystem
+    let exportstring = result;
+    let exportfilename = this.notetitle+".slidenote";
+    let blob = new Blob([exportstring],{type:"text/plain;charset=utf-8"});
+    saveAs(blob, exportfilename);
 
   }
   var endtime = new Date().getTime();
@@ -350,7 +400,92 @@ slidenoteGuardian.prototype.decrypt = async function(buffer, iv){
   return new TextDecoder().decode(this.plainTextBuffer); //TODO: error-handling
 }
 
+slidenoteGuardian.prototype.encryptForExport = async function(plaintext){
+  console.log("encrypt plaintext:"+plaintext.substring(0,20));
+    let plainTextUtf8 = new TextEncoder().encode(plaintext); //changing into UTF-8-Array
+    let pw = await this.passwordPrompt("please type in password for export");
+    let keyguardian = await this.createKey(null,pw); //create new key with no iv
+    if(keyguardian==null)return {encbuffer:null, iv:null};
+    //this.iv = keyguardian.iv;
+    let encbuffer = await crypto.subtle.encrypt(keyguardian.alg, keyguardian.key, plainTextUtf8);
+    return {encbuffer: encbuffer, iv:keyguardian.iv};
+    /*the job of encryptForExport is done - rest of code should be in saveNote*/
+}
+slidenoteGuardian.prototype.decryptImport = async function(buffer, iv){
+  let pw = await this.passwordPrompt("please type in password of import");
+  let keyguardian = await this.createKey(iv, pw);
+  console.log("decoding starts");
+  try{
+    this.plainTextBuffer = await this.crypto.subtle.decrypt(keyguardian.alg, keyguardian.key, buffer);
+  } catch(e){
+    console.log(e);
+    console.log("decryption has failed!");
+    //this.password = null; //reset password as it has no meaning
+    return "decryption has failed";
+  }
+  console.log("decoding has ended");
+  return new TextDecoder().decode(this.plainTextBuffer); //TODO: error-handling
+}
+
+slidenoteGuardian.prototype.importFromEncryptedFile = async function(encBufferString){
+  let encstring = encBufferString;
+  console.log("import of enc-file"+encstring);
+  //getting iv of string:
+  let iv = new Uint8Array(this.ivlength); //create empty ivarray
+  for(let i=0;i<this.ivlength;i++)iv[i]=encBufferString.charCodeAt(i)-255;
+  encstring = encBufferString.substring(this.ivlength);//delete iv-chars from string
+  let buffer = new Uint8Array(encstring.length);
+  for(let i=0;i<encstring.length;i++)buffer[i]=encstring.charCodeAt(i)-255;
+  //this.encTextBuffer = buffer.buffer; //changing to ArrayBuffer -- TODO:kann weg oder?
+  let decText = await this.decryptImport(buffer.buffer, iv); //decrypt ArrayBuffer
+  //console.log("decryption fail:"+this.decText);
+  console.log("decryption succesfull?" + decText);
+  //error-handling - try again:
+  while(decText === "decryption has failed" && confirm("decryption failed. try it again?")){
+      decText = await this.decryptImport(buffer.buffer, iv); //decrypt ArrayBuffer anew
+  }
+  if(decText === "decryption has failed")return; //password wrong, abort the load
+  //decText is now the unencrypted MD-Code plus imagestring:
+  let MDCodeEnd = decText.indexOf("\n||€€imagepart€€||\n");
+  console.log("decryption of import succesfull");
+  let decMD;
+  if(MDCodeEnd===-1)decMD = decText; else decMD = decText.substring(0,MDCodeEnd);
+  console.log(MDCodeEnd + "MDCODEEND");
+  console.log("decMD:"+decMD);
+  let decImageString;
+  if(MDCodeEnd>-1)decImageString = decText.substring(MDCodeEnd+19);//getting rid of ||€€imagepart€€||
+  console.log("imagestring"+decImageString);
+  this.insertImport(decMD, decImageString);
+}
+
+
+
 //helper functions - for internal use only:
+
+slidenoteGuardian.prototype.insertImport = async function(mdcode, imagestring){
+  if(slidenote.textarea.value.length<=1){
+    slidenote.textarea.value = mdcode;
+  } else{
+    let userchoice = await this.importPrompt(mdcode, imagestring);
+    if(userchoice ==='import'){
+      let selend = slidenote.textarea.selectionEnd;
+      slidenote.textarea.value= slidenote.textarea.value.substring(0,slidenote.textarea.selectionStart)+
+         mdcode + slidenote.textarea.value.substring(slidenote.textarea.selectionEnd);
+      slidenote.textarea.selectionEnd = selend+mdcode.length;
+    }else if(userchoice ==="replace"){
+      slidenote.textarea.value=mdcode;
+      slidenote.base64images.deleteAllImages(); //empty array
+    } else{ //user canceled
+      return;
+    }
+  }
+
+
+  if(imagestring)slidenote.base64images.loadImageString(imagestring);
+  slidenote.parseneu();
+  slidenote.textarea.focus();
+
+}
 
 slidenoteGuardian.prototype.hash = async function(text){
   let textutf8 = new TextEncoder().encode(text);
@@ -360,16 +495,18 @@ slidenoteGuardian.prototype.hash = async function(text){
   return result;
 }
 
-slidenoteGuardian.prototype.createKey = async function(iv){
+slidenoteGuardian.prototype.createKey = async function(iv, passw){
   console.log("creating Key");
-  if(this.password == null){
+  let password = passw;
+  if(this.password == null && passw==null){
     //this.password = prompt("please type in your personal password");
     this.password = await this.passwordPrompt("please type in your personal password");
   }
-  if(this.password ==null)return;
-  let pwUtf8 = new TextEncoder().encode(this.password);
-  this.passwordHash = await this.crypto.subtle.digest('SHA-256', pwUtf8);
-  let passwordHash = this.passwordHash;
+  if(this.password ==null && passw==null)return;
+  if(passw==null)password = this.password;
+  let pwUtf8 = new TextEncoder().encode(password);
+  let passwordHash = await this.crypto.subtle.digest('SHA-256', pwUtf8);
+  if(passw==null) this.passwordHash = passwordHash;
   let keyguardian = {};
   if(iv==null){
     keyguardian.iv = crypto.getRandomValues(new Uint8Array(this.ivlength));
@@ -490,7 +627,7 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
 	      if (e.target === pwokbutton) {
 	        resolve(pwinput.value); //return password
 	      } else {
-	        reject(new Error('User cancelled')); //return error
+	        reject(new Error('User canceled')); //return error
 	      }
 		    document.body.removeChild(pwprompt); //let prompt disapear
 	    });
@@ -504,4 +641,74 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
 			}
 		});
 	});
+}
+
+slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
+  var promptwrapper = document.createElement("div");
+  promptwrapper.id = "slidenoteGuardianImportPromptWrapper";
+  var prompt = document.createElement("div"); //prompt-container
+  prompt.id = "slidenoteGuardianImportPrompt";
+  var mdcodeblock = document.createElement("div"); //md-code-container
+  var imageblock; //block for preview-images
+  let imageblocktitle;
+  let mdcodeblocktitle = document.createElement("h1");
+  mdcodeblocktitle.innerHTML = "Import MD-Code from File:";
+  prompt.appendChild(mdcodeblocktitle);
+  prompt.appendChild(mdcodeblock);
+  if(imagestring){
+    imageblock = document.createElement("div"); //block for preview-images
+    imageblocktitle = document.createElement("h2");
+    prompt.appendChild(imageblocktitle);
+    prompt.appendChild(imageblock);
+  }
+  //buttons:
+  var importbutton = document.createElement("button");
+  var cancelbutton = document.createElement("button");
+  var replacebutton = document.createElement("button");
+  importbutton.innerHTML = "add to existing Code";
+  cancelbutton.innerHTML = "cancel";
+  replacebutton.innerHTML = "replace existing code";
+  var buttonwrapper = document.createElement("div");
+  buttonwrapper.appendChild(cancelbutton);
+  buttonwrapper.appendChild(replacebutton);
+  buttonwrapper.appendChild(importbutton);
+  prompt.appendChild(buttonwrapper);
+
+  mdcodeblock.innerHTML = mdcode;
+  mdcodeblock.id = "slidenoteGuardianCodePreview";
+
+  if(imagestring){
+
+    var imagepuffer = imagestring.split("<<<");
+    imagepuffer.pop(); //delete last element as it has no meaning
+    imageblocktitle.innerHTML = "Images from slidenote to import: (Total "+imagepuffer.length+" images)";
+    for(let i=0;i<imagepuffer.length;i++){
+      let imgdata = imagepuffer[i].split(">>>");
+      //previewimages.push({name:imgdata[0],src:imgdata[1]});
+      let imgtitle = document.createElement("h3");
+      imgtitle.innerHTML = imgdata[0];
+      let img = new Image();
+      img.src = imgdata[1];
+      imageblock.appendChild(imgtitle);
+      imageblock.appendChild(img);
+    }
+  }
+  promptwrapper.appendChild(prompt);
+  document.body.appendChild(promptwrapper); //make prompt visible
+  return new Promise(function(resolve,reject){
+    prompt.addEventListener('click', function handleButtonClicks(e){
+      if(e.target.tagName!== 'BUTTON'){return;}
+      prompt.removeEventListener('click',handleButtonClicks);
+      if (e.target === importbutton){
+        resolve('import');
+      } else if(e.target === replacebutton){
+        resolve('replace');
+      } else{
+        reject(new Error('User aborted Import'));
+      }
+      document.body.removeChild(promptwrapper);
+
+    });
+  });
+
 }

@@ -71,6 +71,10 @@ slidenote.base64images = {
     }
     this.rebuildOldImages();
   },
+  deleteAllImages: function(){
+    this.base64images.length = 0;
+    this.rebuildOldImages();
+  },
   insertImage: function(name){
     //adds image to md-code
     console.log("imageinsert name"+name);
@@ -93,7 +97,12 @@ slidenote.base64images = {
     let imgstring = imagestring;
     while(imgstring.indexOf('>>>')>0){
       let aktimg = imgstring.substring(0,imgstring.indexOf('<<<'));
-      this.base64images.push(new base64Image(aktimg.substring(0,aktimg.indexOf('>>>')), aktimg.substring(aktimg.indexOf('>>>')+3)));
+      //check if imagename is yet in database - if so replace image-data:
+      let aktimgname = aktimg.substring(0,aktimg.indexOf(">>>"));
+      let existingimage = this.imageByName(aktimgname);
+      if(existingimage!=null)
+            existingimage.base64url = aktimg.substring(aktimg.indexOf('>>>')+3); else
+            this.base64images.push(new base64Image(aktimg.substring(0,aktimg.indexOf('>>>')), aktimg.substring(aktimg.indexOf('>>>')+3)));
       imgstring = imgstring.substring(imgstring.indexOf('<<<')+3);
     }
     this.rebuildOldImages();

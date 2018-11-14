@@ -15,3 +15,34 @@
     position: fixed;
     top: 30%;
 }
+
+#slidenoteGuardianImportPromptWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    padding:10%;
+}
+#slidenoteGuardianImportPrompt{
+  background:white;
+  padding:15px;
+  max-height:80%;
+  overflow:scroll;
+}
+
+#slidenoteGuardianImportPrompt div{
+  max-height:30vh;
+  overflow:scroll;
+}
+
+#slidenoteGuardianImportPrompt img{
+  max-width:100px;
+  max-height:100px;
+}
+
+#slidenoteGuardianCodePreview{
+  white-space:pre;
+}
