@@ -71,7 +71,7 @@ Ein weiterer Text mit mehreren A	Tabs	B
 Ein weiterer Text mit mehreren A			Tabs				B
 Ein weiterer Text mit mehreren A					Tabs						B
 -----
-Ein Datenblock:
+#Ein Datenblock: Chart Pie
 ||chart||pie
 #titel
 ##untertitel 1
@@ -81,7 +81,7 @@ option b:20
 option c: 30
 ||chart||
 -----
-#nächster datenblock:
+#nächster datenblock: Chart Bar
 ||chart||bar
 #titel
 ##untertitel 1
@@ -91,7 +91,7 @@ option b:20
 option c: 30
 ||chart||
 -----
-#noch ein datenblock
+#noch ein datenblock: Chart Line
 ||chart||line
 #titel
 ##untertitel 1
@@ -108,5 +108,14 @@ a|b|c
 1|2|3
 ||table||
 -----
+#Latex:
+||latex||
+\mathbf{V}_1 \times \mathbf{V}_2 = \begin{vmatrix}
+\mathbf{i} & \mathbf{j} & \mathbf{k} \
+\frac{\partial X}{\partial u} & \frac{\partial Y}{\partial u} & 0 \
+\frac{\partial X}{\partial v} & \frac{\partial Y}{\partial v} & 0 \
+\end{vmatrix}
+||latex||
+---
 #Letzte Seite
 Mehr fällt mir grad nicht ein zum Testen...
