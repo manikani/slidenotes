@@ -1,4 +1,4 @@
-var newtheme = new Theme("katex");
+var newtheme = new Theme("klatex");
 newtheme.description = "Latex-Support with Katex";
 //loading js-library:
 var jsfile = document.createElement('script');
