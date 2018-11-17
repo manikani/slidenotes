@@ -93,7 +93,9 @@ slidenoteGuardian.prototype.init = function(){
         slidenoteguardian.importFromEncryptedFile(reader.result);
       }
       reader.readAsText(file);
-    } else if(nombre.substring(nombre.length-2)==="md"|| nombre.substring(nombre.length-3)==="txt"){
+    } else if(nombre.substring(nombre.length-2)==="md" ||
+           nombre.substring(nombre.length-3)==="txt" ||
+            nombre.substring(nombre.length-3)==="csv"){
       var reader = new FileReader();
       reader.onload = function(e){
         slidenoteguardian.insertImport(reader.result);
@@ -241,14 +243,18 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     //export/save it to the local filesystem
     let exportstring = result;
     let exportfilename = this.notetitle+".slidenote";
-    let blob = new Blob([exportstring],{type:"text/plain;charset=utf-8"});
-    saveAs(blob, exportfilename);
-
+    this.exportToFilesystem(exportstring, exportfilename);
   }
   var endtime = new Date().getTime();
   var usedtime = endtime - starttime;
   console.log("Timecheck: saved node to destination "+destination+" in"+usedtime+"Ms");
 
+}
+
+slidenoteGuardian.prototype.exportToFilesystem = function(exportstring, exportfilename){
+  //TODO: Check if saveAs supported. If not bounce exportstring to server
+  let blob = new Blob([exportstring],{type:"text/plain;charset=utf-8"});
+  saveAs(blob, exportfilename);
 }
 
 slidenoteGuardian.prototype.loadImages = async function(destination){

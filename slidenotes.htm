@@ -249,6 +249,7 @@ function parsetesting(){
 	<button onclick="slidenoteguardian.saveNote('local')">save local</button>
 	<button onclick="slidenoteguardian.loadNote('local')">load local</button>
 	<button onclick="slidenoteguardian.saveNote('filesystem')">export as encrypted .slidenote</button>
+	<button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">export as unencrypted .md textfile</button>
 	Import MD-Code or Slidenote: <input type="file" id="importfile">
 	<input type="text" id="cmstitle">
 	<input type="text" id="cmsslidenotehash">
