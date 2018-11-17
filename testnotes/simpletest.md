@@ -5,6 +5,8 @@
 #####und weiter...
 ######und weiter...
 
+
+
 -----
 #Einfache Zeichen
 **Doppelstern**, *einfach Stern*, __Doppelunterstrich__, _einfacher Unterstrich_, ~~durchgestrichen~~, ***Trippel-Sternchen***
@@ -57,6 +59,7 @@ Nach dem `**inlinecode**` sollte aber *noch was stehen*
 -----
 #Link und Images
 Ein [einfacher Link](url) nach url was war denn da los?
+Ein [javascript-hack-Link](url">bla</a><script src="localtest/hello.js"></script><a href="url2) 
 Ein Bild von lapa: ![](images/lapa.jpg) eol
 Ein [**fetter link**](images/lapa.jpg) zu lapas bild
 Ein Bildlink?: [![](images/lapa.jpg)](images/lapa.jpg) 
@@ -100,6 +103,23 @@ option a:10
 option b:20
 option c: 30
 ||chart||
+---
+#Noch ein Datenblock: Chart Line mit anderer Datastructure:
+||chart||pie
+#My Pie
+first label, second label, third label
+1, 2, 3
+||chart||
+---
+||chart||line
+#neue LineChart mit mehreren Werten
+###2009
+###2010
+Januar, Februar, März, April, Mai, Juni, Juli, August
+1, 20, 3, 40, 5, 60, 7, 80
+11,22,33,44,55,66,77,88
+||chart||
+
 -----
 #table-datenblock
 ||table||
@@ -119,3 +139,16 @@ a|b|c
 ---
 #Letzte Seite
 Mehr fällt mir grad nicht ein zum Testen...
+---
+
+# slidenotes
+This project is still under heavy development and is not meant to be used yet in production! 
+Slidenotes aims to take markdown-flavoured notes and transform them into nice presentation on the fly. 
+Till now its Core is written in pure Javascript. 
+The Core is roughly divided in three parts: 
+1. a markdown-parser
+2. an editor-part (markdown-wysiwyg-editor and enhanced text-editor)
+3. a presentation-maker
+
+In the future its planned to combine this javascript with an CMS like drupal to get a user-experience where you can not only transform md-code into nice presentations, but also store it in a secure form online, share it, publish it and edit it from whatever device you prefer. 
+With the design-choice to be a web-app we can achive easily a platform-independence, so you can share, view and edit your slidenotes on your computer - be it with MacIntosh O$X, Window$, Linux, BSD... - or on your mobile device - be it android or iOS. 
