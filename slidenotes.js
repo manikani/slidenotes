@@ -3144,6 +3144,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	//daher erneutes scannen wie oben nur mit lines:
 	this.init();
 	//Grundthemes laden:
+	this.loadTheme("hiddenobjects");
 	this.loadTheme("contextfield");
 	this.loadTheme("blocks");
 	this.loadTheme("stickytitles");
@@ -3308,12 +3309,19 @@ pagegenerator.prototype.stylePages = function(){
 	}
 	//html ist vorgestyled. jetzt html finalisieren:
 	this.finalizeHtml();
-
+	//afterfinalize ausführen:
+	for(var x=0;x<this.themes.length;x++){
+		if(this.themes[x].active)this.themes[x].afterFinalizeHtml();
+	}
 	//jetzt special theme-styles ausführen:
 	console.log(this.themes.length+" Themes");
 	//console.log(document.
 	for(var x=0;x<this.themes.length;x++){
 		if(this.themes[x].active)this.themes[x].styleThemeSpecials(); //Hook-Funktion
+	}
+	//afterStyleThemeSpecials ausführen:
+	for(var x=0;x<this.themes.length;x++){
+		if(this.themes[x].active)this.themes[x].afterStyleThemeSpecials();
 	}
 	//alles gestyled: klassen anhängen:
 	for(var x=0;x<this.themes.length;x++){
@@ -3625,7 +3633,16 @@ pagegenerator.prototype.showpresentation = function(){
 		//console.log("querycodeanfang:"+document.querySelectorAll(".presentation code")[0].innerHTML.substring(0,20));
 		//this.showPage(presentation.emdparsobjekt.pageAtPosition(quelle.selectionStart)[0]);
 		console.log("show page:"+this.emdparsobjekt.map.pageAtPosition(cursorpos) + " pos:"+cursorpos);
-		this.showPage(this.emdparsobjekt.map.pageAtPosition(cursorpos));
+		//this.showPage(this.emdparsobjekt.map.pageAtPosition(cursorpos));
+		var showpagenr = this.emdparsobjekt.map.pageAtPosition(cursorpos);
+		if(this.generatedPages){
+			for(var gpx=this.generatedPages.length;gpx>=0;gpx--){
+				if(this.generatedPages[gpx]<showpagenr)showpagenr++;
+			}
+			console.log("changed pagenr to:"+showpagenr + " gp-length:"+this.generatedPages.length);
+
+		}
+		this.showPage(showpagenr);
 		praesesrahmen.classList.add("fullscreen");
 		praesesrahmen.tabIndex=1; //make it tabable to get keystrokes
 		praesesrahmen.focus(); //focus it to get keystrokes
@@ -3636,6 +3653,12 @@ pagegenerator.prototype.showpresentation = function(){
 	} else{
 		fullscreen=false;
 		praesesrahmen.tabIndex = undefined; //undo tabable so it cant get accessed by accident/screenreader
+		if(this.generatedPages){
+			for(var gpx=0;gpx<this.generatedPages.length;gpx++){
+				if(this.generatedPages[gpx]<this.aktpage)this.aktpage--;
+			}
+			console.log("changed aktpage to:"+this.aktpage);
+		}
 		//presentation.ausgabediv.classList.remove("active");
 		//console.log("map.linestart"+this.aktpage+":"+slidenote.parser.map.linestart[slidenote.parser.map.pagestart[this.aktpage].line]);
 		var oldPage = slidenote.parser.map.pageAtPosition(quelle.selectionEnd);//slidenote.parser.pageAtPosition(quelle.selectionEnd, "pagenr");
