@@ -3235,7 +3235,13 @@ pagegenerator.prototype.finalizeHtml = function(){
 	for(var x=0;x<this.pages.length;x++)this.presentationhtml +=this.pagestart + this.pages[x] + this.pageend;
 
 	this.presentationhtml += this.htmlend;
-	this.presentation.innerHTML = this.presentationhtml;
+	//this.presentation.innerHTML = this.presentationhtml;
+	var presentationtemplate = document.createElement("template");
+	presentationtemplate.innerHTML = this.presentationhtml;
+	for(var t=0;t<this.themes.length;t++){
+		if(this.themes[t].active)this.themes[t].insideFinalizeHtml(presentationtemplate);
+	}
+	this.presentation.innerHTML = presentationtemplate.innerHTML; //presentationtemplate.content.cloneNode(true);
 	console.log("präsentation ins div geschrieben:"+this.presentation.innerHTML);
 	this.pagedivs = document.getElementsByClassName("ppage");
 	if(this.aktpage === undefined || this.aktpage>this.pagedivs.length)this.aktpage=0;
@@ -3733,6 +3739,15 @@ Theme.prototype.cycleThroughHtmlElements = function(htmlelement){
 
 Theme.prototype.styleThemeSpecials = function(){
 	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
+}
+Theme.prototype.insideFinalizeHtml = function(template){
+	//HookFunction inside Finalize Html, before adding template to body and rendering it
+}
+Theme.prototype.afterFinalizeHtml = function(){
+	//Hook-Function, called before styleThemeSpecials
+}
+Theme.prototype.afterStyleThemeSpecials = function(){
+	//Hook-Function, called after styleThemeSpecials
 }
 Theme.prototype.styleThemeMDCodeEditor = function(){
 	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
