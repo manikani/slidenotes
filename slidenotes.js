@@ -3157,7 +3157,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	this.loadTheme("chartjs");
 	this.loadTheme("table");
 	this.loadTheme("imgtourl");
-	this.loadTheme("katex");
+	this.loadTheme("klatex");
 	this.loadTheme("switchparseelements");
 	this.loadTheme("sections");
 
