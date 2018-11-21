@@ -38,11 +38,19 @@ newtheme.afterFinalizeHtml = function(){
       for(hiddenpagenr=0;hiddenpagenr<hiddenpage.parentElement.children.length;hiddenpagenr++){
         if(hiddenpage.parentElement.children[hiddenpagenr]==hiddenpage)break;
       }
+      var pageexists = false;
+      for(var hpn=0;hpn<this.hiddenobjects.length;hpn++){
+        if(this.hiddenobjects[hpn].pagenr === hiddenpagenr)pageexists=true;
+      }
+      var hiddenchilds = new Array();
+      for(var hc=0;hc<hiddendatadiv.children.length;hc++)hiddenchilds.push(hiddendatadiv.children[hc]);
+
+      //if(!pageexists)
       this.hiddenobjects.push({
         type:"hidden",
         page:hiddenpage,
         pagenr:hiddenpagenr,
-        children:hiddendatadiv.children,
+        children:hiddenchilds,
         head:slidenote.parser.dataobjects[datax].head
       });
 
@@ -78,13 +86,18 @@ newtheme.afterStyleThemeSpecials = function(){
     //clone actual div:
     var actclone = actobj.page.cloneNode(true);
     actclone.classList.add("hiddenobjectclone");
-    actclone.classList.remove("active");
+    actobj.page.classList.remove("active");
+    /*
     var cloneTags = actclone.getElementsByClassName("hiddenobject");
     console.log("page-parent:");
     console.log(actobj.page.parentElement);
     for(var y=cloneTags.length-1;y>=0;y--)cloneTags[y].classList.remove("hiddenobject");
     actobj.page.parentElement.insertBefore(actclone,actobj.page.nextSibling);
-    slidenote.presentation.pages.splice(actobj.pagenr+1,0,actclone);
+    */
+    for(var y=0;y<actobj.children.length;y++)actobj.children[y].classList.remove("hiddenobject");
+    actobj.page.parentElement.insertBefore(actclone,actobj.page);
+
+    slidenote.presentation.pages.splice(actobj.pagenr,0,actclone);
     slidenote.presentation.generatedPages.push(actobj.pagenr);
   }
 }
