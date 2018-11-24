@@ -3291,7 +3291,6 @@ pagegenerator.prototype.stylePages = function(){
 		for(var pg=0;pg<this.pagesperline.length;pg++){
 			//console.log("stylePages pagestaglines:"+this.pagestaggedlines);
 			this.pagesperline[pg]=this.pagestyles[x].encapsuleHtml(this.pagesperline[pg], this.pagestaggedlines[pg]);
-			//this.pagesperline[pg] = this.sanitizeSonderzeichen(this.pagesperline[pg]);
 			//console.log("after:"+this.pagesperline[pg]);
 		}
 	}
@@ -3334,16 +3333,6 @@ pagegenerator.prototype.stylePages = function(){
 	this.presentationhtml = this.presentation.innerHTML;
 	//console.log("final output\n"+this.presentationhtml);
 
-}
-//sanitizeSonderzeichen: war gedacht um Sonderzeichen in HTML-Code umzuwandeln. wird nicht gebraucht und ist gefährlich
-pagegenerator.prototype.sanitizeSonderzeichen = function(){
-	var text = this.presentationhtml;
-	var sonderzeichen = new Array("ä","Ä","ö","Ö","ü","Ü");
-	var sonderzeichenhtml = new Array("&auml;","&Auml;","&ouml;","&Ouml;","&uuml;","&Uuml;");
-	for(var x=0;x<sonderzeichen.length;x++)
-			while(text.indexOf(sonderzeichen[x])>-1)
-				text=text.substring(0,text.indexOf(sonderzeichen[x])) + sonderzeichenhtml[x] + text.substring(text.indexOf(sonderzeichen[x])+1);
-	this.presentation.innerHTML = text;
 }
 
 //nextPage: "blättert um" zur nächsten Seite der Präsentation durch Anhängen der ".active" CSS-Klasse an das nächste Element
@@ -3629,7 +3618,6 @@ pagegenerator.prototype.showpresentation = function(){
 		//if(test!=null)console.log(test.length+"codes code1: ");
 		//console.log("querycodeanzahl:"+document.querySelectorAll(".presentation code")[0].innerHTML);
 
-		//this.sanitizeSonderzeichen();
 		//console.log("querycodeanfang:"+document.querySelectorAll(".presentation code")[0].innerHTML.substring(0,20));
 		//this.showPage(presentation.emdparsobjekt.pageAtPosition(quelle.selectionStart)[0]);
 		console.log("show page:"+this.emdparsobjekt.map.pageAtPosition(cursorpos) + " pos:"+cursorpos);
