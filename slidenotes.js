@@ -3993,6 +3993,14 @@ slidenotes.prototype.parseLater2 = function(pause){
 	console.log("parselater2:"+diff+(diff>pause));
 }
 
+slidenotes.prototype.parseAfterPause = function(){
+	this.keypressstack--;
+	console.log("keypressstack:"+this.keypressstack);
+	if(this.keypressstack>0)return;
+	console.log("keypresstack = 0, check if you have to parse:"+document.getElementById("carret").innerHTML);
+	if(document.getElementById("carret").innerHTML.length>0)slidenote.parseneu();
+}
+
 slidenotes.prototype.keypressdown = function(event, inputobject){
 	var key = ""+event.key;
 	console.log(event);
@@ -4029,6 +4037,10 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 				}else{
 					var cursor = document.getElementById("carret");
 					cursor.innerHTML = cursor.innerHTML+""+key;
+					if(this.keypressstack===undefined)this.keypressstack=0;
+					this.keypressstack++;
+					setTimeout("slidenote.parseAfterPause()", 500);
+
 					console.log("actkey:"+key+"last key:"+this.lastpressedkey);
 				}
 			}
