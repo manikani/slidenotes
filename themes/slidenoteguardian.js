@@ -104,7 +104,43 @@ slidenoteGuardian.prototype.init = function(){
     } else {
       //Filetype not supported
     }
-  })
+  }); //end of fileinput.addEventListener
+
+  window.onbeforeunload = function(){
+    var acthash = slidenoteguardian.localstorage.getItem("slidenotehash");
+    if(acthash!=slidenoteguardian.cmsSlidenoteHash.value){
+      console.log(acthash+"\n localstoragehash vs cmshash\n"+slidenoteguardian.cmsSlidenoteHash.value);
+      return "do you really want to leave?";
+    }
+  }
+
+  slidenote.textarea.addEventListener('drop', function(e){
+      //prevent defaults:
+      e.preventDefault();
+      e.stopPropagation();
+      //handling drag n drop of files
+      let dt = e.dataTransfer;
+      let files = dt.files;
+      let file = files[0];
+      let nombre = file.name;
+      if(nombre.substring(nombre.length-10)===".slidenote"){
+        var reader = new FileReader();
+        reader.onload = function(e){
+          slidenoteguardian.importFromEncryptedFile(reader.result);
+        }
+        reader.readAsText(file);
+      }else if(nombre.substring(nombre.length-2)==="md" ||
+            nombre.substring(nombre.length-3)==="txt" ||
+            nombre.substring(nombre.length-3)==="csv"){
+              var reader = new FileReader();
+              reader.onload = function(e){
+                slidenoteguardian.insertImport(reader.result);
+              }
+              reader.readAsText(file);
+      } else {
+        //filetype not supported: Image here?
+      }
+  }, false);
 
 }
 

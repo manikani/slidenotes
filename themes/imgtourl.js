@@ -259,6 +259,37 @@ newtheme.init = function(){
   				fileDisplayArea.innerHTML = "File not supported!";
   			}
   });
+  slidenote.textarea.addEventListener("drop", function(e){
+    console.log("dropevent:");
+    console.log(e);
+    var dt = e.dataTransfer;
+    var file = dt.files[0];
+    var nombre = file.name;
+    var imageType = /image.*/;
+    if(file.type.match(imageType)){
+      //check if on actual image if so use that images src as name:
+      var activeelement = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
+      if(activeelement && activeelement.typ==="image"){
+        slidenote.base64images.preselectedname=activeelement.src;
+        nombre = activeelement.src;
+      }
+      var reader = new FileReader();
+      reader.onload = function(e){
+        fileDisplayArea.innerHTML = "";
+        var img = new Image();
+        img.onload = function(){slidenote.base64images.resizeImage(img);};
+        var targetimg = new Image();
+        targetimg.id="downsizedimage";
+        targetimg.name=nombre;
+        targetimg.onclick = function(){slidenote.base64images.addImage(this.name, this.src);};
+        fileDisplayArea.appendChild(targetimg);
+        img.src = reader.result;
+        slidenote.base64images.lastuploadedimage = img;
+      }
+      reader.readAsDataURL(file);
+      document.getElementById("imagesblock").classList.add("visible");
+    }
+  },false);
   slidenote.textarea.addEventListener("keyup",function(event){
     var key = ""+event.key;
     if(key==="undefined")key=getKeyOfKeyCode(event.keyCode);
