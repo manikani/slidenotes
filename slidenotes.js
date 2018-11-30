@@ -3316,7 +3316,18 @@ pagegenerator.prototype.stylePages = function(){
 	console.log(this.themes.length+" Themes");
 	//console.log(document.
 	for(var x=0;x<this.themes.length;x++){
-		if(this.themes[x].active)this.themes[x].styleThemeSpecials(); //Hook-Funktion
+		if(this.themes[x].active){
+			var checkbefore = slidenote.presentationdiv.innerHTML.length;
+			this.themes[x].styleThemeSpecials(); //Hook-Funktion
+			var checkafter = slidenote.presentationdiv.innerHTML.length;
+			var checkdiff = checkafter - checkbefore;
+			if(checkdiff!=0){
+				console.log("checkresult of theme "+ this.themes[x].classname+":"+checkdiff+" added");
+			}else{
+				console.log("checkresult of theme "+this.themes[x].classname+": no change");
+			}
+
+		}
 	}
 	//afterStyleThemeSpecials ausführen:
 	for(var x=0;x<this.themes.length;x++){
