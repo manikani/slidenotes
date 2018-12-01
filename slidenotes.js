@@ -936,6 +936,23 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 				 typ:"end"
 			 });
 		 } //footnote
+		 if(element.tag==="comment"){
+			 changes.push({
+				 line:element.line,
+				 posinall:element.posinall,
+				 pos:element.pos,
+				 html:'<span class="comment">',
+				 mdcode:element.mdcode,
+				 typ:"start"
+			 });
+			 changes.push({
+				 line:element.line,
+				 posinall:this.map.lineend[element.line],
+				 pos:lines[element.line].length,
+				 html:'</span>',
+				 mdcode:"", typ:"end"
+			 });
+		 }
 		 if(element.typ==="pagebreak"){
 
 		 }
@@ -1875,6 +1892,49 @@ emdparser.prototype.parseMap = function(){
 				}//end of while
 
 			}//end of inline code
+			//comment: comment disables further parsing inside comment, but is dangerous.
+			//it should NOT happen inside links or image-sources (such as http://...)
+			//how to prevent that?
+			if(lines[x].indexOf("//")>-1){
+				var commentstart = lines[x].indexOf("//");
+				//check if comment or part of url:
+				var partofurl=false;
+				if(commentstart>3){
+					//if(lines[x].substring(commentstart-1,commentstart)===":" ||
+					//	lines[x].substring(commentstart-2,commentstart)===":/")partofurl=true;
+					partofurl=(lines[x].substring(commentstart-1,commentstart)===":");
+				}
+				while(partofurl && commentstart>-1){
+					commentstart = lines[x].indexOf("//",commentstart+2);
+					partofurl = (lines[x].substring(commentstart-1,commentstart)===":")
+				}
+				if(!partofurl && commentstart>-1){
+					//valid comment found:
+					var mapcomstart = {
+						line:x, pos:commentstart, html:"", mdcode:lines[x].substring(commentstart),
+						typ:"start", tag:"comment"
+					}
+					this.map.addElement(mapcomstart);
+					//prevent further parsing:
+					lines[x]=lines[x].substring(0,commentstart)+substitutewitheuro(lines[x].length-commentstart);
+					//check if inlinecode is inside the comment: (or all code?)
+					if(this.map.insertedhtmlinline[x].length>1){
+						for(var delx=0;delx<this.map.insertedhtmlinline[x].length;delx++){
+							var actdel = this.map.insertedhtmlinline[x][delx];
+							if(actdel.pos>commentstart){
+								actdel.typ="deleted";
+								actdel.html=""; actdel.mdcode="";
+							}
+						}
+					}
+						//check for errors in perror:
+					for(var errx=0;errx<this.perror.length;errx++){
+						var acte=this.perror[errx];
+						if(acte.line ===x && acte.row>commentstart)this.perror.splice(errx,1);
+					}
+				}//end of valid comment found
+			}//end of comment-block
+
       //image:
 			//console.log("imagesearch in line:"+lines[x]);
 			//console.log("index:"+lines[x].indexOf("!["));
