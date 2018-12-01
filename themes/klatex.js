@@ -12,7 +12,7 @@ cssfile.setAttribute("type", "text/css");
 cssfile.setAttribute("href", "themes/katex/katex.min.css");
 document.getElementsByTagName("head")[0].appendChild(cssfile);
 
-newtheme.addEditorbutton('Latex',"||latex||","||latex||"); //TODO: add function to body?
+newtheme.addEditorbutton('Latex',"```latex","```"); //TODO: add function to body?
 slidenote.datatypes.push({type:"latex",mdcode:false,theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){

@@ -121,9 +121,9 @@ var insertfunction = function(){
     slidenote.insertbutton(charttype);
   }
 }
-newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"||chart||pie","||chart||", insertfunction);
-newtheme.addEditorbutton('<img src="themes/chartjs/barbutton.png">',"||chart||bar","||chart||", insertfunction);
-newtheme.addEditorbutton('<img src="themes/chartjs/linebutton.png">',"||chart||line","||chart||", insertfunction);
+newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"```chart pie","```", insertfunction);
+newtheme.addEditorbutton('<img src="themes/chartjs/barbutton.png">',"```chart bar","```", insertfunction);
+newtheme.addEditorbutton('<img src="themes/chartjs/linebutton.png">',"```chart line","```", insertfunction);
 
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme});
 

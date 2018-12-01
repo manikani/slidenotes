@@ -11,7 +11,7 @@ newtheme.helpText = function(dataobject){
   return result;
 }
 
-newtheme.addEditorbutton('Section',"||section||","||section||");
+newtheme.addEditorbutton('Section',"```section","```");
 
 slidenote.datatypes.push({type:"section", mdcode:true, theme:newtheme});
 

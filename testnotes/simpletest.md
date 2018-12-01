@@ -75,67 +75,67 @@ Ein weiterer Text mit mehreren A			Tabs				B
 Ein weiterer Text mit mehreren A					Tabs						B
 -----
 #Ein Datenblock: Chart Pie
-||chart||pie
+```chart pie
 #titel
 ##untertitel 1
 ##untertitel 2
 option a:10
 option b:20
 option c: 30
-||chart||
+```
 -----
 #nächster datenblock: Chart Bar
-||chart||bar
+```chart bar
 #titel
 ##untertitel 1
 ##untertitel 2
 option a:10
 option b:20
 option c: 30
-||chart||
+```
 -----
 #noch ein datenblock: Chart Line
-||chart||line
+```chart line
 #titel
 ##untertitel 1
 ##untertitel 2
 option a:10
 option b:20
 option c: 30
-||chart||
+```
 ---
 #Noch ein Datenblock: Chart Line mit anderer Datastructure:
-||chart||pie
+```chart pie
 #My Pie
 first label, second label, third label
 1, 2, 3
-||chart||
+```
 ---
-||chart||line
+```chart line
 #neue LineChart mit mehreren Werten
 ###2009
 ###2010
 Januar, Februar, März, April, Mai, Juni, Juli, August
 1, 20, 3, 40, 5, 60, 7, 80
 11,22,33,44,55,66,77,88
-||chart||
+```
 
 -----
 #table-datenblock
-||table||
+```table
 a|b|c
 1|2|3
 1|2|3
-||table||
+```
 -----
 #Latex:
-||latex||
+```latex
 \mathbf{V}_1 \times \mathbf{V}_2 = \begin{vmatrix}
 \mathbf{i} & \mathbf{j} & \mathbf{k} \
 \frac{\partial X}{\partial u} & \frac{\partial Y}{\partial u} & 0 \
 \frac{\partial X}{\partial v} & \frac{\partial Y}{\partial v} & 0 \
 \end{vmatrix}
-||latex||
+```
 ---
 #Letzte Seite
 Mehr fällt mir grad nicht ein zum Testen...

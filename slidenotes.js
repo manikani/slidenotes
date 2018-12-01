@@ -1764,94 +1764,108 @@ emdparser.prototype.parseMap = function(){
   			letztezeile = qlc;
   			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
   		}//lines[x] fängt jetzt mit <quote> an
-      //codeblock:
-      if(lines[x].length>=3 && lines[x].substring(0,3)==="```"){
-        var codeende = x+1;
-        while(codeende < lines.length){
-          if(lines[codeende].substring(0,3)==="```")break;
-          codeende++;
-        }
-        if(codeende===lines.length || lines[codeende].substring(0,3)!="```"){
-          //error: no codeend found
-          this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol ```"));
-        }else{
-          //codeend found:
-          this.map.addElement({
-            line:x,pos:0,html:"<code>",mdcode:lines[x],typ:"start",
-            tag:"codestart", wystextveraenderung:lines[x].length
-          });
-          this.map.addElement({
-            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"start",
-            tag:"codeende",wystextveraenderung:lines[codeende].length
-          });
-          for(var cx = x;cx<=codeende;cx++){
-            lines[cx]=substitutewitheuro(lines[cx].length); //substitute line to avoid further parsing
-            this.lineswithhtml[cx]="code"; //mark lines as codelines
-          }
-
-        }
-      }//end of codeblock
-      //datablock:
-      if(lines[x].length>5 && lines[x].substring(0,2)==="||" && this.lineswithhtml[x]!="data"){
-        var datahead;
-        var datatyp;
-        var rawdata;
-        if(lines[x].indexOf("||",2)<0){
-          //error datahead was not correct:
-          this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol ||"));
-        }else{
-          //datahead is correct:
-          datahead = lines[x];
-          datatyp = datahead.substring(2,datahead.indexOf("||",2));
-          if(!slidenote.datatypes.isvalid(datatyp)){
-            this.perror.push(new parsererror(x,0,lines[x].length-1,"data","not a valid datatype"));
-          }else{
-            var datatag = "||"+datatyp+"||";
-            var dataende = x+1;
-            while(dataende<lines.length){
-              if(lines[dataende].substring(0,datatag.length)===datatag)break;
-              dataende++;
-            }
-            if(dataende==lines.length|| lines[dataende].substring(0,datatag.length)!=datatag){
-              //error no dataend found
-              this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol "+datatag));
-    					this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol "+datatag));
-
-            }else{
-              var rawdata = new Array();
-              for(var rdx=x+1;rdx<dataende;rdx++){
-                rawdata.push(lines[rdx]);
-                if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){ //is mdcode allowed? if not:
-                          lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing
-								}else{ //mdcode is allowed
-									if(lines[rdx].substring(0,3)=="---"){ //even if mdcode is allowed - if its a new page-sign:
-										lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing so that a section is not broken by page
-									}
-								}
-              }
-							if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){
-              	for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data"; //fill lineswithhtml with data
+			//codeblock and datablock:
+			if(lines[x].substring(0,3)==="```"){
+				//possible code or datablock found
+				var head=lines[x];
+				//look out for datablock:
+				var datablocktypefound;
+				for(var blocktype=0;blocktype<slidenote.datatypes.length;blocktype++)if(head.indexOf(slidenote.datatypes[blocktype].type)>-1)datablocktypefound = slidenote.datatypes[blocktype];
+				//datablocktypefound is now either null for codeblock or the datatype
+				if(datablocktypefound){
+					//datablock found:
+					var datahead = head;
+					var datatyp = datablocktypefound.type;
+					//look out for dataend:
+					var dataende = x+1;
+					var innerblocks = 0;
+					while(dataende<lines.length){
+						if(lines[dataende].substring(0,3)==="```"){
+							if(lines[dataende].length===3){
+								if(innerblocks===0)break; else innerblocks--;
 							}else{
-								this.lineswithhtml[x]="data";
-								this.lineswithhtml[dataende]="data";
+								innerblocks++;
 							}
-              var mapstartel = {line:x,pos:0,html:"<data>",mdcode:lines[x],typ:"start",wystextveraenderung:0};
-    					var mapendel = {line:dataende,pos:0,html:"</data>",mdcode:lines[dataende],typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
-    					mapstartel.brotherelement = mapendel;
-    					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</data>",mdcode:"",typ:"end",wystextveraenderung:0});
-    					//save dataobject:
-    					if(this.dataobjects == null)this.dataobjects = new Array();
-    					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
-    					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
-    					this.map.addElement(mapstartel); //save parsing to map
-    					this.map.addElement(mapendel); //
-							lines[dataende] = substitutewitheuro(lines[dataende].length); //prevent further parsing
-    					console.log("neues dataobjekt hinzugefügt");
-    					console.log(this.dataobjects);
-            } //end of dataend found
-          }//end of is valid datatype
-        }//end of datablockhead found
-      }//end of datablock
+						}
+			      dataende++;
+			    }
+					if(dataende===lines.length){
+						 //error no dataend found
+			            this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol ```"));
+			    		this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol ```"));
+					}else{
+						var rawdata = new Array();
+			              for(var rdx=x+1;rdx<dataende;rdx++){
+			                rawdata.push(lines[rdx]);
+			                if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){ //is mdcode allowed? if not:
+			                          lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing
+											}else{ //mdcode is allowed
+												if(lines[rdx].substring(0,3)=="---"){ //even if mdcode is allowed - if its a new page-sign:
+													lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing so that a section is not broken by page
+												}
+											}
+			              }
+										if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){
+			              	for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data"; //fill lineswithhtml with data
+										}else{
+											this.lineswithhtml[x]="data";
+											this.lineswithhtml[dataende]="data";
+										}
+			              var mapstartel = {line:x,pos:0,html:"<data>",mdcode:lines[x],typ:"start",wystextveraenderung:0};
+			    					var mapendel = {line:dataende,pos:0,html:"</data>",mdcode:lines[dataende],typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
+			    					mapstartel.brotherelement = mapendel;
+			    					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</data>",mdcode:"",typ:"end",wystextveraenderung:0});
+			    					//save dataobject:
+			    					if(this.dataobjects == null)this.dataobjects = new Array();
+										if(datahead.indexOf("//")>-1){
+											var headcomment = datahead.substring(datahead.indexOf("//"));
+											datahead = datahead.substring(0,datahead.indexOf("//"));
+											//add new comment to map:
+											this.map.addElement({
+												line:x,pos:datahead.length,html:"",
+												mdcode:headcomment,typ:"start",tag:"comment"
+											});
+										}
+			    					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
+			    					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
+			    					this.map.addElement(mapstartel); //save parsing to map
+			    					this.map.addElement(mapendel); //
+										lines[dataende] = substitutewitheuro(lines[dataende].length); //prevent further parsing
+										lines[x] = substitutewitheuro(lines[x].length);
+			    					console.log("neues dataobjekt hinzugefügt");
+			    					console.log(this.dataobjects);
+					}
+
+				} else{
+					//codeblock found:
+					//codeblock is much easier as no inner blocks are allowed. the next line with ``` breaks the codeblock:
+					var codeende = x+1;
+			        while(codeende < lines.length){
+			          if(lines[codeende].substring(0,3)==="```")break;
+			          codeende++;
+			        }
+			        if(codeende===lines.length || lines[codeende].substring(0,3)!="```"){
+			          //error: no codeend found
+			          this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol ```"));
+			        }else{
+			          //codeend found:
+			          this.map.addElement({
+			            line:x,pos:0,html:"<code>",mdcode:lines[x],typ:"start",
+			            tag:"codestart", wystextveraenderung:lines[x].length
+			          });
+			          this.map.addElement({
+			            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"start",
+			            tag:"codeende",wystextveraenderung:lines[codeende].length
+			          });
+			          for(var cx = x;cx<=codeende;cx++){
+			            lines[cx]=substitutewitheuro(lines[cx].length); //substitute line to avoid further parsing
+			            this.lineswithhtml[cx]="code"; //mark lines as codelines
+			          }
+
+			        }
+
+				}
+			}//end of code and datablocks
 			//all blocks are scanned. now for one-line-elements - eg image, link, code...
 
 			//inline code: has to be first of all one-line-elements to prevent parsing inside of it
@@ -4425,9 +4439,10 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 			emdstart="`";
 			emdend="`";
 		}
-	}else if(emdzeichen.substring(0,2)=="||"){
+	}else if(emdzeichen.substring(0,3)=="```"){
 		emdstart=emdzeichen+"\n";
-		emdend="\n"+emdzeichen.substring(0,emdzeichen.indexOf("||",2)+2) +"\n";
+		//emdend="\n"+emdzeichen.substring(0,emdzeichen.indexOf("||",2)+2) +"\n";
+		emdend="\n```\n";
 	}else if(emdzeichen==="---"){
 		emdstart = "\n"+emdzeichen+"\n";
 		emdend = "";
