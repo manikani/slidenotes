@@ -79,4 +79,16 @@ newtheme.highlighteditor = function(){
 
 slidenote.afterCodeEditorrender = newtheme.highlighteditor;
 
+newtheme.highlightintexteditor = true;
+newtheme.addGlobalOption("checkbox", "Highlightning of Codeblocks in Texteditor (experimental)", "hltexteditor",true);
+newtheme.changeGlobalOption = function(optionnr, value){
+		this.highlightintexteditor = value;
+		this.globaloptions[optionnr].values=value;
+		if(this.highlightintexteditor){
+			slidenote.afterCodeEditorrender = this.highlighteditor;
+		} else{
+			slidenote.afterCodeEditorrender = null;
+		}
+}
+
 presentation.addTheme(newtheme);
