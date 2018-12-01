@@ -4017,6 +4017,7 @@ slidenotes.prototype.parseneu = function(){
 		if(this.texteditorerroractivated){
 			//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
 			this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
+			if(this.afterCodeEditorrender)this.afterCodeEditorrender();
 			//getting rid of false lines from proposedsymbols:
 			var proposedsymbols = document.getElementsByClassName("proposedsymbol");
 			for(var pps = 0;pps<proposedsymbols.length;pps++){

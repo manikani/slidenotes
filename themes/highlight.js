@@ -66,5 +66,17 @@ newtheme.styleThemeSpecials = function(){
 		hljs.highlightBlock(block);
 	}
 }
-newtheme.active = false;
+newtheme.active = true;
+newtheme.highlighteditor = function(){
+	var codes = document.getElementsByClassName("code");
+	for(var cx=0;cx<codes.length;cx++){
+		if(codes[cx].innerHTML.length>5){
+			hljs.highlightBlock(codes[cx]);
+			codes[cx].classList.remove("hljs");
+		}
+	}
+}
+
+slidenote.afterCodeEditorrender = newtheme.highlighteditor;
+
 presentation.addTheme(newtheme);
