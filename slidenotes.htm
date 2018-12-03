@@ -166,12 +166,12 @@ function parsetesting(){
 --></script>
 </head>
 <body onload="initeditor()">
-<h1>Welcome to the Slidenote-Editor</h1>
 <div id="slidenotediv">
+<!--
 	<div id="slidenotebuttons">
 		<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
 		<input type="button" onclick="slidenote.showErrorDetails()" value="show parseerrors">
-		<!--<input type="button" onclick="document.getElementById('slidenotediv').classList.add('vollbild');document.getElementById('quelltext').focus();" value="wysiwyg-vollbild">-->
+		<input type="button" onclick="document.getElementById('slidenotediv').classList.add('vollbild');document.getElementById('quelltext').focus();" value="wysiwyg-vollbild">
 		<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
 			<option value="wysiwyg">WYSIWYM-Editor</option>
 			<option value="wysiwygfullscreen">WYSIWYM-Editor Fullscreen</option>
@@ -180,7 +180,10 @@ function parsetesting(){
 		</select>
 		<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
 	</div>
+-->
 	<div id="editorblock">
+		<div id="editorheader"><img id="savestatus" src="images/schloss-grau.png" alt="initial state"><span id="notetitle">my awesome slidenote</span> </div>
+		<div id="editoroptionbutton"><a href="javascript:slidenote.presentation.showThemes()">Options</a></div>
 		<div id="texteditorbuttons">
 			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
 			<button onclick="insertbutton('**')" >**bold**</button>
@@ -196,11 +199,15 @@ function parsetesting(){
 			<button onclick="insertbutton('%code')" >code</button>
 			<!--<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>-->
 		</div>
+		<div id="sidebarcontainer"><div id="sidebar"></div></div>
 		<div id="texteditor" class="texteditor">
 			<div id="texteditorerrorlayer"></div>
 			<textarea spellcheck="false" id="quelltext" onload="" autofocus onfocus="initeditor();"></textarea>
 			<div id="texteditorimagespreview"></div>
 			<div id="wysiwygarea" contenteditable="true" spellcheck="false"></div>
+		</div>
+		<div id="footer">
+			<button onclick="slidenote.presentation.showpresentation()"><img src="images/presentationtoggle.png"></button>
 		</div>
 		<div id="imagesblock">
 				<h1>Image Upload <button onclick="Javascript:document.getElementById('imagesblock').classList.remove('visible');">close</button></h1>

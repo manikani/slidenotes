@@ -1187,6 +1187,69 @@ emdparser.prototype.renderCodeeditorImagePreview = function(){
 	return imgtemptext;
 }
 
+emdparser.prototype.generateSidebar = function(){
+	var sidebarelements = slidenote.parser.map.sidebarelements;
+	var sidebar = document.getElementById("sidebar");
+	if(!sidebar){
+		sidebar = document.createElement("div");
+		sidebar.id="sidebar";
+		var editor = document.getElementById("texteditor");
+		editor.insertBefore(sidebar,editor.childNodes[0]);
+	}
+	sidebar.innerHTML = "";
+	var bglines = document.getElementsByClassName("backgroundline");
+	var sidebarlines = new Array();
+	for(var x=0;x<bglines.length;x++){
+		var newline = document.createElement("div");
+		var h = bglines[x].offsetHeight;
+		if(h<10)h=16;
+		//newline.style.height = h+"px";
+		newline.innerHTML = "&nbsp;"//"Line #"+x;
+		sidebarlines.push(newline);
+	}
+	for(var x=0;x<sidebarelements.length;x++){
+		actel = sidebarelements[x];
+		if(actel.typ==="singleline"){
+			var newspan = document.createElement("span");
+			newspan.innerText=actel.text;
+			newspan.classList.add("singleline");
+			sidebarlines[actel.startline].appendChild(newspan);
+		}else if(actel.typ==="multiline"){
+			var firstlinespan = document.createElement("span");
+			var lastlinespan = document.createElement("span");
+			var emptytext = "....................".substring(0,actel.text.length-1);
+			firstlinespan.classList.add("multilinestart");
+			firstlinespan.innerText=emptytext;
+			lastlinespan.classList.add("multilineend");
+			lastlinespan.innerText=emptytext;
+			sidebarlines[actel.startline].appendChild(firstlinespan);
+			if(actel.endline-actel.startline>1){
+				var middlelinespan = document.createElement("span");
+				middlelinespan.classList.add("multilinemiddle");
+				middlelinespan.innerText = actel.text;
+				var middlelinenr = Math.floor((actel.endline - actel.startline)/2)+actel.startline;
+				//if(middlelinenr===actel.endline)lastlinespan=null;
+
+				for(var mlx=actel.startline+1;mlx<middlelinenr;mlx++){
+					var simplechild = document.createElement("span");
+					simplechild.innerText = emptytext;
+					sidebarlines[mlx].appendChild(simplechild);
+				}
+				sidebarlines[middlelinenr].appendChild(middlelinespan);
+				for(var mlx=middlelinenr+1;mlx<actel.endline;mlx++){
+					var simplechild = document.createElement("span");
+					simplechild.innerText = emptytext;
+					sidebarlines[mlx].appendChild(simplechild);
+				}
+			}
+			if(lastlinespan)sidebarlines[actel.endline].appendChild(lastlinespan);
+
+		}
+	}
+	for(var x=0;x<sidebarlines.length;x++)sidebar.appendChild(sidebarlines[x]);
+	return sidebarlines;
+}
+
 /* Returns the element in the map the current carret is on
  * usefull for many things in the md-Code-Editor
  * returns null if there is no element
@@ -1493,6 +1556,8 @@ emdparser.prototype.parseMap = function(){
 	//console.log("Timecheck: replace T_T needed:"+(new Date().getTime() - TimecheckStart));
   var lines = this.returnparsedlines(sourcecode);
   var linestartpos = 0;
+	this.map.sidebarelements = new Array();
+
   //sort out <:
   for(var x=0;x<lines.length;x++){
     var symbols = ["<", "&", '\\***', "\\**", "\\*", "\\__", "\\_", "\\~~", "\\![", "\\```","\\`"];
@@ -1533,7 +1598,11 @@ emdparser.prototype.parseMap = function(){
 				wystextveraenderung:rauten.length
 			});
 			this.lineswithhtml[x]="h"+rauten.length;
-
+			var rautentext = ["", "TITLE", "HEADING", "SUBHEADING"];
+			this.map.sidebarelements.push({
+				typ:"singleline",text:rautentext[rauten.length],
+				startline:x, endline:x
+			});
     }//end title
 		//scan for lists:
 		/*	SCAN FOR LISTS (ul and ol)
@@ -1723,6 +1792,10 @@ emdparser.prototype.parseMap = function(){
 			for(var lx=x;lx<listx;lx++){
 				if(this.lineswithhtml[lx]==undefined)this.lineswithhtml[lx]="list";
 			}
+			this.map.sidebarelements.push({
+				typ:"multiline",text:listtyp, tag: listtyp,
+				startline:x, endline:listx-1
+			});
 
 		}// end of list block
 
@@ -1763,7 +1836,12 @@ emdparser.prototype.parseMap = function(){
   			}
   			letztezeile = qlc;
   			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
+				this.map.sidebarelements.push({
+					typ:"multiline",text: "quote", tag:"quote",
+					startline:x, endline:qlc
+				});
   		}//lines[x] fängt jetzt mit <quote> an
+
 			//codeblock and datablock:
 			if(lines[x].substring(0,3)==="```"){
 				//possible code or datablock found
@@ -1826,12 +1904,19 @@ emdparser.prototype.parseMap = function(){
 												mdcode:headcomment,typ:"start",tag:"comment"
 											});
 										}
-			    					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
+			    					this.dataobjects.push({
+											type:datatyp, head:datahead, raw:rawdata,
+											startline:x, endline:dataende
+										});
 			    					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
 			    					this.map.addElement(mapstartel); //save parsing to map
 			    					this.map.addElement(mapendel); //
 										lines[dataende] = substitutewitheuro(lines[dataende].length); //prevent further parsing
 										lines[x] = substitutewitheuro(lines[x].length);
+										this.map.sidebarelements.push({
+											typ:"multiline",text:datatyp,tag:datatyp,
+											startline:x, endline:dataende
+										});
 			    					console.log("neues dataobjekt hinzugefügt");
 			    					console.log(this.dataobjects);
 					}
@@ -1861,6 +1946,10 @@ emdparser.prototype.parseMap = function(){
 			            lines[cx]=substitutewitheuro(lines[cx].length); //substitute line to avoid further parsing
 			            this.lineswithhtml[cx]="code"; //mark lines as codelines
 			          }
+								this.map.sidebarelements.push({
+									typ:"multiline",text:"code",tag:"code",
+									startline:x, endline:codeende
+								});
 
 			        }
 
@@ -2345,6 +2434,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 			lines[x]="<ul>"+lines[x];
 			//muss ich oben machen
 			lines[glc]=lines[glc]+"</ul>";
+			this.map.multilineobjects.push({typ:"ul", tag:"ul", startline:x, endline:glc});
 			letztezeile=glc;
 		}
 		//lines[x] fängt jetzt mit ul an:
@@ -2408,6 +2498,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 			letztezeile=nlc;
 			//folgendes geht nicht mehr so, wenn eingerückte listen gibt:
 			//for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="ol";
+			this.map.multilineobjects.push({typ:"ol", tag:"ol", startline:x, endline:nlc});
 		}
 		//lines[x]fängt jetzt mit <ol> an
 		if(lines[x].search(/[0-9]/)==0&&this.lineswithhtml[x]!="data"&&this.lineswithhtml[x]!="code"){
@@ -2450,6 +2541,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 			}
 			letztezeile = qlc;
 			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
+			this.map.multilineobjects.push({typ:"quote", tag:"quote", startline:x, endline:qlc});
 		}//lines[x] fängt jetzt mit <quote> an
 
 		// codeblock
@@ -4017,6 +4109,9 @@ slidenotes.prototype.parseneu = function(){
 		if(this.texteditorerroractivated){
 			//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
 			this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
+			//add sidebar here
+			this.parser.generateSidebar();
+
 			if(this.afterCodeEditorrender)this.afterCodeEditorrender();
 			//getting rid of false lines from proposedsymbols:
 			var proposedsymbols = document.getElementsByClassName("proposedsymbol");
@@ -4480,6 +4575,8 @@ slidenotes.prototype.scroll = function(editor){
 	this.texteditorrahmensetzen();
 	if(editor==this.textarea && this.texteditorerroractivated)
 	this.texteditorerrorlayer.scrollTop = editor.scrollTop;
+	var sidebartop = 0-editor.scrollTop;
+	document.getElementById("sidebar").style.top = sidebartop+"px";
 	//TODO: wysiwyg-scroll wenn cursor aus dem bild kommt
 	//kommt das wirklich hier rein? eher nach wysiwyg-html-rendern oder?
 };

@@ -3,7 +3,6 @@
 	background:white;
 	position:initial;
 	height:400px;
-	padding:15px;
 }
 #texteditorerrorlayer{
 	color:unset;
@@ -239,10 +238,110 @@ h1{
     height: 200%;
     position: initial;
     width: 100%;
+		display:grid;
+		grid-template-areas: ". header optionarea"
+													". buttonarea ."
+													"sidearealeft editorarea sidearearight"
+													"footer footer footer";
+		grid-template-columns: 1fr 2fr 1fr;
+		grid-gap: 10px 2px;
 }
 #editorblock::after{
 	clear:both;
 	content:".";
+}
+/*grid-style:*/
+div#editorheader {
+    grid-area: header;
+}
+
+div#editoroptionbutton {
+    grid-area: optionarea;
+}
+
+div#texteditorbuttons {
+    grid-area: buttonarea;
+}
+
+div#sidebarcontainer {
+    grid-area: sidearealeft;
+}
+
+div#texteditor {
+    grid-area: editorarea;
+}
+
+div#contextfieldcontainer {
+    grid-area: sidearearight;
+}
+
+div#footer {
+    grid-area: footer;
+}
+
+/*sidebar*/
+div#sidebar {
+    position: absolute;
+    right: 0;
+}
+
+div#sidebarcontainer {
+    position: relative;
+    overflow: hidden;
+}
+
+#sidebar{
+	text-align:right;
+	font-size:1em;
+	font-family:monospace;
+	padding:3px;
+}
+#sidebar span.multilinemiddle {
+    color:unset;
+    border:none;
+}
+
+#sidebar span.multilinestart {
+    margin-top: -1px;
+    border-top: 1px solid gray;
+}
+
+#sidebar span.multilineend {
+border-bottom: 1px solid gray;
+    margin-bottom: -1px;
+}
+
+#sidebar span {
+    border-left: 1px solid gray;
+    color: transparent;
+}
+#sidebar span.singleline{
+	color:unset;
+	border:none;
+}
+/*header with notetitle and optionbutton*/
+div#editorheader {
+    text-align: center;
+}
+
+span#notetitle {
+    margin-left: 15px;
+    color: gray;
+    font-size: 1.4em;
+}
+
+#editoroptionbutton {
+    text-align: right;
+}
+
+#editoroptionbutton a {
+    color: gray;
+    text-decoration: none;
+}
+
+/*footer*/
+div#footer {
+    text-align: center;
 }
 
 /*wysiwyg*/
