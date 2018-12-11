@@ -1199,30 +1199,68 @@ emdparser.prototype.generateSidebar = function(){
 	sidebar.innerHTML = "";
 	var bglines = document.getElementsByClassName("backgroundline");
 	var sidebarlines = new Array();
+	//get pixel-height of one line:
+	var testline = document.createElement("span");
+	testline.classList.add("backgroundline");
+	testline.innerText="t";
+	bglines[0].parentNode.appendChild(testline);
+	var standardlineheight = testline.offsetHeight;
+	testline.remove();
+	console.log("standard-height:"+standardlineheight);
 	for(var x=0;x<bglines.length;x++){
 		var newline = document.createElement("div");
 		var h = bglines[x].offsetHeight;
-		if(h<10)h=16;
+		//if(h<10)h=16;
+		if(h>standardlineheight){
+			newline.ismultiline=true;
+			newline.multilines = h/standardlineheight;
+			console.log("multiline - lines:"+newline.multilines+" px:"+h);
+		}//newline.style.height = h+"px";
+
 		//newline.style.height = h+"px";
-		newline.innerHTML = "&nbsp;"//"Line #"+x;
+		//newline.innerHTML = "&nbsp;"//"Line #"+x;
 		sidebarlines.push(newline);
 	}
-	for(var x=0;x<sidebarelements.length;x++){
+
+	var carretsymbol = document.createElement("a");
+	carretsymbol.classList.add("carretline");
+	carretsymbol.href="javascript:slidenote.presentation.showInsertMenu()";
+	//carretsymbol.onclick="slidenote.presentation.showInsertMenu()";
+	carretsymbol.innerText= "__▽_▶";//" ⌣➤ ▶";
+	/*
+	var carretsymbol = document.createElement("span");
+	carretsymbol.classList.add("carretline");
+	var downtilde = document.createElement("a");
+	downtilde.href="javascript:alert('todo:buttonmenu')";
+	downtilde.innerText = " ▽";
+	carretsymbol.appendChild(downtilde);
+	var carretmarker = document.createElement("span");
+	carretmarker.innerText = " >";
+	carretmarker.classList.add("carretmarker");
+	carretsymbol.appendChild(carretmarker);*/
+	sidebarlines[this.lineAtPosition(slidenote.textarea.selectionEnd)].appendChild(carretsymbol);
+	for(var x=sidebarelements.length-1;x>=0;x--){
 		actel = sidebarelements[x];
-		if(actel.typ==="singleline"){
+		if(actel.typ==="singleline" || actel.endline === actel.startline){
 			var newspan = document.createElement("span");
 			newspan.innerText=actel.text;
 			newspan.classList.add("singleline");
-			sidebarlines[actel.startline].appendChild(newspan);
+			sidebarlines[actel.startline].insertBefore(newspan,sidebarlines[actel.startline].firstChild);
+			sidebarlines[actel.startline].issingleline=true;
 		}else if(actel.typ==="multiline"){
 			var firstlinespan = document.createElement("span");
 			var lastlinespan = document.createElement("span");
+			var innerelementlength=0;
+			for(var iex=actel.startline;iex<=actel.endline;iex++)if(sidebarlines[iex].innerText.length>innerelementlength)innerelementlength=sidebarlines[iex].innerText.length;//if(sidebarlines[iex].childNodes.length>innerelementlength)innerelementlength=sidebarlines[iex].childNodes.length;
+			if(innerelementlength>0)innerelementlength=innerelementlength+2;
 			var emptytext = "....................".substring(0,actel.text.length-1);
 			firstlinespan.classList.add("multilinestart");
 			firstlinespan.innerText=emptytext;
 			lastlinespan.classList.add("multilineend");
 			lastlinespan.innerText=emptytext;
-			sidebarlines[actel.startline].appendChild(firstlinespan);
+			//sidebarlines[actel.startline].appendChild(firstlinespan);
+			firstlinespan.innerText+="................".substring(0,innerelementlength-sidebarlines[actel.startline].innerText.length);
+			sidebarlines[actel.startline].insertBefore(firstlinespan, sidebarlines[actel.startline].firstChild);
 			if(actel.endline-actel.startline>1){
 				var middlelinespan = document.createElement("span");
 				middlelinespan.classList.add("multilinemiddle");
@@ -1233,20 +1271,84 @@ emdparser.prototype.generateSidebar = function(){
 				for(var mlx=actel.startline+1;mlx<middlelinenr;mlx++){
 					var simplechild = document.createElement("span");
 					simplechild.innerText = emptytext;
-					sidebarlines[mlx].appendChild(simplechild);
+					simplechild.innerText+="................".substring(0,innerelementlength-sidebarlines[mlx].innerText.length);
+					//sidebarlines[mlx].appendChild(simplechild);
+					sidebarlines[mlx].insertBefore(simplechild, sidebarlines[mlx].firstChild);
 				}
-				sidebarlines[middlelinenr].appendChild(middlelinespan);
+				//sidebarlines[middlelinenr].appendChild(middlelinespan);
+				var spacesright = innerelementlength - sidebarlines[middlelinenr].innerText.length;
+				spacesright = spacesright*6;
+				middlelinespan.innerHTML+="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".substring(0,spacesright);
+				sidebarlines[middlelinenr].insertBefore(middlelinespan, sidebarlines[middlelinenr].firstChild);
 				for(var mlx=middlelinenr+1;mlx<actel.endline;mlx++){
 					var simplechild = document.createElement("span");
 					simplechild.innerText = emptytext;
-					sidebarlines[mlx].appendChild(simplechild);
+					simplechild.innerText+="................".substring(0,innerelementlength-sidebarlines[mlx].innerText.length);
+					//sidebarlines[mlx].appendChild(simplechild);
+					sidebarlines[mlx].insertBefore(simplechild, sidebarlines[mlx].firstChild);
 				}
 			}
-			if(lastlinespan)sidebarlines[actel.endline].appendChild(lastlinespan);
+			//if(lastlinespan)sidebarlines[actel.endline].appendChild(lastlinespan);
+			lastlinespan.innerText+="................".substring(0,innerelementlength-sidebarlines[actel.endline].innerText.length)
+				if(lastlinespan)sidebarlines[actel.endline].insertBefore(lastlinespan, sidebarlines[actel.endline].firstChild);
 
 		}
 	}
-	for(var x=0;x<sidebarlines.length;x++)sidebar.appendChild(sidebarlines[x]);
+	for(var x=0;x<sidebarlines.length;x++){
+		if(sidebarlines[x].innerHTML.length===0)sidebarlines[x].innerHTML = "&nbsp;";
+		if(sidebarlines[x].ismultiline){//style.height.length>0){
+			var maxlines = sidebarlines[x].multilines -1;
+			//maxlines = maxlines.substring(0,maxlines.indexOf("px"));
+			//maxlines = Math.floor(maxlines/16);
+			if(sidebarlines[x].innerHTML ==="&nbsp;"){
+				for(var adline=0;adline<maxlines;adline++)sidebarlines[x].innerHTML+="<br>◥";
+			}else{
+			//how many lines?
+			var firstline = sidebarlines[x].cloneNode(true);
+			for(var adline=0;adline<maxlines;adline++){
+				//add missing symbols:
+				var newline = firstline.cloneNode(true);
+				//remove all links:
+				while(newline.getElementsByClassName("carretline").length>0){
+					var replacement = document.createElement("span");
+					replacement.classList.add("replacement");
+					replacement.innerText = "....";
+					newline.appendChild(replacement);
+					newline.removeChild(newline.getElementsByClassName("carretline")[0]);
+				}
+				sidebarlines[x].appendChild(document.createElement("br"));
+				console.log(newline);
+				console.log(newline.childNodes);
+				for(var nx=0;nx<newline.childNodes.length;nx++){
+					if(newline.childNodes[nx].classList.contains("multilinemiddle")){
+						newline.childNodes[nx].classList.remove("multilinemiddle");
+						newline.childNodes[nx].innerText="..................".substring(0,newline.childNodes[nx].innerText.length-1);
+					}
+					if(newline.childNodes[nx].classList.contains("singleline")){
+						newline.childNodes[nx].innerText="";
+					}
+					if(newline.childNodes[nx].classList.contains("multilinestart")){
+						newline.childNodes[nx].classList.remove("multilinestart");
+					}
+					if(newline.childNodes[nx].classList.contains("multilineend")){
+						sidebarlines[x].childNodes[nx].classList.remove("multilineend");
+						if(adline<maxlines-1)newline.childNodes[nx].classList.remove("multilineend");
+					}
+				}
+				var continueline = document.createElement("span");
+				continueline.classList.add("continueline");
+				continueline.innerText = "◥";
+				newline.appendChild(continueline);
+				continueline.previousSibling.innerText = continueline.previousSibling.innerText.substring(0,continueline.previousSibling.innerText.length-1);
+				while(newline.childNodes.length>0){
+					sidebarlines[x].appendChild(newline.childNodes[0]);
+				}
+			}
+		}}
+		sidebar.appendChild(sidebarlines[x]);
+	}
+	//make cursorline nicer:
+	carretsymbol.innerHTML='&nbsp;<img src="images/buttons/droptilde.png">&nbsp;<img src="images/buttons/cursorline.png">';
 	return sidebarlines;
 }
 
@@ -1598,7 +1700,7 @@ emdparser.prototype.parseMap = function(){
 				wystextveraenderung:rauten.length
 			});
 			this.lineswithhtml[x]="h"+rauten.length;
-			var rautentext = ["", "TITLE", "HEADING", "SUBHEADING"];
+			var rautentext = ["", "H1", "H2", "H3"];
 			this.map.sidebarelements.push({
 				typ:"singleline",text:rautentext[rauten.length],
 				startline:x, endline:x
@@ -1847,13 +1949,14 @@ emdparser.prototype.parseMap = function(){
 				//possible code or datablock found
 				var head=lines[x];
 				//look out for datablock:
-				var datablocktypefound;
+				var datablocktypefound =null;
 				for(var blocktype=0;blocktype<slidenote.datatypes.length;blocktype++)if(head.indexOf(slidenote.datatypes[blocktype].type)>-1)datablocktypefound = slidenote.datatypes[blocktype];
 				//datablocktypefound is now either null for codeblock or the datatype
 				if(datablocktypefound){
 					//datablock found:
 					var datahead = head;
 					var datatyp = datablocktypefound.type;
+					console.log("datablock found:"+datahead + "->"+datatyp);
 					//look out for dataend:
 					var dataende = x+1;
 					var innerblocks = 0;
@@ -3745,7 +3848,7 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 						slidenote.presentation.themes[themenr].editorbuttons[x].insertfunction;
 				}
 
-				document.getElementById("texteditorbuttons").appendChild(newhtmlbutton);
+				document.getElementById("insertarea").appendChild(newhtmlbutton);
 			}
 		}else{
 			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
@@ -3764,6 +3867,49 @@ pagegenerator.prototype.changeGlobalOption = function(themenr,optionnr, value){
 	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+value);
 }
 
+pagegenerator.prototype.showInsertMenu = function(){
+	var insertmenu = document.getElementById("insertarea");
+	console.log("show insertMenu");
+	insertmenu.style.visibility = "visible";
+	insertmenu.tabIndex = 0;
+	//position insertmenu after carretsymbol or above:
+	var carretline = document.getElementsByClassName("carretline")[0];
+	var cursorlinesymbol = document.getElementById("cursorlinesymbol");
+	if(carretline){
+		var top = carretline.offsetTop + document.getElementById("sidebar").offsetTop +5;
+		console.log("insertmenu-top:"+top);
+		var topmax = slidenote.textarea.offsetHeight - insertmenu.offsetHeight;
+		if(top>topmax){
+			top-=insertmenu.offsetHeight;
+			var cursorlinesymboltop = insertmenu.offsetHeight -9;
+			cursorlinesymbol.style.top = cursorlinesymboltop+"px";
+			//insertmenu.getElementsByTagName("IMG")[1].style.display="none";
+		} else{
+			//insertmenu.getElementsByTagName("IMG")[1].style.display="unset";
+			cursorlinesymbol.style.top = "-7px";
+		}
+		insertmenu.style.top = top+"px";
+	}
+	slidenote.textarea.focus(); //get focus on slidenote again to regain cursor
+	//insertmenu.focus();
+	carretline.style.visibility="hidden";
+
+	var closeMenu = function(){
+		setTimeout(function (){
+			var insertmenu = document.getElementById("insertarea");
+			insertmenu.tabIndex = undefined;
+			insertmenu.style.visibility = "hidden";
+			document.getElementsByClassName("carretline")[0].style.visibility="visible";
+			slidenote.textarea.focus();
+		},200);
+
+	}
+		insertmenu.onclick = closeMenu;
+		slidenote.textarea.addEventListener("click", closeMenu);
+		slidenote.textarea.addEventListener("keyup",closeMenu);
+		slidenote.textarea.addEventListener("scroll",closeMenu);
+
+}
 
 /* pagegenerator.showpresentation() startet und beendet die präsentation
  * startet die eigentliche präsentation durch aufruf von
@@ -4202,6 +4348,8 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			console.log("parse keypressdown");
 			this.parseneu();//on Enter you should always parse anew
 			this.scroll();
+		}else if(key.indexOf("Arrow")>-1){
+			setTimeout("slidenote.parser.generateSidebar()",10);
 		}else if(key.indexOf("Page")>-1){
 			this.parser.map.lastcursorpos = this.textarea.selectionEnd;
 			event.preventDefault();
@@ -4477,11 +4625,28 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 				 return;
 			 }
 	}
-	if(emdzeichen=="%head"){
+	if(emdzeichen.substring(0,5)=="%head"){
 		emdstart="\n#";
-		emdnr = prompt("h... 1,2,3,4?");
+		//emdnr = prompt("h... 1,2,3,4?");
+		emdnr = emdzeichen.substring(5);
 		for(var xa=1;xa<emdnr;xa++)emdstart+="#";
 		emdend="\n";
+	}else if((emdzeichen=="%nrlist" || emdzeichen=="%list" || emdzeichen=="%quote") &&
+						textarea.selectionStart ===textarea.selectionEnd){
+							var insz = "";
+							if(emdzeichen==="%nrlist"){
+								emdstart="1. ";
+								emdend="\n2. \n3. \n";
+							}
+							if(emdzeichen==="%list"){
+								emdstart="- ";
+								emdend="\n- \n- \n";
+							}
+							if(emdzeichen==="%quote"){
+								emdstart="> ";
+								emdend="\n";
+							}
+
 	}else if(emdzeichen=="%nrlist" || emdzeichen=="%list" || emdzeichen=="%quote"){
 			var selectedtext = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
 			//if(selectedtext.substring(1,2)=="\n")selectedtext = selectedtext.substring(1);
@@ -4573,10 +4738,11 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 
 slidenotes.prototype.scroll = function(editor){
 	this.texteditorrahmensetzen();
-	if(editor==this.textarea && this.texteditorerroractivated)
-	this.texteditorerrorlayer.scrollTop = editor.scrollTop;
-	var sidebartop = 0-editor.scrollTop;
-	document.getElementById("sidebar").style.top = sidebartop+"px";
+	if(editor==this.textarea && this.texteditorerroractivated){
+		this.texteditorerrorlayer.scrollTop = editor.scrollTop;
+		var sidebartop = 0-editor.scrollTop;
+		document.getElementById("sidebar").style.top = sidebartop+"px";
+	}
 	//TODO: wysiwyg-scroll wenn cursor aus dem bild kommt
 	//kommt das wirklich hier rein? eher nach wysiwyg-html-rendern oder?
 };

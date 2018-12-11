@@ -193,7 +193,9 @@ newtheme.init = function(){
   //add imagebutton to texteditorbuttons
   var texteditorbuttons = document.getElementById("texteditorbuttons");
   var button = document.createElement("BUTTON");
-  var buttontext = document.createTextNode("Image");
+  var buttontext = new Image();
+  buttontext.src="images/buttons/image.png";
+  //var buttontext = document.createTextNode("Image");
   var fileInput = document.getElementById('fileInput');
   var fileDisplayArea = document.getElementById('filePreview');
   button.appendChild(buttontext);

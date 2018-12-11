@@ -51,7 +51,7 @@ function initeditor(){
 			//autofocus tonfocus="initeditor(this.value);
 			texted.onscroll=function(){slidenote.scroll(texted);};
 			texted.onclick = function(){console.log("parseneu forced by click"+this.selectionEnd);slidenote.parseneu();};
-			texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
+			//texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
 			wys.onmouseup=function(event){slidenote.wysiwyg.copyCursorToTextarea(event); console.log("onmouseupend");};
 			wys.onmousedown=function(event){slidenote.wysiwyg.mousedown(event);};
 			wys.onpaste=function(event){
@@ -107,7 +107,7 @@ function initeditor(){
 			slidenote.parseneu();
 			console.log("slidenotes geladen");
 			console.log(slidenote);
-			texted.addEventListener("focusout", function(){setTimeout("slidenote.wysiwyg.hideorshowcursor()", 100);});
+			//texted.addEventListener("focusout", function(){setTimeout("slidenote.wysiwyg.hideorshowcursor()", 100);});
 			document.getElementById("praesentationrahmen").onkeyup = function(event){
 				//Keyboardsteuerung der Slideshow:
 				var key=""+event.key;
@@ -167,7 +167,7 @@ function parsetesting(){
 </head>
 <body onload="initeditor()">
 <div id="slidenotediv">
-<!--
+
 	<div id="slidenotebuttons">
 		<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
 		<input type="button" onclick="slidenote.showErrorDetails()" value="show parseerrors">
@@ -180,26 +180,55 @@ function parsetesting(){
 		</select>
 		<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
 	</div>
--->
+
 	<div id="editorblock">
-		<div id="editorheader"><img id="savestatus" src="images/schloss-grau.png" alt="initial state"><span id="notetitle">my awesome slidenote</span> </div>
-		<div id="editoroptionbutton"><a href="javascript:slidenote.presentation.showThemes()">Options</a></div>
+		<div id="editorheader">
+			<button><img src="images/buttons/home.png">HOME</button>
+			<button><img src="images/buttons/import.png">IMPORT</button>
+			<img id="savestatus" src="images/schloss-grau.png" alt="initial state">
+			<span id="notetitle">my awesome slidenote</span>
+			<button>EXPORT<img src="images/buttons/export.png"></button>
+			<button>SAVE<img src="images/buttons/cloudsaved.png"></button>
+			<!--
+			<ul id="exportul">
+				<li class="first"><img src="images/buttons/export.png">EXPORT</li>
+				<li>BACKUP OF CODE:</li>
+				<li><button onclick="slidenoteguardian.saveNote('filesystem')">encrypted .slidenote</button></li>
+				<li><button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md textfile</button></li>
+				<li>PUBLISH PRESENTATION:</li>
+				<li>Publish to slidenote.io</li>
+				<li>Save as encrypted .html</li>
+				<li>Save as unencrypted .html</li>
+			</ul>
+		-->
+
+		</div>
+		<div id="editoroptionbutton"><a href="javascript:slidenote.presentation.showThemes()">Options ℹ</a></div>
 		<div id="texteditorbuttons">
 			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
-			<button onclick="insertbutton('**')" >**bold**</button>
-			<button onclick="insertbutton('*')" >*italics*</button>
-			<button onclick="insertbutton('~~')" >~~stroke~~</button>
-			<button onclick="insertbutton('%head')" >title</button>
-			<button onclick="insertbutton('%list')" >unordered list</button>
-			<button onclick="insertbutton('%nrlist')" >ordered list</button>
-			<button onclick="insertbutton('%quote')" >quote</button>
-			<button onclick="insertbutton('%link')" >link</button>
-			<button onclick="insertbutton('---')" >new Page</button>
-			<!--<button onclick="insertbutton('%image')" >image</button>-->
-			<button onclick="insertbutton('%code')" >code</button>
+			<!--<button onclick="insertbutton('---')" >new Page</button>-->
+			<button onclick="insertbutton('%head1')" ><img src="images/buttons/h1.png"></button>
+			<button onclick="insertbutton('%head2')" ><img src="images/buttons/h2.png"></button>
+			<button onclick="insertbutton('%head3')" ><img src="images/buttons/h3.png"></button>
+			<button onclick="insertbutton('%list')" ><img src="images/buttons/ul.png"></button>
+			<button onclick="insertbutton('%nrlist')" ><img src="images/buttons/ol.png"></button>
+			<button onclick="insertbutton('%quote')" ><img src="images/buttons/quote.png"></button>
+			<button onclick="insertbutton('%comment')" ><img src="images/buttons/comment.png"></button>
+			<button onclick="insertbutton('**')" ><img src="images/buttons/bold.png"></button>
+			<button onclick="insertbutton('*')" ><img src="images/buttons/italic.png"></button>
+			<button onclick="insertbutton('~~')" ><img src="images/buttons/stroke.png"></button>
+			<button onclick="insertbutton('%code')" ><img src="images/buttons/code.png"></button>
+			<button onclick="insertbutton('%link')" ><img src="images/buttons/link.png"></button>
 			<!--<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>-->
 		</div>
-		<div id="sidebarcontainer"><div id="sidebar"></div></div>
+		<div id="sidebarcontainer">
+			<div id="sidebar"></div>
+			<div id="insertarea">
+				<span> <label>INSERT   <img src="images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="images/buttons/cursorline.png"></span>
+				<button onclick="insertbutton('---')" >new Page</button>
+
+			</div>
+		</div>
 		<div id="texteditor" class="texteditor">
 			<div id="texteditorerrorlayer"></div>
 			<textarea spellcheck="false" id="quelltext" onload="" autofocus onfocus="initeditor();"></textarea>

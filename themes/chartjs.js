@@ -1,10 +1,13 @@
 var newtheme = new Theme("chartjs");
 newtheme.description = "Charts with Chart.js - takes datatags ||chart||line, ||chart||pie, ||chart||bar";
 
-newtheme.helpText = function(dataobject){
+newtheme.helpText = function(dataobject, more){
   var result = "";
   console.log(dataobject);
-  var type = dataobject.head.substring(9);
+  var type; // = dataobject.head.substring(9);
+  type = "line"; //standard-type
+  if(dataobject.head.indexOf("pie")>-1)type="pie";
+  if(dataobject.head.indexOf("bar")>-1)type="bar";
   result += "<h2>Chart Overview:</h2>"+
             //"<i><b>extras:</b></i><br>"+
             "#Title <br>";
@@ -22,6 +25,43 @@ newtheme.helpText = function(dataobject){
             "if you use more than one dataset, the first element of a row is used as datasetlabel";
   //try to render current chart and give it back?
   //i have to rewrite whole bunch of code
+  if(!more){
+    //shorter help-text:
+    var longtext = result;
+    result = document.createElement("div");
+    var linebuttonimg = new Image();
+    linebuttonimg.src="themes/chartjs/linebutton.png";
+    var piebuttonimg = new Image();
+    piebuttonimg.src="themes/chartjs/piebutton.png";
+    var barbuttonimg = new Image();
+    barbuttonimg.src="themes/chartjs/barbutton.png";
+
+    var linebutton = document.createElement("button");
+    linebutton.classList.add("chartjsbutton");
+    linebutton.value="```chart:line";
+    linebutton.addEventListener("click",this.insertfunction);
+    if(type==="line")linebutton.classList.add("active");
+    var piebutton = document.createElement("button");
+    piebutton.classList.add("chartjsbutton");
+    piebutton.value="```chart:pie";
+    piebutton.addEventListener("click",this.insertfunction);
+    if(type==="pie")piebutton.classList.add("active");
+    var barbutton = document.createElement("button");
+    barbutton.classList.add("chartjsbutton");
+    barbutton.value="```chart:bar";
+    barbutton.addEventListener("click",this.insertfunction);
+    if(type==="bar")barbutton.classList.add("active");
+    var text = document.createElement("div");
+    text.innerText = "Add a Chart to your Slideshow. Active Chart-Type: "+type;
+    linebutton.appendChild(linebuttonimg);
+    piebutton.appendChild(piebuttonimg);
+    barbutton.appendChild(barbuttonimg);
+    result.appendChild(linebutton);
+    result.appendChild(barbutton);
+    result.appendChild(piebutton);
+    result.appendChild(text);
+
+  }
   return result;
 }
 //newtheme.active = false;
@@ -121,10 +161,11 @@ var insertfunction = function(){
     slidenote.insertbutton(charttype);
   }
 }
-newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"```chart pie","```", insertfunction);
-newtheme.addEditorbutton('<img src="themes/chartjs/barbutton.png">',"```chart bar","```", insertfunction);
-newtheme.addEditorbutton('<img src="themes/chartjs/linebutton.png">',"```chart line","```", insertfunction);
-
+newtheme.insertfunction = insertfunction;
+//newtheme.addEditorbutton('<img src="themes/chartjs/piebutton.png">',"```chart pie","```", insertfunction);
+//newtheme.addEditorbutton('<img src="themes/chartjs/barbutton.png">',"```chart bar","```", insertfunction);
+//newtheme.addEditorbutton('<img src="themes/chartjs/linebutton.png">',"```chart line","```", insertfunction);
+newtheme.addEditorbutton('Chart','```chart','```');
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){
