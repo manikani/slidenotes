@@ -2058,6 +2058,17 @@ emdparser.prototype.parseMap = function(){
 
 				}
 			}//end of code and datablocks
+			//comment: a whole line is signed as a comment:
+			if(lines[x].substring(0,2)==="//"){
+					//valid comment found:
+					var mapcomstart = {
+						line:x, pos:0, html:"", mdcode:lines[x],
+						typ:"start", tag:"comment"
+					}
+					this.map.addElement(mapcomstart);
+					//prevent further parsing:
+					lines[x]=substitutewitheuro(lines[x].length);
+			}//end of comment-block
 			//all blocks are scanned. now for one-line-elements - eg image, link, code...
 
 			//inline code: has to be first of all one-line-elements to prevent parsing inside of it
@@ -2098,49 +2109,6 @@ emdparser.prototype.parseMap = function(){
 				}//end of while
 
 			}//end of inline code
-			//comment: comment disables further parsing inside comment, but is dangerous.
-			//it should NOT happen inside links or image-sources (such as http://...)
-			//how to prevent that?
-			if(lines[x].indexOf("//")>-1){
-				var commentstart = lines[x].indexOf("//");
-				//check if comment or part of url:
-				var partofurl=false;
-				if(commentstart>3){
-					//if(lines[x].substring(commentstart-1,commentstart)===":" ||
-					//	lines[x].substring(commentstart-2,commentstart)===":/")partofurl=true;
-					partofurl=(lines[x].substring(commentstart-1,commentstart)===":");
-				}
-				while(partofurl && commentstart>-1){
-					commentstart = lines[x].indexOf("//",commentstart+2);
-					partofurl = (lines[x].substring(commentstart-1,commentstart)===":")
-				}
-				if(!partofurl && commentstart>-1){
-					//valid comment found:
-					var mapcomstart = {
-						line:x, pos:commentstart, html:"", mdcode:lines[x].substring(commentstart),
-						typ:"start", tag:"comment"
-					}
-					this.map.addElement(mapcomstart);
-					//prevent further parsing:
-					lines[x]=lines[x].substring(0,commentstart)+substitutewitheuro(lines[x].length-commentstart);
-					//check if inlinecode is inside the comment: (or all code?)
-					if(this.map.insertedhtmlinline[x].length>1){
-						for(var delx=0;delx<this.map.insertedhtmlinline[x].length;delx++){
-							var actdel = this.map.insertedhtmlinline[x][delx];
-							if(actdel.pos>commentstart){
-								actdel.typ="deleted";
-								actdel.html=""; actdel.mdcode="";
-							}
-						}
-					}
-						//check for errors in perror:
-					for(var errx=0;errx<this.perror.length;errx++){
-						var acte=this.perror[errx];
-						if(acte.line ===x && acte.row>commentstart)this.perror.splice(errx,1);
-					}
-				}//end of valid comment found
-			}//end of comment-block
-
       //image:
 			//console.log("imagesearch in line:"+lines[x]);
 			//console.log("index:"+lines[x].indexOf("!["));
@@ -3413,6 +3381,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	//daher erneutes scannen wie oben nur mit lines:
 	this.init();
 	//Grundthemes laden:
+	this.loadTheme("extraoptions");
 	this.loadTheme("hiddenobjects");
 	this.loadTheme("contextfield");
 	this.loadTheme("blocks");
@@ -4707,6 +4676,9 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	}else if(emdzeichen==="---"){
 		emdstart = "\n"+emdzeichen+"\n";
 		emdend = "";
+	}else if(emdzeichen==="%comment"){
+		emdstart = "\n//";
+		endend = "\n";
 	}else{ //einfache zeichen:
 		//emdnr = startemdl.positionOf(emdzeichen); //sollte im array vorkommen. da ich den befehl grad nicht weiß:
 		for(var x=0;x<startemdl.length;x++)if(startemdl[x]==emdzeichen)emdnr=x;
