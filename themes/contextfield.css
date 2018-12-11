@@ -5,12 +5,30 @@
 }
 
 #contextfieldcontainer {
-    position: absolute;
+    /*position: absolute;
     right: 0;
     max-width: 36%;
     top: 25%;
     background: white;
-    z-index: 100;
+    z-index: 100;*/
     border: 1px dashed;
     padding: 5px;
+}
+
+img.uploadlink {
+    height: 1em;
+}
+
+div#contextfield {
+    position: absolute;
+    background: black;
+    color: white;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+#contextfield a {
+    color: white;
+    padding: 1px;
+    margin: 3px;
 }

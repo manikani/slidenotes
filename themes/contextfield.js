@@ -4,9 +4,9 @@ newtheme.description = "Contextfield: Adds a Field with helpfull Information to 
 
 newtheme.init = function(){
   this.contextFieldContainer = document.createElement("div");
-  var contextTitle = document.createElement("h1");
-  contextTitle.innerHTML = "Context-Field Helper";
-  this.contextFieldContainer.appendChild(contextTitle);
+  //var contextTitle = document.createElement("h1");
+  //contextTitle.innerHTML = "Context-Field Helper";
+  //this.contextFieldContainer.appendChild(contextTitle);
   this.Field = document.createElement("div");
   this.Field.id="contextfield";
   this.contextFieldContainer.appendChild(this.Field);
@@ -36,9 +36,13 @@ newtheme.styleThemeMDCodeEditor = function(){
   var onObject = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
   console.log("styleThemeMDCodeEditor mit Objekt:"); console.log(onObject);
   if(onObject){
+    Field.classList.remove("empty");
     if(onObject.typ === "image"){
-      Field.innerHTML = "![<i>imagealttext</i>](<b>imagename or url</b>)<br>"
-      + "Example: ![](my_image1)<br> Current image:<br>";
+      //Field.innerHTML = "![<i>imagealttext</i>](<b>imagename or url</b>)<br>"
+      //+ "Example: ![](my_image1)<br> Current image:<br>";
+      var fieldtext = document.createElement("div");
+      fieldtext.innerText="choose a picture from your library for the current selection";
+      Field.appendChild(fieldtext);
       var cfimage = new Image();
       cfimage.id = "contextfieldimage";
       cfimage.name = onObject.src;
@@ -56,21 +60,30 @@ newtheme.styleThemeMDCodeEditor = function(){
       } else{
         //no image found - use upload-image
         var noimagetext = document.createElement("div");
-        noimagetext.innerHTML = "No image uploaded by the name <i>"+onObject.src+"</i> <br>";
-        var uploadlink = document.createElement("a");
-        uploadlink.href="#";
-        uploadlink.name = onObject.src;
-        uploadlink.onclick=function(){
-          slidenote.base64images.preselectedname = this.name;
-          document.getElementById("imagesblock").classList.add("visible");
-        };
-        uploadlink.innerHTML = "Upload an Image to the slidenote";
+        noimagetext.innerHTML = "No image uploaded by the name <i>"+onObject.src+"</i>";
         Field.appendChild(noimagetext);
-        Field.appendChild(uploadlink);
         cfimage.src = "images/imageupload.png";
       }
 
       Field.appendChild(cfimage);
+      var uploadlink = document.createElement("a");
+      uploadlink.href="#";
+      uploadlink.name = onObject.src;
+      uploadlink.onclick=function(){
+        slidenote.base64images.preselectedname = this.name;
+        document.getElementById("imagesblock").classList.add("visible");
+      };
+      //uploadlink.innerHTML = "Upload an Image to the slidenote";
+      var uploadlinkimg = new Image();
+      uploadlinkimg.classList.add("uploadlink");
+      uploadlinkimg.src="images/buttons/imageneg.png";
+      uploadlink.appendChild(uploadlinkimg);
+      Field.appendChild(uploadlink);
+      var morelink = document.createElement("a");
+      morelink.href="#";
+      morelink.innerText="more...";
+      Field.appendChild(morelink);
+
     }//end of type = image
     if(onObject.dataobject){
       //element has dataobject so it should use themes help-text:
@@ -79,8 +92,10 @@ newtheme.styleThemeMDCodeEditor = function(){
       console.log(cftheme);
       //console.log(typeof cftheme.helpText + " - " +cftheme.helpText(onObject.dataobject));
       if(cftheme.helpText && typeof cftheme.helpText ==="function"){
-        Field.innerHTML = cftheme.helpText(onObject.dataobject);
-
+        var helptext = cftheme.helpText(onObject.dataobject);
+        console.log(typeof helptext);
+        if(typeof helptext ==="string")Field.innerHTML = helptext;
+        else Field.appendChild(helptext);
       }
     }//end of type = dataObject
     if(onObject.typ ==="pagebreak"){
@@ -94,6 +109,17 @@ newtheme.styleThemeMDCodeEditor = function(){
     }
   } else { //end of isset onObject
     //no object found
+    Field.classList.add("empty");
+    var emptytext = document.createElement("div");
+    emptytext.innerText="select a markup or insert a section for the current paragraph";
+    if(slidenote.textarea.selectionStart!=slidenote.textarea.selectionEnd)
+        emptytext.innerText="select a markup for the current text selection";
+    Field.appendChild(emptytext);
+    var morelink = document.createElement("a");
+    morelink.innerText="more...";
+    morelink.href="#";
+    Field.appendChild(morelink);
+
 
 
   }//end of isset onObject else
