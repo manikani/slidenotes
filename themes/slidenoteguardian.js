@@ -542,7 +542,8 @@ slidenoteGuardian.prototype.createKey = async function(iv, passw){
   let password = passw;
   if(this.password == null && passw==null){
     //this.password = prompt("please type in your personal password");
-    this.password = await this.passwordPrompt("please type in your personal password");
+    let pwtext = "as a matter of principle: everything you write is encrypted before we even store it on our server. please choose a password now. feel free to make one as simple or as complicated as you want. just don't forget it: there is no password recovery!";
+    this.password = await this.passwordPrompt(pwtext);
   }
   if(this.password ==null && passw==null)return;
   if(passw==null)password = this.password;
@@ -648,16 +649,33 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
 	var pwtext = document.createElement("div"); //text to be displayed inside box
 	pwtext.innerHTML = text;
 	pwpromptbox.appendChild(pwtext);
+  //password-box and retype-password-box
+  var pwlabel = document.createElement("label");
+  pwlabel.innerText="PASSWORD";
+  pwpromptbox.appendChild(pwlabel);
 	var pwinput = document.createElement("input"); //password-box
 	pwinput.type="password";
   pwinput.id="pwpromptfield";
 	pwpromptbox.appendChild(pwinput);
+  var pwchecklabel = document.createElement("label");
+  pwchecklabel.innerText="RE-TYPE PASSWORD";
+  pwpromptbox.appendChild(pwchecklabel);
+  pwcheck = document.createElement("input");
+  pwcheck.type="password";
+  pwcheck.id="pwcheckfield";
+  pwpromptbox.appendChild(pwcheck);
+
+  //buttons
 	var pwokbutton = document.createElement("button");
-	pwokbutton.innerHTML = "ok";
+	pwokbutton.innerHTML = "ENCRYPT";
 	var pwcancelb = document.createElement("button");
 	pwcancelb.innerHTML = "cancel";
 	pwpromptbox.appendChild(pwcancelb);
 	pwpromptbox.appendChild(pwokbutton);
+
+  var pwpromptaftertext = document.createElement("div");
+  pwpromptaftertext.innerText = "we recommend using a password manager to keep up with the task of choosing and remembering safe passwords on the web.";
+  pwpromptbox.appendChild(pwpromptaftertext);
 	document.body.appendChild(pwprompt); //make promptbox visible
 	pwinput.focus(); //focus on pwbox to get direct input
   setTimeout("document.getElementById('pwpromptfield').focus()",500); //not the most elegant, but direct focus does not work sometimes - dont know why
@@ -667,21 +685,37 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
 	      if (e.target.tagName !== 'BUTTON') { return; }
 	      pwprompt.removeEventListener('click', handleButtonClicks); //removes eventhandler on cancel or ok
 	      if (e.target === pwokbutton) {
-	        resolve(pwinput.value); //return password
+          if(pwinput.value===pwcheck.value)resolve(pwinput.value); //return password
+          else {
+            return;
+            //reject(new Error('Wrong retype'));
+          }
 	      } else {
 	        reject(new Error('User canceled')); //return error
 	      }
 		    document.body.removeChild(pwprompt); //let prompt disapear
 	    });
-		pwinput.addEventListener('keyup',function handleEnter(e){
-			if(e.keyCode == 13){
-				resolve(pwinput.value);
-				document.body.removeChild(pwprompt);
-			}else if(e.keyCode==27){
-				document.body.removeChild(pwprompt);
-				reject(new Error("User cancelled"));
-			}
-		});
+    var handleenter= function handleEnter(e){
+      if(pwinput.value===pwcheck.value){
+        pwcheck.style.backgroundColor="green";
+      }else{
+        pwcheck.style.backgroundColor="red";
+      }
+  			if(e.keyCode == 13){
+          if(pwinput.value===pwcheck.value)resolve(pwinput.value);
+            else {
+              return;
+            //  alert("password and retype of password differs - please try again");
+            //reject(new Error("Wrong retype"));
+            }
+  				document.body.removeChild(pwprompt);
+  			}else if(e.keyCode==27){
+  				document.body.removeChild(pwprompt);
+  				reject(new Error("User cancelled"));
+  			}
+  		}
+		pwinput.addEventListener('keyup',handleenter);
+    pwcheck.addEventListener('keyup',handleenter);
 	});
 }
 
