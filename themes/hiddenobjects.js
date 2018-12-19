@@ -22,7 +22,7 @@ newtheme.hiddenobjects;
 newtheme.afterFinalizeHtml = function(){
   //prepare
   this.hiddenobjects = new Array();
-  var datadivs = slidenote.presentationdiv.getElementsByTagName("data");
+  var datadivs = slidenote.presentationdiv.getElementsByTagName("section");
   for(var datax=slidenote.parser.dataobjects.length-1;datax>=0;datax--){
     if(slidenote.parser.dataobjects[datax].type=="hidden"){
       console.log("found hidden object");

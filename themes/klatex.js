@@ -16,7 +16,7 @@ newtheme.addEditorbutton('Latex',"```latex","```"); //TODO: add function to body
 slidenote.datatypes.push({type:"latex",mdcode:false,theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){
-  var datadivs = slidenote.presentationdiv.getElementsByTagName("data");
+  var datadivs = slidenote.presentationdiv.getElementsByTagName("section");
   for(var datax=0;datax<slidenote.parser.dataobjects.length;datax++){
     var dataobject = slidenote.parser.dataobjects[datax];
     if(dataobject.type==="latex"){

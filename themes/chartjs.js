@@ -170,7 +170,7 @@ slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){
   //get all data-blocks with chart:
-  var datadivs = slidenote.presentationdiv.getElementsByTagName("data");
+  var datadivs = slidenote.presentationdiv.getElementsByTagName("section");
   console.log("datadivs:")
   console.log(datadivs);
 

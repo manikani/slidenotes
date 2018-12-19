@@ -1373,7 +1373,7 @@ emdparser.prototype.CarretOnElement = function(carretpos){
 		if(actel.mdcode.substring(0,1) === "#"){actelstart --; actelend = this.map.lineend[actel.line];} //TODO:linepos
 		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall+actel.brotherelement.mdcode.length;
 		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
-		if(actel.html ==="<data>"){actelstart--;actelend++;}
+		if(actel.html ==="<section>"){actelstart--;actelend++;}
 
 		if(actelstart<carretpos && actelend > carretpos){
 			//element getroffen:
@@ -1998,10 +1998,10 @@ emdparser.prototype.parseMap = function(){
 											this.lineswithhtml[x]="data";
 											this.lineswithhtml[dataende]="data";
 										}
-			              var mapstartel = {line:x,pos:0,html:"<data>",mdcode:lines[x],typ:"start",wystextveraenderung:0};
-			    					var mapendel = {line:dataende,pos:0,html:"</data>",mdcode:lines[dataende],typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
+			              var mapstartel = {line:x,pos:0,html:"<section>",mdcode:lines[x],typ:"start",wystextveraenderung:0};
+			    					var mapendel = {line:dataende,pos:0,html:"</section>",mdcode:lines[dataende],typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
 			    					mapstartel.brotherelement = mapendel;
-			    					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</data>",mdcode:"",typ:"end",wystextveraenderung:0});
+			    					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</section>",mdcode:"",typ:"end",wystextveraenderung:0});
 			    					//save dataobject:
 			    					if(this.dataobjects == null)this.dataobjects = new Array();
 										if(datahead.indexOf("//")>-1){
@@ -2687,8 +2687,8 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					//datablock ist konsistent von lines[x] bis lines[dataend]
 					var altelinie=lines[x];
 					var altelinieende=lines[dataende];
-					lines[x]="<data>"+lines[x];
-					lines[dataende]+="</data>";
+					lines[x]="<section>"+lines[x];
+					lines[dataende]+="</section>";
 					//console.log("dataende:"+dataende+"zeile:"+lines[dataende]);
 					var rawdata = new Array();
 					//sanitize-code of datablock für wysiwyg und parser:
@@ -2703,13 +2703,13 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					//lineswithhtml:
 					for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data";
 					//mapping des gesamten blocks:
-					//this.map.addElement({line:x,pos:0,html:"<data>",mdcode:altelinie,typ:"start",wystextveraenderung:altelinie.length});
-					//this.map.addElement({line:dataende,pos:0,html:"</data>",mdcode:altelinieende,typ:"start",wystextveraenderung:altelinieende.length});
-					var mapstartel = {line:x,pos:0,html:"<data>",mdcode:altelinie,typ:"start",wystextveraenderung:0};
-					var mapendel = {line:dataende,pos:0,html:"</data>",mdcode:altelinieende,typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
+					//this.map.addElement({line:x,pos:0,html:"<section>",mdcode:altelinie,typ:"start",wystextveraenderung:altelinie.length});
+					//this.map.addElement({line:dataende,pos:0,html:"</section>",mdcode:altelinieende,typ:"start",wystextveraenderung:altelinieende.length});
+					var mapstartel = {line:x,pos:0,html:"<section>",mdcode:altelinie,typ:"start",wystextveraenderung:0};
+					var mapendel = {line:dataende,pos:0,html:"</section>",mdcode:altelinieende,typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
 					mapstartel.brotherelement = mapendel;
 
-					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</data>",mdcode:"",typ:"end",wystextveraenderung:0});
+					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</section>",mdcode:"",typ:"end",wystextveraenderung:0});
 					//datenobjekt speichern:
 					if(this.dataobjects == null)this.dataobjects = new Array();
 					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
@@ -2720,7 +2720,7 @@ emdparser.prototype.parsenachzeilen = function(parsemaptest){
 					//console.log(this.dataobjects);
 				}
 			}
-		} //end of datablock, lines[x] fängt jetzt mit <data> an
+		} //end of datablock, lines[x] fängt jetzt mit <section> an
 		//image: (has to check for alt-text too:)
 		if(lines[x].indexOf("![")>-1){
 

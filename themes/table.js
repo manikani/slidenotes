@@ -14,7 +14,7 @@ newtheme.addEditorbutton('Table',"```table","```");
 slidenote.datatypes.push({type:"table",mdcode:false,theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){
-  var datadivs = slidenote.presentationdiv.getElementsByTagName("data");
+  var datadivs = slidenote.presentationdiv.getElementsByTagName("section");
   for(var datax=0;datax<slidenote.parser.dataobjects.length;datax++){
   if(slidenote.parser.dataobjects[datax].type=="table"){
     console.log("table gefunden");
