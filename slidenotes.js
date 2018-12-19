@@ -1312,7 +1312,7 @@ emdparser.prototype.generateSidebar = function(){
 				while(newline.getElementsByClassName("carretline").length>0){
 					var replacement = document.createElement("span");
 					replacement.classList.add("replacement");
-					replacement.innerText = "....";
+					replacement.innerText = ".....";
 					newline.appendChild(replacement);
 					newline.removeChild(newline.getElementsByClassName("carretline")[0]);
 				}
@@ -1348,7 +1348,13 @@ emdparser.prototype.generateSidebar = function(){
 		sidebar.appendChild(sidebarlines[x]);
 	}
 	//make cursorline nicer:
-	carretsymbol.innerHTML='&nbsp;<img src="images/buttons/droptilde.png">&nbsp;<img src="images/buttons/cursorline.png">';
+	//carretsymbol.innerHTML='&nbsp;<img src="images/buttons/droptilde.png">&nbsp;<img src="images/buttons/cursorline.png">';
+	var nicesymbol = document.getElementById("nicesidebarsymbol");//document.createElement("div");
+	//nicesymbol.id="nicesidebarsymbol";
+	nicesymbol.style.top = (carretsymbol.offsetTop + sidebar.offsetTop) +"px";
+	nicesymbol.style.position="absolute";
+	//nicesymbol.innerHTML='&nbsp;<a href="javascript:slidenote.presentation.showInsertMenu();"<img src="images/buttons/droptilde.png"></a>&nbsp;<img src="images/buttons/cursorline.png">';
+
 	return sidebarlines;
 }
 
@@ -3877,6 +3883,9 @@ pagegenerator.prototype.showInsertMenu = function(){
 		slidenote.textarea.addEventListener("click", closeMenu);
 		slidenote.textarea.addEventListener("keyup",closeMenu);
 		slidenote.textarea.addEventListener("scroll",closeMenu);
+		for(var x=0;x<slidenote.presentation.themes.length;x++){
+			if(slidenote.presentation.themes[x].active)slidenote.presentation.themes[x].styleThemeMDCodeEditor("insertAreaVisible"); //Hook-Funktion
+		}
 
 }
 
@@ -4157,6 +4166,7 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 }
 
 slidenotes.prototype.choseEditor=function(editor){
+	this.editormodus=editor;
 	if(editor=="wysiwyg"){
 		this.wysiwygactivated=true;
 		this.texteditorerroractivated=false;
@@ -4169,6 +4179,15 @@ slidenotes.prototype.choseEditor=function(editor){
 		this.wysiwygarea.classList.add("hidden");
 		this.texteditorerrorlayer.classList.remove("hidden");
 		document.getElementById("slidenotediv").classList.remove("vollbild");
+		document.getElementById("nicesidebarsymbol").style.display="unset";
+	}else if(editor=="focus"){
+		this.wysiwygactivated=false;
+		this.texteditorerroractivated = true;
+		this.wysiwygarea.classList.add("hidden");
+		this.texteditorerrorlayer.classList.remove("hidden");
+		document.getElementById("slidenotediv").classList.remove("vollbild");
+		document.getElementById("sidebar").innerHTML="";
+		document.getElementById("nicesidebarsymbol").style.display="none";
 	}else if(editor=="wysiwygfullscreen"){
 		this.wysiwygactivated=true;
 		this.texteditorerroractivated=false;
@@ -4225,7 +4244,8 @@ slidenotes.prototype.parseneu = function(){
 			//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
 			this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
 			//add sidebar here
-			this.parser.generateSidebar();
+			if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus")
+				this.parser.generateSidebar();
 
 			if(this.afterCodeEditorrender)this.afterCodeEditorrender();
 			//getting rid of false lines from proposedsymbols:
@@ -4318,6 +4338,7 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			this.parseneu();//on Enter you should always parse anew
 			this.scroll();
 		}else if(key.indexOf("Arrow")>-1){
+			if(document.getElementById("editorchoice").value!="focus")
 			setTimeout("slidenote.parser.generateSidebar()",10);
 		}else if(key.indexOf("Page")>-1){
 			this.parser.map.lastcursorpos = this.textarea.selectionEnd;
@@ -4714,6 +4735,11 @@ slidenotes.prototype.scroll = function(editor){
 		this.texteditorerrorlayer.scrollTop = editor.scrollTop;
 		var sidebartop = 0-editor.scrollTop;
 		document.getElementById("sidebar").style.top = sidebartop+"px";
+		var nssym = document.getElementById("nicesidebarsymbol");
+		if(nssym){
+			nssym.style.top = (sidebartop + document.getElementsByClassName("carretline")[0].offsetTop) + "px";
+			document.getElementById("insertarea").style.top = nssym.style.top;
+		}
 	}
 	//TODO: wysiwyg-scroll wenn cursor aus dem bild kommt
 	//kommt das wirklich hier rein? eher nach wysiwyg-html-rendern oder?
