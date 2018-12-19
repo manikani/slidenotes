@@ -58,9 +58,12 @@ function slidenoteGuardian(slidenote){
 slidenoteGuardian.prototype.init = function(){
   //init will be called once the slidenote has been loaded from cms
   this.getCMSFields();
-  if(this.localstorage.getItem("title")===this.notetitle){
-    if(confirm("We found a Version of this Slidenote in your local Storage. Do you want to load it?")){
-      this.loadNote("local");
+  if(this.localstorage.getItem("title") && this.localstorage.getItem("title").length>0){//===this.notetitle){
+    let loadtext = "We found a Slidenote in your Browsers Cache of the loaded Slidenote. Use Version of Browser-Cache?";
+    if(this.localstorage.getItem("title")!=this.notetitle)loadtext="We found a Slidenote with title \""+this.localstorage.getItem("title")+"\" in your local Storage but loaded Title is \""+this.notetitle+"\". Do you want to load the cached version instead?";
+    if(confirm(loadtext)){
+      this.notetitle=this.localstorage.getItem("title");
+      setTimeout("slidenoteguardian.loadNote('local')",100);
     } else {
       //this.loadNote("cms");
       //this.loadConfig("cms");
@@ -77,7 +80,7 @@ slidenoteGuardian.prototype.init = function(){
   setTimeout("slidenoteguardian.autoSaveToCMS()",3000);
   slidenote.textarea.addEventListener("focus",function(event){
     if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null){
-      document.getElementById("pwpromptfield").focus();
+      document.getElementById("password").focus();
     }
   })
   //Adding import-Function to fileinput:
@@ -103,6 +106,7 @@ slidenoteGuardian.prototype.init = function(){
       reader.readAsText(file);
     } else {
       //Filetype not supported
+      alert("filetype not supported");
     }
   }); //end of fileinput.addEventListener
 
@@ -123,6 +127,7 @@ slidenoteGuardian.prototype.init = function(){
       let files = dt.files;
       let file = files[0];
       let nombre = file.name;
+      document.getElementById("importfile").dropfilename = file.name;
       if(nombre.substring(nombre.length-10)===".slidenote"){
         var reader = new FileReader();
         reader.onload = function(e){
@@ -274,11 +279,17 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
       this.localstorage.setItem('cryptimagestring',encimgstring);
       this.localstorage.setItem('imghash',imghash);
     }
+    let notehash = await this.hash(slidenotetext);
+    this.localstorage.setItem("slidenotehash", notehash);
 
   }else if(destination ==="filesystem"){
     //export/save it to the local filesystem
     let exportstring = result;
     let exportfilename = this.notetitle+".slidenote";
+    if(encResult.filename){
+      exportfilename=encResult.filename;
+      if(exportfilename.substring(exportfilename.length-10)!=".slidenote")exportfilename+=".slidenote";
+    }
     this.exportToFilesystem(exportstring, exportfilename);
   }
   var endtime = new Date().getTime();
@@ -402,6 +413,7 @@ slidenoteGuardian.prototype.saveConfig = async function(destination){
         }
   }
   stringToSave+="$$";
+  //stringToSave+="md-texteditor";
   stringToSave+=document.getElementById("editorchoice").value;
   stringToSave+="€€";
 
@@ -428,6 +440,8 @@ slidenoteGuardian.prototype.encrypt = async function(plaintext){
     /*the job of encrypt is done - rest of code should be in save*/
 }
 slidenoteGuardian.prototype.decrypt = async function(buffer, iv){
+  let pwtext = "as a matter of principle: everything you write is encrypted before we even store it on our server. please choose a password now. feel free to make one as simple or as complicated as you want. just don't forget it: there is no password recovery!";
+  this.password = await this.passwordPrompt(pwtext, "decrypt");
   let keyguardian = await this.createKey(iv);
   console.log("decoding starts");
   try{
@@ -445,16 +459,17 @@ slidenoteGuardian.prototype.decrypt = async function(buffer, iv){
 slidenoteGuardian.prototype.encryptForExport = async function(plaintext){
   console.log("encrypt plaintext:"+plaintext.substring(0,20));
     let plainTextUtf8 = new TextEncoder().encode(plaintext); //changing into UTF-8-Array
-    let pw = await this.passwordPrompt("please type in password for export");
+    let pw = await this.passwordPrompt("please type in password for export", "export");
+    let filename = document.getElementById("username").value;
     let keyguardian = await this.createKey(null,pw); //create new key with no iv
     if(keyguardian==null)return {encbuffer:null, iv:null};
     //this.iv = keyguardian.iv;
     let encbuffer = await crypto.subtle.encrypt(keyguardian.alg, keyguardian.key, plainTextUtf8);
-    return {encbuffer: encbuffer, iv:keyguardian.iv};
+    return {encbuffer: encbuffer, iv:keyguardian.iv, filename:filename};
     /*the job of encryptForExport is done - rest of code should be in saveNote*/
 }
 slidenoteGuardian.prototype.decryptImport = async function(buffer, iv){
-  let pw = await this.passwordPrompt("please type in password of import");
+  let pw = await this.passwordPrompt("please type in password of import", "decrypt");
   let keyguardian = await this.createKey(iv, pw);
   console.log("decoding starts");
   try{
@@ -509,19 +524,27 @@ slidenoteGuardian.prototype.insertImport = async function(mdcode, imagestring){
     slidenote.textarea.value = mdcode;
   } else{
     let userchoice = await this.importPrompt(mdcode, imagestring);
+    let selend = slidenote.textarea.selectionEnd;
     if(userchoice ==='import'){
-      let selend = slidenote.textarea.selectionEnd;
       slidenote.textarea.value= slidenote.textarea.value.substring(0,slidenote.textarea.selectionStart)+
          mdcode + slidenote.textarea.value.substring(slidenote.textarea.selectionEnd);
       slidenote.textarea.selectionEnd = selend+mdcode.length;
     }else if(userchoice ==="replace"){
       slidenote.textarea.value=mdcode;
       slidenote.base64images.deleteAllImages(); //empty array
+    } else if(userchoice ==="chart"){
+      slidenote.textarea.value=slidenote.textarea.value.substring(0,selend)+
+                "\n```chart\n"+mdcode+"\n```\n"+slidenote.textarea.value.substring(selend);
+    } else if(userchoice ==="table"){
+      slidenote.textarea.value=slidenote.textarea.value.substring(0,selend)+
+                "\n```table\n"+mdcode+"\n```\n"+slidenote.textarea.value.substring(selend);
     } else{ //user canceled
-      return;
+      //return;
     }
-  }
 
+  }
+  //reset fileuploadfield to get it anew:
+  document.getElementById("importfile").value=null;
 
   if(imagestring)slidenote.base64images.loadImageString(imagestring);
   slidenote.parseneu();
@@ -636,7 +659,7 @@ slidenoteGuardian.prototype.autoSaveToCMS = async function(){
   setTimeout("slidenoteguardian.autoSaveToCMS()",autosavetime);
 }
 
-slidenoteGuardian.prototype.passwordPrompt = function (text){
+slidenoteGuardian.prototype.passwordPrompt = function (text, method){
   /*creates a password-prompt*/
   if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null){
     console.log("second password-prompt");
@@ -644,48 +667,100 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
   }
 	var pwprompt = document.createElement("div"); //the prompt-container
 	pwprompt.id= "slidenoteGuardianPasswortPrompt"; //id for css
-  var pwpromptbox = document.createElement("div"); //inner promptbox
+  var pwpromptbox = document.getElementById("slidenoteGuardianPasswordPromptTemplate");
+  if(pwpromptbox===null){
+    console.log("no password template found"+pwpromptbox);
+    pwpromptbox = document.createElement("div"); //inner promptbox
+  	var pwtext = document.createElement("div"); //text to be displayed inside box
+  	pwtext.innerHTML = text;
+  	pwpromptbox.appendChild(pwtext);
+    //password-box and retype-password-box
+    var pwform = document.createElement("form");
+    var emailfield = document.createElement("input");
+    emailfield.id="email";
+    emailfield.type="email";
+    emailfield.value= this.slidenotetitle+"@slidenotes.io";
+    //emailfield.style.display="none";
+    //emailfield.style.height="1px";
+    emailfield.autocomplete="username";
+    pwform.appendChild(emailfield);
+    var pwlabel = document.createElement("label");
+    pwlabel.innerText="PASSWORD";
+    pwform.appendChild(pwlabel);
+  	var pwinput = document.createElement("input"); //password-box
+  	pwinput.type="password";
+    pwinput.id="password";
+    pwinput.autocomplete="current-password";
+  	pwform.appendChild(pwinput);
+    pwpromptbox.appendChild(pwform);
+    var pwchecklabel = document.createElement("label");
+    pwchecklabel.innerText="RE-TYPE PASSWORD";
+    pwpromptbox.appendChild(pwchecklabel);
+    pwcheck = document.createElement("input");
+    pwcheck.type="password";
+    pwcheck.id="pwcheckfield";
+    pwpromptbox.appendChild(pwcheck);
+
+    //buttons
+  	var pwokbutton = document.createElement("button");
+  	pwokbutton.innerHTML = "ENCRYPT";
+  	var pwcancelb = document.createElement("button");
+  	pwcancelb.innerHTML = "cancel";
+  	pwpromptbox.appendChild(pwcancelb);
+  	pwpromptbox.appendChild(pwokbutton);
+
+    var pwpromptaftertext = document.createElement("div");
+    pwpromptaftertext.innerText = "we recommend using a password manager to keep up with the task of choosing and remembering safe passwords on the web.";
+    pwpromptbox.appendChild(pwpromptaftertext);
+  }else{
+    console.log("template found: using template to comply with password-manager");
+    var usernamefield = document.getElementById("username");
+    var usernamelabel = document.getElementById("slidenoteGuardianPasswordPromptUsernameLabel");
+    var pwinput = document.getElementById("password");
+    var pwcheck = document.getElementById("pwcheckfield");
+    var pwchecklabel = document.getElementById("slidenoteGuardianPasswordPromptRetypeLabel");
+    var pwtext = document.getElementById("slidenoteGuardianPasswordPromptTemplatePreText");
+    var pwokbutton = document.getElementById("slidenoteGuardianPasswordPromptEncrypt");
+    var pwnotetitle = document.getElementById("slidenoteGuardianPasswordPromptNotetitle");
+    pwtext.innerText = text;
+    if(this.notetitle==="undefined")this.notetitle=this.localstorage.getItem("title");
+    pwinput.value="";
+    usernamefield.value = this.notetitle; //+"@slidenotes.io";
+    if(pwnotetitle!=null)pwnotetitle.innerText = "Decrypting Slidenote \""+this.notetitle+"\"";
+  }
+  if(method==="decrypt"){
+    pwokbutton.innerText="DECRYPT";
+    pwchecklabel.style.display="none";
+    pwcheck.style.display="none";
+    pwcheck.value="";
+    usernamefield.classList.add("hidden");
+    usernamelabel.classList.add("hidden");
+  }else if(method==="export") {
+    pwokbutton.innerText="ENCRYPT";
+    usernamefield.value=this.notetitle+".slidenote";
+    usernamefield.classList.remove("hidden");
+    usernamelabel.classList.remove("hidden");
+    pwchecklabel.style.display="block";
+    pwcheck.style.display="block";
+  }else {
+    usernamefield.classList.add("hidden");
+    usernamelabel.classList.add("hidden");
+    pwokbutton.innerText="ENCRYPT";
+    pwchecklabel.style.display="block";
+    pwcheck.style.display="block";
+    pwnotetitle.innerText="Set Password for Slidenote";
+  }
   pwprompt.appendChild(pwpromptbox);
-	var pwtext = document.createElement("div"); //text to be displayed inside box
-	pwtext.innerHTML = text;
-	pwpromptbox.appendChild(pwtext);
-  //password-box and retype-password-box
-  var pwlabel = document.createElement("label");
-  pwlabel.innerText="PASSWORD";
-  pwpromptbox.appendChild(pwlabel);
-	var pwinput = document.createElement("input"); //password-box
-	pwinput.type="password";
-  pwinput.id="pwpromptfield";
-	pwpromptbox.appendChild(pwinput);
-  var pwchecklabel = document.createElement("label");
-  pwchecklabel.innerText="RE-TYPE PASSWORD";
-  pwpromptbox.appendChild(pwchecklabel);
-  pwcheck = document.createElement("input");
-  pwcheck.type="password";
-  pwcheck.id="pwcheckfield";
-  pwpromptbox.appendChild(pwcheck);
-
-  //buttons
-	var pwokbutton = document.createElement("button");
-	pwokbutton.innerHTML = "ENCRYPT";
-	var pwcancelb = document.createElement("button");
-	pwcancelb.innerHTML = "cancel";
-	pwpromptbox.appendChild(pwcancelb);
-	pwpromptbox.appendChild(pwokbutton);
-
-  var pwpromptaftertext = document.createElement("div");
-  pwpromptaftertext.innerText = "we recommend using a password manager to keep up with the task of choosing and remembering safe passwords on the web.";
-  pwpromptbox.appendChild(pwpromptaftertext);
 	document.body.appendChild(pwprompt); //make promptbox visible
 	pwinput.focus(); //focus on pwbox to get direct input
-  setTimeout("document.getElementById('pwpromptfield').focus()",500); //not the most elegant, but direct focus does not work sometimes - dont know why
+  setTimeout("document.getElementById('password').focus()",500); //not the most elegant, but direct focus does not work sometimes - dont know why
 
 	return new Promise(function(resolve, reject) {
 	    pwprompt.addEventListener('click', function handleButtonClicks(e) {
 	      if (e.target.tagName !== 'BUTTON') { return; }
 	      pwprompt.removeEventListener('click', handleButtonClicks); //removes eventhandler on cancel or ok
 	      if (e.target === pwokbutton) {
-          if(pwinput.value===pwcheck.value)resolve(pwinput.value); //return password
+          if(pwinput.value===pwcheck.value||(pwcheck.style.display==="none" && pwcheck.value.length===0))resolve(pwinput.value); //return password
           else {
             return;
             //reject(new Error('Wrong retype'));
@@ -693,23 +768,26 @@ slidenoteGuardian.prototype.passwordPrompt = function (text){
 	      } else {
 	        reject(new Error('User canceled')); //return error
 	      }
+        document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
 		    document.body.removeChild(pwprompt); //let prompt disapear
 	    });
     var handleenter= function handleEnter(e){
       if(pwinput.value===pwcheck.value){
         pwcheck.style.backgroundColor="green";
       }else{
-        pwcheck.style.backgroundColor="red";
+        if(pwcheck.value.length>0 || pwcheck.style.display!="none")pwcheck.style.backgroundColor="red";else pwcheck.style.backgroundColor="white";
       }
   			if(e.keyCode == 13){
-          if(pwinput.value===pwcheck.value)resolve(pwinput.value);
+          if(pwinput.value===pwcheck.value||(pwcheck.value.length===0 && pwcheck.style.display==="none"))resolve(pwinput.value);
             else {
               return;
             //  alert("password and retype of password differs - please try again");
             //reject(new Error("Wrong retype"));
             }
+          document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
   				document.body.removeChild(pwprompt);
   			}else if(e.keyCode==27){
+          document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
   				document.body.removeChild(pwprompt);
   				reject(new Error("User cancelled"));
   			}
@@ -769,6 +847,25 @@ slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
       imageblock.appendChild(img);
     }
   }
+  let nombre=document.getElementById("importfile").files[0];
+  if(nombre){
+    nombre=nombre.name;
+  }else {
+    nombre = document.getElementById("importfile").dropfilename;
+    if(!nombre)nombre="nothing";else document.getElementById("importfile").dropfilename=null;
+  };
+  let chartbutton = document.createElement("button");
+  let tablebutton = document.createElement("button");
+  let insidedatatag = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
+  if(insidedatatag) insidedatatag = (insidedatatag.dataobject!=undefined); else insidedatatag=false;
+  if(nombre.substring(nombre.length-3)==="csv" && !insidedatatag){
+    //buttons to insert: chart, table:
+    chartbutton.innerText="add as new chart";
+    tablebutton.innerText = "add as new table";
+    buttonwrapper.appendChild(chartbutton);
+    buttonwrapper.appendChild(tablebutton);
+
+  }
   promptwrapper.appendChild(prompt);
   document.body.appendChild(promptwrapper); //make prompt visible
   return new Promise(function(resolve,reject){
@@ -779,6 +876,10 @@ slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
         resolve('import');
       } else if(e.target === replacebutton){
         resolve('replace');
+      } else if(e.target === chartbutton){
+        resolve('chart');
+      } else if(e.target === tablebutton){
+        resolve('table');
       } else{
         reject(new Error('User aborted Import'));
       }

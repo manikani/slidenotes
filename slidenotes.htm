@@ -280,6 +280,23 @@ function parsetesting(){
 		<input type="button" onclick="this.parentNode.classList.remove('active')" value="close">
 	</div>
 </div>
+<div id="slidenoteGuardianPasswordPromptStore">
+<div id="slidenoteGuardianPasswordPromptTemplate">
+	<div id="slidenoteGuardianPasswordPromptNotetitle">TITLE</div>
+	<div id="slidenoteGuardianPasswordPromptTemplatePreText"></div>
+	<form onsubmit="event.preventDefault();" action="#" method="POST">
+		<label id="slidenoteGuardianPasswordPromptUsernameLabel">FILENAME FOR EXPORT</label>
+		<input type="text" id="username">
+		<label>PASSWORD</label>
+		<input type="password" id="password">
+		<label id="slidenoteGuardianPasswordPromptRetypeLabel">RE-TYPE PASSWORD</label>
+		<input type="password" id="pwcheckfield">
+		<button type="submit" id="slidenoteGuardianPasswordPromptEncrypt">ENCRYPT</button>
+		<div id="slidenoteGuardianPasswortPromptAfterText">we recommend using a password manager to keep up with the task of choosing and remembering safe passwords on the web.</div>
+	</form>
+
+</div>
+</div>
 <div><h1>Later Hidden Content: CMS-Area</h1>
 	<button onclick="slidenoteguardian.saveNote('cms')">save to cms</button>
 	<button onclick="slidenoteguardian.loadNote('cms')">load from cms</button>
