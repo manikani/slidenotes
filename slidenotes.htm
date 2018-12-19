@@ -51,6 +51,66 @@ function initeditor(){
 			//autofocus tonfocus="initeditor(this.value);
 			texted.onscroll=function(){slidenote.scroll(texted);};
 			texted.onclick = function(){console.log("parseneu forced by click"+this.selectionEnd);slidenote.parseneu();};
+
+			document.getElementById("importbutton").addEventListener("click",function(){document.getElementById("importfile").click()});
+			document.getElementById("exportbutton").addEventListener("click",function(){
+				var menu=document.getElementById("exportoptions");
+				if(menu.classList.contains("active"))menu.classList.remove("active");else menu.classList.add("active");
+			});
+			document.getElementById("editoroptionbuttonbutton").addEventListener("click",function(e){
+				var optionmenu = document.getElementById("optionmenu");
+				if(optionmenu.classList.contains("active")){
+					optionmenu.classList.remove("active");
+				}else{
+					//get all themes:
+					var themelist = document.getElementById("optionmenupresentationdesign");
+					themelist.innerHTML = "";
+					var themeul = document.createElement("ul");
+					var themes = slidenote.presentation.themes;
+					var themedesctext = "";
+					for(var tx=0;tx<themes.length;tx++){
+						if(themes[tx].themetype ==="css"){
+							//var acttext = '<input type="radio" name="design" onchange="slidenote.presentation.changeThemeStatus('+tx+',this.checked)"';
+							var themeli = document.createElement("li");
+							var themeinput = document.createElement("input");
+							themeinput.type = "radio";
+							themeinput.name = "design";
+							themeinput.number = tx;
+							//themeinput.onchange = function(){slidenote.presentation.changeThemeStatus(this.number,this.checked)};
+							if(themes[tx].active)	themeinput.checked = true; else themeinput.checked=false;
+							var themelabel = document.createElement("label");
+							themelabel.innerText = themes[tx].classname;
+							themeli.appendChild(themeinput);
+							themeli.appendChild(themelabel);
+							themeul.appendChild(themeli);
+							if(themes[tx].active)themedesctext = themes[tx].description;
+							themeinput.description = themes[tx].description;
+							themeinput.onchange = function(){
+								slidenote.presentation.changeThemeStatus(this.number,this.checked);
+								if(this.checked)document.getElementById("themedescription").innerText=this.description;
+
+							}
+						}
+					}
+					themelist.appendChild(themeul);
+					var themedescription = document.getElementById("themedescription");
+					themedescription.innerText = themedesctext;
+					optionmenu.classList.add("active");
+				}
+			});
+			document.getElementById("nightmodetoggle").addEventListener("click",function(e){
+				var toggler=document.getElementById("nightmodetoggle");
+				if(toggler.classList.contains("off")){
+					toggler.classList.remove("off");
+					toggler.classList.add("on");
+					document.getElementById("slidenotediv").classList.add("nightmode");
+		   }else{
+				toggler.classList.remove("on");
+				toggler.classList.add("off");
+				document.getElementById("slidenotediv").classList.remove("nightmode");
+       }
+			});
+
 			//texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
 			wys.onmouseup=function(event){slidenote.wysiwyg.copyCursorToTextarea(event); console.log("onmouseupend");};
 			wys.onmousedown=function(event){slidenote.wysiwyg.mousedown(event);};
@@ -167,7 +227,7 @@ function parsetesting(){
 </head>
 <body onload="initeditor()">
 <div id="slidenotediv">
-
+<!--
 	<div id="slidenotebuttons">
 		<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
 		<input type="button" onclick="slidenote.showErrorDetails()" value="show parseerrors">
@@ -180,18 +240,18 @@ function parsetesting(){
 		</select>
 		<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
 	</div>
-
+-->
 	<div id="editorblock">
 		<div id="editorheader">
 			<button><img src="images/buttons/home.png">HOME</button>
-			<button><img src="images/buttons/import.png">IMPORT</button>
+			<button id="importbutton"><img src="images/buttons/import.png">IMPORT<input type="file" id="importfile"></button>
 			<img id="savestatus" src="images/schloss-grau.png" alt="initial state">
 			<span id="notetitle">my awesome slidenote</span>
-			<button>EXPORT<img src="images/buttons/export.png"></button>
+			<button id="exportbutton">EXPORT<img src="images/buttons/export.png"></button>
 			<button>SAVE<img src="images/buttons/cloudsaved.png"></button>
-			<!--
-			<ul id="exportul">
-				<li class="first"><img src="images/buttons/export.png">EXPORT</li>
+		</div>
+		<div id="exportoptions">
+			<ul>
 				<li>BACKUP OF CODE:</li>
 				<li><button onclick="slidenoteguardian.saveNote('filesystem')">encrypted .slidenote</button></li>
 				<li><button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md textfile</button></li>
@@ -200,10 +260,8 @@ function parsetesting(){
 				<li>Save as encrypted .html</li>
 				<li>Save as unencrypted .html</li>
 			</ul>
-		-->
-
 		</div>
-		<div id="editoroptionbutton"><a href="javascript:slidenote.presentation.showThemes()">Options ℹ</a></div>
+		<div id="editoroptionbutton"><button id="editoroptionbuttonbutton">Options ℹ</button></div>
 		<div id="texteditorbuttons">
 			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
 			<!--<button onclick="insertbutton('---')" >new Page</button>-->
@@ -229,12 +287,38 @@ function parsetesting(){
 				<button onclick="insertbutton('---')" >new Page</button>
 
 			</div>
+			<!--<div style="">123456789012345</div>-->
+
 		</div>
 		<div id="texteditor" class="texteditor">
 			<div id="texteditorerrorlayer"></div>
-			<textarea spellcheck="false" id="quelltext" onload="" autofocus onfocus="initeditor();"></textarea>
+			<textarea spellcheck="false" id="quelltext" onload="" autofocus onfocus="setTimeout('initeditor()',100);"></textarea>
 			<div id="texteditorimagespreview"></div>
 			<div id="wysiwygarea" contenteditable="true" spellcheck="false"></div>
+		</div>
+		<div id="optionmenu">
+			<h3>PRESENTATION DESIGN</h3>
+			<div id="optionmenupresentationdesigncontainer">
+			<div id="optionmenupresentationdesign">
+				<ul>
+					<li><input type="radio" name="basictheme" value="pop"> POP</li>
+					<li><input type="radio" name="basictheme" value="pop"> TUFTE</li>
+					<li><input type="radio" name="basictheme" value="pop"> CONSOLE</li>
+				</ul>
+			</div>
+			<div id="themedescription"></div>
+		</div>
+
+			<div>Codehighlightning?</div>
+			<h3>INTERFACE DESIGN</h3>
+			<div id="optionmenuinterfacedesign">
+				<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
+					<option value="md-texteditor" selected>context-mode (default)</option>
+					<option value="focus">focus-mode</option>
+				</select>
+			</div>
+			<div>NIGHT MODE <a href="#" class="off" id="nightmodetoggle"><span>OFF</span>|<span>ON</span></a></div>
+			<div><a href="javascript:slidenote.presentation.showThemes()">Advanced Options ℹ</a></div>
 		</div>
 		<div id="footer">
 			<button onclick="slidenote.presentation.showpresentation()"><img src="images/presentationtoggle.png"></button>
@@ -304,7 +388,6 @@ function parsetesting(){
 	<button onclick="slidenoteguardian.loadNote('local')">load local</button>
 	<button onclick="slidenoteguardian.saveNote('filesystem')">export as encrypted .slidenote</button>
 	<button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">export as unencrypted .md textfile</button>
-	Import MD-Code or Slidenote: <input type="file" id="importfile">
 	<input type="text" id="cmstitle">
 	<input type="text" id="cmsslidenotehash">
 	<textarea id="cmsarea"></textarea>

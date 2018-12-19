@@ -19,7 +19,7 @@
 	border: 1px solid;
     margin: 1px;
     padding: 1px;
-	width: 500px;
+	width: 60%;
 	height:75vh;
 }
 #quelltext{
@@ -279,6 +279,10 @@ div#texteditor {
 div#contextfieldcontainer {
     grid-area: sidearearight;
 }
+div#imagesblock{
+	display:none;
+	grid-area:editorarea;
+}
 
 div#footer {
     grid-area: footer;
@@ -311,6 +315,7 @@ div#sidebar {
 div#sidebarcontainer {
     position: relative;
     overflow: hidden;
+		/*min-width:12em;*/
 }
 
 #sidebar{
@@ -345,18 +350,27 @@ border-bottom: 1px solid gray;
 	border-left:1px solid transparent;
 }
 #sidebar .carretline{
-	color:black;
+	color:transparent;
 	border-left:1px solid transparent;
 	text-decoration:none;
-	margin-left:-3px;
+	margin-left:-1px;
 	visibility: visible;
 }
 #sidebar .carretline.hidden{
 	visibility: hidden;
 }
-#sidebar .carretline img{
-	height:1em;
+div#nicesidebarsymbol {
+    position: absolute;
+    right: 0;
+    height: 1em;
 }
+
+div#nicesidebarsymbol img {
+    height: 1em;
+}
+/*#sidebar .carretline img{
+	height:1em;
+}*/
 #sidebar .continueline{
 	color:gray;
 	border-left:1px solid transparent;
@@ -419,6 +433,11 @@ span#notetitle {
     font-size: 1.4em;
 }
 
+#editorheader img {
+    height: 2em;
+    margin-bottom: -0.5em;
+}
+
 #editoroptionbutton {
     text-align: right;
 }
@@ -428,11 +447,130 @@ span#notetitle {
     text-decoration: none;
 }
 
+#importfile{
+	display:none;
+}
+
+/*export-options*/
+div#exportoptions {
+    grid-area: editorarea;
+    z-index: 10000;
+    background: rgba(255,255,255,0.5);
+    position: relative;
+		display:none;
+}
+div#exportoptions.active {
+	display:block;
+}
+
+div#exportoptions ul {
+    background: white;
+    position: absolute;
+    right: 0;
+    top: -10px;
+    list-style: none;
+}
 /*footer*/
 div#footer {
     text-align: center;
 }
 
+/*nightmode: easy-cssmode:*/
+div#slidenotediv.nightmode {
+    filter: invert(100%);
+    background: white;
+    color: black;
+}
+.nightmode #imagesblock img,
+.nightmode #contextfieldimage,
+.nightmode .imagesrc{
+	filter:invert(100%);
+}
+
+
+
+/* old nightmode:
+div#slidenotediv.nightmode {
+    background: black;
+    color: white;
+}
+
+#slidenotediv.nightmode button {
+    background: black;
+    color: white;
+}
+
+#slidenotediv.nightmode div#texteditorerrorlayer {
+    background: black;
+}
+
+#slidenotediv.nightmode img {
+    filter:invert(100%);
+}
+
+#slidenotediv.nightmode div#insertarea {
+    background: black;
+    border-color: white;
+}
+
+#slidenotediv.nightmode #insertarea label {
+    background: black;
+    border-color: white;
+}
+
+/*new optionmenu*/
+
+div#optionmenu {
+    grid-area: sidearearight;
+    /* display: grid; */
+		visibility: hidden;
+		padding:10px;
+}
+
+div#optionmenu.active{
+	visibility:visible;
+}
+
+#optionmenu ul {
+    list-style: none;
+    padding: 0;
+    /* float: left; */
+}
+
+div#themedescription {
+    margin-left: 10px;
+    border: 1px solid black;
+    border-radius: 5px;
+		padding:5px;
+}
+/*
+div#optionmenupresentationdesign {
+    display: inline-block;
+}*/
+#optionmenupresentationdesigncontainer{
+	display:grid;
+	grid-template-columns:1fr 1fr;
+}
+
+#optionmenu li {
+    font-size: 0.7em;
+}
+#nightmodetoggle span:first-child {
+    color: black;
+}
+
+#nightmodetoggle span {
+    color: gray;
+    margin: 5px;
+}
+
+.nightmode #nightmodetoggle span:first-child {
+    color: lightgray;
+}
+
+.nightmode #nightmodetoggle span {
+    color: black;
+}
 /*wysiwyg*/
 #wysiwygarea {
 	background:white;
