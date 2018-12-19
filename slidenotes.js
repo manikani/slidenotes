@@ -4736,7 +4736,7 @@ slidenotes.prototype.scroll = function(editor){
 		var sidebartop = 0-editor.scrollTop;
 		document.getElementById("sidebar").style.top = sidebartop+"px";
 		var nssym = document.getElementById("nicesidebarsymbol");
-		if(nssym){
+		if(nssym && nssym.style.display!="none"){
 			nssym.style.top = (sidebartop + document.getElementsByClassName("carretline")[0].offsetTop) + "px";
 			document.getElementById("insertarea").style.top = nssym.style.top;
 		}

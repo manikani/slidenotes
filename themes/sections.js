@@ -19,7 +19,7 @@ newtheme.styleThemeSpecials = function(){
   //get all data-blocks:
   var datadivs = slidenote.presentationdiv.getElementsByTagName("section");
   for(var datax=0;datax<slidenote.parser.dataobjects.length;datax++){
-    if(slidenote.parser.dataobjects[datax].type=="section"){
+    if(slidenote.parser.dataobjects[datax].type=="layout"){
       console.log("found section");
       var dataobject = slidenote.parser.dataobjects[datax];
       var sectiondata = datadivs[datax];
