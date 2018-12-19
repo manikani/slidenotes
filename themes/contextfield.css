@@ -32,3 +32,6 @@ div#contextfield {
     padding: 1px;
     margin: 3px;
 }
+div#contextfield.empty{
+  
+}

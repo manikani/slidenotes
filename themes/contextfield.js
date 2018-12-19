@@ -7,10 +7,13 @@ newtheme.init = function(){
   //var contextTitle = document.createElement("h1");
   //contextTitle.innerHTML = "Context-Field Helper";
   //this.contextFieldContainer.appendChild(contextTitle);
-  this.Field = document.createElement("div");
-  this.Field.id="contextfield";
-  this.contextFieldContainer.appendChild(this.Field);
-  this.contextFieldContainer.id="contextfieldcontainer";
+  this.Field = document.getElementById("contextfield");
+  if(this.Field===null){
+    this.Field = document.createElement("div");
+    this.Field.id="contextfield";
+  }//this.contextFieldContainer.appendChild(this.Field);
+  //this.contextFieldContainer.id="contextfieldcontainer";
+  document.getElementById("sidebarcontainer").appendChild(this.Field);
 };
 newtheme.changeThemeStatus = function(status){
   this.active = status;
@@ -28,13 +31,23 @@ newtheme.changeThemeStatus = function(status){
   }
 }
 
-newtheme.styleThemeMDCodeEditor = function(){
+newtheme.styleThemeMDCodeEditor = function(mode){
   //clear contextfield
   var Field = document.getElementById("contextfield");
   Field.innerHTML = "";
   //test if we are on an object:
   var onObject = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
   console.log("styleThemeMDCodeEditor mit Objekt:"); console.log(onObject);
+  //check if insertmenu is available - if not, do nothing:
+  var insertarea = document.getElementById("insertarea");
+  //if(!insertarea || insertarea.style.visibility==="hidden"){
+  if(mode!="insertAreaVisible"){
+    console.log("make contextfield visible after insert")
+    Field.style.visibility="hidden";
+    return;
+  }
+    Field.style.visibility="visible";
+
   if(onObject){
     Field.classList.remove("empty");
     if(onObject.typ === "image"){
@@ -61,7 +74,7 @@ newtheme.styleThemeMDCodeEditor = function(){
         //no image found - use upload-image
         var noimagetext = document.createElement("div");
         noimagetext.innerHTML = "No image uploaded by the name <i>"+onObject.src+"</i>";
-        Field.appendChild(noimagetext);
+        //Field.appendChild(noimagetext);
         cfimage.src = "images/imageupload.png";
       }
 
@@ -107,8 +120,10 @@ newtheme.styleThemeMDCodeEditor = function(){
       Field.innerHTML = "<h1>#Title</h1><h2>##Subtitle</h2><h3>###Subsubtitle</h3>";
 
     }
+    console.log("object found:"+onObject.typ +"/"+onObject.tag);
   } else { //end of isset onObject
     //no object found
+    console.log("no object found");
     Field.classList.add("empty");
     var emptytext = document.createElement("div");
     emptytext.innerText="select a markup or insert a section for the current paragraph";
@@ -119,10 +134,18 @@ newtheme.styleThemeMDCodeEditor = function(){
     morelink.innerText="more...";
     morelink.href="#";
     Field.appendChild(morelink);
-
-
-
   }//end of isset onObject else
+  //setting top of contextfield:
+  var newtop = insertarea.offsetTop;
+  if(newtop>slidenote.textarea.offsetHeight/2){
+    //up on insertarea:
+    newtop -= (Field.offsetHeight + 10);
+  } else{
+    newtop+= insertarea.offsetHeight+10;
+  }
+  console.log("newtop:"+newtop + "insmenu: "+insertarea.offsetTop + "fieldheight:"+Field.offsetHeight);
+  Field.style.top = newtop+"px";
+
 }
 
 
