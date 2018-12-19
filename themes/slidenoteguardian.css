@@ -14,9 +14,9 @@
     color:white;
     padding: 15px;
     width: 60%;
-    height:50%;
+    height:80%;
     position: fixed;
-    top: 30%;
+    top: 10%;
     left:20%;
 }
 
@@ -34,6 +34,18 @@
     margin-bottom:20px;
     margin-left: auto;
     margin-right: auto;
+}
+
+#slidenoteGuardianPasswordPromptStore{
+  display:none;
+}
+
+input#username.hidden {
+    position: absolute;
+    top: -100%;
+}
+label#slidenoteGuardianPasswordPromptUsernameLabel.hidden {
+    display: none;
 }
 
 #slidenoteGuardianImportPromptWrapper {
