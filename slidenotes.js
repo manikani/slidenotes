@@ -1187,7 +1187,8 @@ emdparser.prototype.renderCodeeditorImagePreview = function(){
 	return imgtemptext;
 }
 
-emdparser.prototype.generateSidebar = function(){
+emdparser.prototype.generateSidebar = function(startend){
+	var starttime = new Date();
 	var sidebarelements = slidenote.parser.map.sidebarelements;
 	var sidebar = document.getElementById("sidebar");
 	if(!sidebar){
@@ -1196,32 +1197,66 @@ emdparser.prototype.generateSidebar = function(){
 		var editor = document.getElementById("texteditor");
 		editor.insertBefore(sidebar,editor.childNodes[0]);
 	}
-	sidebar.innerHTML = "";
+	//sidebar.innerHTML = "";
 	var bglines = document.getElementsByClassName("backgroundline");
-	var sidebarlines = new Array();
+	var oldlines = sidebar.children;
+	var startline = 0;
+	var endline = bglines.length;
+	if(startend){
+		console.log("sidebar-startend start:"+startend.start +" end:"+startend.end +" cursorchange:"+startend.cursorchange);
+		if(startend.start)startline = this.map.pagestart[startend.start].line;
+		if(startend.end)endline=this.map.pageend[startend.end].line;
+		if(startend.cursorchange || (startend.start===null && startend.end===null)){
+			var actpage = slidenote.parser.pageAtPosition(slidenote.textarea.selectionEnd);
+			startline = this.map.pagestart[actpage[0]].line;
+			endline = this.map.pageend[actpage[0]].line+1;
+			if(this.map.pagestart[actpage[0]].posinall>actpage[1]){
+				startline--;//endline=startline;
+			}
+			if(endline>bglines.length)endline=bglines.length;
+		}
+
+	}
+	while(oldlines.length<bglines.length){
+		sidebar.insertBefore(document.createElement("div"), sidebar.children[startline]);
+	}
+	while(oldlines.length>bglines.length){
+		oldlines[startline].remove();
+	}
+	var preparetime = new Date();
+	console.log("generate sidebar from"+startline+" to "+endline+" lines:"+oldlines.length+"/"+bglines.length)
+	var sidebarlines = new Array(bglines.length);
 	//get pixel-height of one line:
-	var testline = document.createElement("span");
-	testline.classList.add("backgroundline");
-	testline.innerText="t";
-	bglines[0].parentNode.appendChild(testline);
-	var standardlineheight = testline.offsetHeight;
-	testline.remove();
-	console.log("standard-height:"+standardlineheight);
-	for(var x=0;x<bglines.length;x++){
+	if(slidenote.standardlineheight===undefined){
+		var testline = document.createElement("span");
+		testline.classList.add("backgroundline");
+		testline.innerText="t";
+		bglines[0].parentNode.appendChild(testline);
+		slidenote.standardlineheight = testline.offsetHeight;
+		testline.remove();
+		console.log("standard-height:"+standardlineheight);
+	}
+	var standardlineheight = slidenote.standardlineheight;
+	var testtime = new Date();
+	//for(var x=0;x<bglines.length;x++){
+	for(var x=startline;x<endline;x++){
 		var newline = document.createElement("div");
 		var h = bglines[x].offsetHeight;
 		//if(h<10)h=16;
 		if(h>standardlineheight){
 			newline.ismultiline=true;
 			newline.multilines = h/standardlineheight;
-			console.log("multiline - lines:"+newline.multilines+" px:"+h);
+			//console.log("multiline - lines:"+newline.multilines+" px:"+h);
 		}//newline.style.height = h+"px";
 
 		//newline.style.height = h+"px";
 		//newline.innerHTML = "&nbsp;"//"Line #"+x;
-		sidebarlines.push(newline);
+		//sidebarlines.push(newline);
+		sidebarlines[x]=newline;
 	}
-
+	var addinglinetime = new Date();
+	var gimmetime = addinglinetime - testtime;
+	console.log("sidebar add lines:"+gimmetime+"Ms");
 	var carretsymbol = document.createElement("a");
 	carretsymbol.classList.add("carretline");
 	carretsymbol.href="javascript:slidenote.presentation.showInsertMenu()";
@@ -1238,9 +1273,39 @@ emdparser.prototype.generateSidebar = function(){
 	carretmarker.innerText = " >";
 	carretmarker.classList.add("carretmarker");
 	carretsymbol.appendChild(carretmarker);*/
+	var carretlinenr = this.lineAtPosition(slidenote.textarea.selectionEnd);
+	if(sidebarlines[carretlinenr]===undefined)sidebarlines[carretlinenr] = document.createElement("div");
 	sidebarlines[this.lineAtPosition(slidenote.textarea.selectionEnd)].appendChild(carretsymbol);
+	//delete old carretline:
+	var oldcarret = sidebar.getElementsByClassName("carretline");
+	console.log("sidebar oldcarrets found:"+oldcarret.length);
+	while(oldcarret.length>0){
+		var oldline = oldcarret[0].parentElement;
+		//var oldlinelength = oldline.innerText.length;
+		oldcarret[0].remove();
+		if(oldline.innerHTML.length===0)oldline.innerHTML="&nbsp;";
+		if(oldline.children.length>0 && !oldline.children[0].classList.contains("singleline"))oldline.children[0].innerText+=".....";
+	}
+	var oldcarretpos = slidenote.oldparser.parsedcursorpos;
+	var oldcarretline = this.lineAtPosition(oldcarretpos);
+	if(oldcarretline < startline || oldcarretline > endline){
+		var oldcarretpage = slidenote.oldparser.pageAtPosition(oldcarretpos)[0];
+		console.log("sidebar oldcarretpage:"+oldcarretpage);
+		setTimeout("slidenote.parser.generateSidebar({start:"+oldcarretpage+",end:"+oldcarretpage+"})",10);
+	}
+	/*
+	if(carretlinenr<startline||carretlinenr>endline){
+		var carretpage = slidenote.parser.map.pageAtPosition(slidenote.parser.map.linestart[carretlinenr]);
+		setTimeout("slidenote.parser.generateSidebar({start:"+carretpage+",end:"+carretpage+"})",10);
+		//slidenote.parser.generateSidebar({start:carretpage,end:carretpage});
+	}*/
+	//var oldreplacements = sidebar.getElementsByClassName("replacement");
+	//while(oldreplacements.length>0)oldreplacements[0].remove();
+	console.log("sidebar old carretline removed. carretlines:"+document.getElementsByClassName("carretline").length);
+	console.log("sidebar new carretline in line:"+carretlinenr);
 	for(var x=sidebarelements.length-1;x>=0;x--){
 		actel = sidebarelements[x];
+		if(actel.startline<startline || actel.endline>endline)continue;
 		if(actel.typ==="singleline" || actel.endline === actel.startline){
 			var newspan = document.createElement("span");
 			newspan.innerText=actel.text;
@@ -1294,7 +1359,9 @@ emdparser.prototype.generateSidebar = function(){
 
 		}
 	}
-	for(var x=0;x<sidebarlines.length;x++){
+	var looptime1 = new Date();
+	//for(var x=0;x<sidebarlines.length;x++){
+	for(var x=startline;x<endline;x++){
 		if(sidebarlines[x].innerHTML.length===0)sidebarlines[x].innerHTML = "&nbsp;";
 		if(sidebarlines[x].ismultiline){//style.height.length>0){
 			var maxlines = sidebarlines[x].multilines -1;
@@ -1317,8 +1384,8 @@ emdparser.prototype.generateSidebar = function(){
 					newline.removeChild(newline.getElementsByClassName("carretline")[0]);
 				}
 				sidebarlines[x].appendChild(document.createElement("br"));
-				console.log(newline);
-				console.log(newline.childNodes);
+				//console.log(newline);
+				//console.log(newline.childNodes);
 				for(var nx=0;nx<newline.childNodes.length;nx++){
 					if(newline.childNodes[nx].classList.contains("multilinemiddle")){
 						newline.childNodes[nx].classList.remove("multilinemiddle");
@@ -1340,21 +1407,44 @@ emdparser.prototype.generateSidebar = function(){
 				continueline.innerText = "◥";
 				newline.appendChild(continueline);
 				continueline.previousSibling.innerText = continueline.previousSibling.innerText.substring(0,continueline.previousSibling.innerText.length-1);
+				//if(continueline.previousSibling.classList.contains("multilineend")){
+					continueline.previousSibling.appendChild(continueline);
+				//}
 				while(newline.childNodes.length>0){
 					sidebarlines[x].appendChild(newline.childNodes[0]);
 				}
 			}
 		}}
-		sidebar.appendChild(sidebarlines[x]);
+		//sidebar.appendChild(sidebarlines[x]);
+		sidebar.children[x].innerHTML = sidebarlines[x].innerHTML;
 	}
+	var looptime2 = new Date()
+	var loopt2 = looptime2 - looptime1;
+	var loopt1 = looptime1 - addinglinetime;
+	var addtime = addinglinetime - testtime;
+	var testt = testtime - preparetime;
+	var preptime = preparetime - starttime;
+	var gestime = looptime2 - starttime;
+	console.log("sidebar-creation Timecheck: gesamt:"+gestime+
+							" preparation:"+preptime+ " check lineheight:"+testt + " add new lines"+addtime+
+						" loop 1:"+loopt1 + " loop2:"+loopt2);
 	//make cursorline nicer:
+	var nicesymbolfunction = function (){
 	//carretsymbol.innerHTML='&nbsp;<img src="images/buttons/droptilde.png">&nbsp;<img src="images/buttons/cursorline.png">';
 	var nicesymbol = document.getElementById("nicesidebarsymbol");//document.createElement("div");
 	//nicesymbol.id="nicesidebarsymbol";
-	nicesymbol.style.top = (carretsymbol.offsetTop + sidebar.offsetTop) +"px";
+	var carretsymbol = document.getElementsByClassName("carretline")[0];
+	var sidebar = document.getElementById("sidebar");
+	var newtop = carretsymbol.offsetTop + sidebar.offsetTop;
+	//var carret = document.getElementById("carret");
+	//var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
+	if(newtop<0)newtop=3;
+	nicesymbol.style.top = newtop +"px";
 	nicesymbol.style.position="absolute";
+	console.log("nicesymbol:"+nicesymbol.style.top+"carretsymbol:"+carretsymbol.offsetTop);
 	//nicesymbol.innerHTML='&nbsp;<a href="javascript:slidenote.presentation.showInsertMenu();"<img src="images/buttons/droptilde.png"></a>&nbsp;<img src="images/buttons/cursorline.png">';
-
+	}
+	setTimeout(nicesymbolfunction, 10);
 	return sidebarlines;
 }
 
@@ -1502,6 +1592,72 @@ emdparser.prototype.positionAtPage = function(page){
 	console.log("found position at:"+position);
 	return position;
 }
+
+emdparser.prototype.comparePages = function(){
+	var oldparser = slidenote.oldparser;
+	var newparser = slidenote.parser;
+	var oldpages = oldparser.map.pagesCode;
+	var newpages = newparser.map.pagesCode;
+	//var starttime = new Date();
+
+	var startpage = null;
+	if(!oldpages)return;
+	for(var x=0;x<newpages.length;x++){
+		if(x>oldpages.length)break;
+		if(oldpages[x]!=newpages[x]){
+			startpage=x;
+			break;
+		}
+	}
+	console.log("startpage found:"+startpage);
+	console.log("oldpages0:'"+oldpages[0]+ "', newpages0:'"+newpages[0]+"'");
+
+	if(startpage===newpages.length-1){
+		console.log("startpage is last page - return"+startpage);
+		return {start:startpage, end:startpage};
+	}
+	if(startpage===null){
+		console.log("startpage is null - no changes happened");
+		return{start:null, end:null};
+	}
+	var endpage;
+	for(var y=0;y<5;y++){
+		var searchpage = oldpages[startpage+y];
+		for(var x=1;x<6;x++){
+			if(startpage+x>=newpages.length)break;
+			var newpage = newpages[startpage+x];
+			if(newpage===searchpage){
+				endpage=startpage+x;
+				break;
+			}
+		}
+		if(startpage+y>=oldpages.length || endpage!=null)break;
+	}
+
+	//sonderfall:
+	if(startpage<oldpages.length-1 && oldpages[startpage]===oldpages[startpage+1]){
+	/*var olddiffpage = oldpages[startpage];
+	var oldfoundpage;
+	var olddiffpagepos;
+		for(var x=startpage+1;x<oldpages.length;x++){
+			if(oldpages[x]!=olddiffpage){oldfoundpage=oldpages[x];break;}
+		}
+		for(var x=startpage+1;x<newpages.length;x++){
+			if(newpages[x]===oldfoundpage){endpage=x;break;}
+		}
+	*/
+	console.log("sonderfall: startpage:"+startpage+" end: null")
+	return{start:startpage, end:null};
+	}
+	console.log("startpage:"+startpage+" endpage:"+endpage);
+//	var endtime = new Date();
+//	var usedtime = endtime - starttime;
+//	console.log("Timecheck: comparing Pages needed "+usedtime+"Ms");
+	return{start:startpage, end:endpage};
+
+}
+
+
 /* 	renderMapToPresentation is a function which takes the map and lineswithhtml
 *		information to prerender the presentation-page. it renders into pure basic html
 * 	with pagebreaks and such
@@ -2410,7 +2566,7 @@ emdparser.prototype.parseMap = function(){
       }//end of iterating through parseelements
   }//end parsing simple elements per line
   //add last pageend:
-  this.map.pageend.push({line:lines.length})
+  this.map.pageend.push({line:lines.length, posinall:sourcecode.length-1});
   //save cursorpos:
 	this.parsedcursorpos = slidenote.textarea.selectionEnd;
 	this.map.insertedhtmlelements.sort(function(a,b){return a.posinall-b.posinall});
@@ -2420,6 +2576,13 @@ emdparser.prototype.parseMap = function(){
   var TimecheckEnd = new Date().getTime();
   var TimecheckUsed = TimecheckEnd - TimecheckStart;
   console.log("parsed in "+TimecheckUsed+" Ms");
+	//save pages to later compare them:
+	this.map.pagesCode = new Array();
+	for(var x=0;x<this.map.pagestart.length;x++){
+		this.map.pagesCode.push(
+			sourcecode.substring(this.map.pagestart[x].posinall,
+				this.map.pageend[x].posinall));
+	}
 
 
 }
@@ -3852,6 +4015,7 @@ pagegenerator.prototype.showInsertMenu = function(){
 	var cursorlinesymbol = document.getElementById("cursorlinesymbol");
 	if(carretline){
 		var top = carretline.offsetTop + document.getElementById("sidebar").offsetTop +5;
+		if(top<0)top=8;
 		console.log("insertmenu-top:"+top);
 		var topmax = slidenote.textarea.offsetHeight - insertmenu.offsetHeight;
 		if(top>topmax){
@@ -4213,7 +4377,7 @@ slidenotes.prototype.choseEditor=function(editor){
 	this.textarea.focus();
 }
 
-slidenotes.prototype.texteditorrahmensetzen= function(){
+slidenotes.prototype.texteditorrahmensetzen = function(){
 	//setzt den rahmen vom errorlayer auf textarea-größe:
 	var texteditorrahmen = document.getElementById("texteditor");
 	var eingabeblock = this.textarea;
@@ -4229,9 +4393,18 @@ slidenotes.prototype.texteditorrahmensetzen= function(){
 
 slidenotes.prototype.parseneu = function(){
 	var startzeit = new Date();
+	this.oldparser = this.parser;
 	this.parser = new emdparser(this.textarea.value);
-	this.parser.parsenachzeilen();
+	//this.parser.parsenachzeilen();
+	this.parser.parseMap();
 	var zwischenzeit = new Date();
+	var nachrendernzeit;
+	var sidebarzeit;
+	var themechangeszeit;
+	var handlingproposedsymbolszeit;
+	var scrollzeit;
+	var rahmensetzenzeit;
+	var compareResult = this.parser.comparePages();
 	if(this.wysiwygactivated){
 		//hier kommt wysiwygkram rein
 		/*this.parser.parsewysiwyghtml();
@@ -4244,19 +4417,29 @@ slidenotes.prototype.parseneu = function(){
 			//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
 			this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
 			//add sidebar here
-			if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus")
-				this.parser.generateSidebar();
+			nachrendernzeit = new Date();
+			if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus"){
+				//this.parser.generateSidebar(compareResult);
+				if(compareResult)	setTimeout("slidenote.parser.generateSidebar({start:"+compareResult.start+",end:"+compareResult.end+"})",10);
+				  else this.parser.generateSidebar();
+			}
 
+			sidebarzeit = new Date();
 			if(this.afterCodeEditorrender)this.afterCodeEditorrender();
+			themechangeszeit = new Date();
 			//getting rid of false lines from proposedsymbols:
 			var proposedsymbols = document.getElementsByClassName("proposedsymbol");
 			for(var pps = 0;pps<proposedsymbols.length;pps++){
 				if(proposedsymbols[pps].offsetLeft<10) proposedsymbols[pps].style.display = "none";
 			}
+			handlingproposedsymbolszeit = new Date();
 			this.scroll(this.textarea);
+			scrollzeit = new Date();
 			//this.texteditorImagesPreview = document.getElementById("texteditorimagespreview");
 			//this.texteditorImagesPreview.innerHTML = this.parser.renderCodeeditorImagePreview();
-			this.texteditorrahmensetzen();
+			//warum musste ich an dieser stelle den rahmen neu setzen???
+			//this.texteditorrahmensetzen();
+			rahmensetzenzeit = new Date();
 			for(var x=0;x<this.presentation.themes.length;x++){
 				if(this.presentation.themes[x].active)this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
 			}
@@ -4267,6 +4450,17 @@ slidenotes.prototype.parseneu = function(){
 	var renderzeit = endzeit - zwischenzeit;
 	var gesamtzeit = endzeit - startzeit;
 	console.log("Timecheck: Parsen von "+this.textarea.value.length+" Zeichen und "+this.parser.map.insertedhtmlelements.length+" Elementen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
+	var purerenderzeit = nachrendernzeit - zwischenzeit;
+	var sidebarrenderzeit = sidebarzeit - nachrendernzeit;
+	var highlightzeit = themechangeszeit - sidebarzeit;
+	var ppszeit = handlingproposedsymbolszeit - themechangeszeit;
+	var scrllzt = scrollzeit - handlingproposedsymbolszeit;
+	var rahmenzeit = rahmensetzenzeit - scrollzeit;
+	var styleMDzeit = endzeit - rahmensetzenzeit;
+	console.log("Timecheck: pures rendern:"+purerenderzeit+"Ms\nsidebar:"+sidebarrenderzeit+
+							"Ms\n highlight:"+highlightzeit+"Ms\n proposedsymbolverarbeitung:"+ppszeit+
+							"MS\n scroll:"+scrllzt+" rahmensetzen:"+rahmenzeit +"\n"+
+							"styleMDZeit:"+styleMDzeit);
 	if(slidenoteguardian)slidenoteguardian.autoSaveToLocal(new Date().getTime());
 };
 
@@ -4339,7 +4533,7 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			this.scroll();
 		}else if(key.indexOf("Arrow")>-1){
 			if(document.getElementById("editorchoice").value!="focus")
-			setTimeout("slidenote.parser.generateSidebar()",10);
+			setTimeout("slidenote.parser.generateSidebar({start:null,end:null,cursorchange:true})",10);
 		}else if(key.indexOf("Page")>-1){
 			this.parser.map.lastcursorpos = this.textarea.selectionEnd;
 			event.preventDefault();
@@ -4736,7 +4930,7 @@ slidenotes.prototype.scroll = function(editor){
 		var sidebartop = 0-editor.scrollTop;
 		document.getElementById("sidebar").style.top = sidebartop+"px";
 		var nssym = document.getElementById("nicesidebarsymbol");
-		if(nssym && nssym.style.display!="none"){
+		if(nssym && nssym.style.display!="none" && document.getElementsByClassName("carretline")[0]){
 			nssym.style.top = (sidebartop + document.getElementsByClassName("carretline")[0].offsetTop) + "px";
 			document.getElementById("insertarea").style.top = nssym.style.top;
 		}
