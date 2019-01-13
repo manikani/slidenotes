@@ -40,10 +40,13 @@ newtheme.changeDesignOption = function(optionnr, value){
 
 
 newtheme.saveConfigString = function(){
-	return this.seldesign;
+	return this.seldesign+"\t"+this.highlightintexteditor;
 }
 newtheme.loadConfigString = function(data){
-	this.changeDesignOption(0,this.cssarray[data]);
+	var dataar = data.split("\t");
+	this.changeDesignOption(0,this.cssarray[dataar[0]]);
+	if(dataar[1]==="true")this.highlightintexteditor=true;else this.highlightintexteditor=false;
+	this.changeGlobalOption(0,this.highlightintexteditor);
 }
 
 /*dateien nachladen:*/
