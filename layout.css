@@ -19,7 +19,7 @@
 	border: 1px solid;
     margin: 1px;
     padding: 1px;
-	width: 60%;
+	width: 550px;
 	height:75vh;
 }
 #quelltext{
@@ -446,6 +446,10 @@ span#notetitle {
     color: gray;
     text-decoration: none;
 }
+#editoroptionbuttonbutton img {
+    height: 1.4em;
+    margin-bottom: -0.3em;
+}
 
 #importfile{
 	display:none;
@@ -472,7 +476,14 @@ div#exportoptions ul {
 }
 /*footer*/
 div#footer {
-    text-align: center;
+    /*text-align: center;*/
+		justify-self: center;
+		align-self: end;
+}
+
+#footer button img {
+    height: 2em;
+    margin-bottom: -0.5em;
 }
 
 /*nightmode: easy-cssmode:*/
