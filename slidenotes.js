@@ -725,7 +725,7 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 	line:cursorline,
 	 	posinall:cursorposinall,
 	 	pos:cursorposinline,
-	 	html:'<span id="carret"></span>',
+	 	html:'<span id="carret">&zwj;</span>',
 	 	mdcode:'',
 	 	typ:'cursor'
 	 };
@@ -1101,7 +1101,7 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 	 line:cursorline,
 	 posinall:cursorposinall,
 	 pos:cursorposinline,
-	 html:'<span id="carret"></span>',
+	 html:'<span id="carret">&zwj;</span>',
 	 mdcode:'',
 	 typ:'cursor'
 	};
@@ -1141,6 +1141,7 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 	for(var x=0;x<slidenote.presentation.themes.length;x++){
 		if(slidenote.presentation.themes[x].active)slidenote.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
 	}
+	this.setDropDownMenu();
 };
 
 emdparser.prototype.renderCodeeditorImagePreview = function(){
@@ -1316,7 +1317,10 @@ emdparser.prototype.generateSidebar = function(startend){
 			var firstlinespan = document.createElement("span");
 			var lastlinespan = document.createElement("span");
 			var innerelementlength=0;
-			for(var iex=actel.startline;iex<=actel.endline;iex++)if(sidebarlines[iex].innerText.length>innerelementlength)innerelementlength=sidebarlines[iex].innerText.length;//if(sidebarlines[iex].childNodes.length>innerelementlength)innerelementlength=sidebarlines[iex].childNodes.length;
+			console.log(actel.endline + "actel.endline vs sidebarlines.length:"+sidebarlines.length );
+			console.log("endline:"+sidebarlines[actel.endline]);
+			console.log(actel);
+			for(var iex=actel.startline;iex<=actel.endline;iex++)if(sidebarlines[iex] && sidebarlines[iex].innerText.length>innerelementlength)innerelementlength=sidebarlines[iex].innerText.length;//if(sidebarlines[iex].childNodes.length>innerelementlength)innerelementlength=sidebarlines[iex].childNodes.length;
 			if(innerelementlength>0)innerelementlength=innerelementlength+2;
 			var emptytext = "....................".substring(0,actel.text.length-1);
 			firstlinespan.classList.add("multilinestart");
@@ -1429,24 +1433,27 @@ emdparser.prototype.generateSidebar = function(startend){
 							" preparation:"+preptime+ " check lineheight:"+testt + " add new lines"+addtime+
 						" loop 1:"+loopt1 + " loop2:"+loopt2);
 	//make cursorline nicer:
-	var nicesymbolfunction = function (){
+	//var nicesymbolfunction = this.setDropDownMenu;
+	//setTimeout(nicesymbolfunction, 10);
+	return sidebarlines;
+}
+
+emdparser.prototype.setDropDownMenu = function (){
 	//carretsymbol.innerHTML='&nbsp;<img src="images/buttons/droptilde.png">&nbsp;<img src="images/buttons/cursorline.png">';
 	var nicesymbol = document.getElementById("nicesidebarsymbol");//document.createElement("div");
 	//nicesymbol.id="nicesidebarsymbol";
-	var carretsymbol = document.getElementsByClassName("carretline")[0];
+	//var carretsymbol = document.getElementsByClassName("carretline")[0];
 	var sidebar = document.getElementById("sidebar");
-	var newtop = carretsymbol.offsetTop + sidebar.offsetTop;
-	//var carret = document.getElementById("carret");
-	//var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
-	if(newtop<0)newtop=3;
+	//var newtop = carretsymbol.offsetTop + sidebar.offsetTop;
+	var carret = document.getElementById("carret");
+	var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
+	//if(newtop<0)newtop=3;
 	nicesymbol.style.top = newtop +"px";
 	nicesymbol.style.position="absolute";
-	console.log("nicesymbol:"+nicesymbol.style.top+"carretsymbol:"+carretsymbol.offsetTop);
+	//console.log("nicesymbol:"+nicesymbol.style.top+"carretsymbol:"+carretsymbol.offsetTop);
 	//nicesymbol.innerHTML='&nbsp;<a href="javascript:slidenote.presentation.showInsertMenu();"<img src="images/buttons/droptilde.png"></a>&nbsp;<img src="images/buttons/cursorline.png">';
-	}
-	setTimeout(nicesymbolfunction, 10);
-	return sidebarlines;
 }
+
 
 /* Returns the element in the map the current carret is on
  * usefull for many things in the md-Code-Editor
@@ -4420,8 +4427,11 @@ slidenotes.prototype.parseneu = function(){
 			nachrendernzeit = new Date();
 			if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus"){
 				//this.parser.generateSidebar(compareResult);
+				this.parser.setDropDownMenu();
 				if(compareResult)	setTimeout("slidenote.parser.generateSidebar({start:"+compareResult.start+",end:"+compareResult.end+"})",10);
 				  else this.parser.generateSidebar();
+				 //this.parser.generateSidebar();
+					//this.parser.setDropDownMenu();
 			}
 
 			sidebarzeit = new Date();
@@ -4632,8 +4642,9 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 		if(key.indexOf("Arrow")>-1 || key==="Home" || key==="End"){
 			console.log("home, end or arrow pressed");
 			var actcursor=document.getElementById("carret");
-			if(actcursor.innerHTML.length>0){
-				console.log("parseneu forced after arrowkey");
+			if(actcursor.innerHTML.length>0 && actcursor.innerHTML ==="&zwj;"){
+				console.log("parseneu forced after arrowkey" + actcursor.innerHTML);
+				console.log(actcursor)
 				this.parseneu();
 				this.scroll();
 			}else{
@@ -4930,10 +4941,17 @@ slidenotes.prototype.scroll = function(editor){
 		var sidebartop = 0-editor.scrollTop;
 		document.getElementById("sidebar").style.top = sidebartop+"px";
 		var nssym = document.getElementById("nicesidebarsymbol");
-		if(nssym && nssym.style.display!="none" && document.getElementsByClassName("carretline")[0]){
-			nssym.style.top = (sidebartop + document.getElementsByClassName("carretline")[0].offsetTop) + "px";
+		if(nssym && nssym.style.display!="none"){// && document.getElementsByClassName("carretline")[0]){
+			this.parser.setDropDownMenu();
+			//nssym.style.top = (sidebartop + document.getElementsByClassName("carretline")[0].offsetTop) + "px";
 			document.getElementById("insertarea").style.top = nssym.style.top;
+			//console.log("scroll dropdown?" +nssym.style.top )
+		}else {
+			console.log("scroll");
+			console.log(nssym);
 		}
+		//console.log("scroll");
+
 	}
 	//TODO: wysiwyg-scroll wenn cursor aus dem bild kommt
 	//kommt das wirklich hier rein? eher nach wysiwyg-html-rendern oder?
