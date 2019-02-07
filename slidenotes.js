@@ -8,14 +8,13 @@ var mapobject = {	//link:
 	mdcode:"*",		//[text](url)
 	typ:"start",	// "link"
 	//brotherelement: end,
-	wystextveraenderung:1,
 	linktext: null,	//"text"
 	linkurl: null	//"url"
 
 };
 */
 
-/* mapper object to track mapping between md-code/source-code and wysiwyg-html-code
+/* mapper object to track mapping between md-code/source-code and rendered html code
 */
 
 function mapping (parser) {
@@ -26,7 +25,6 @@ function mapping (parser) {
 	 //this.linepos = [0];
 	 this.linestart = [0];
 	 this.lineend = new Array();
-	 this.angezeigtezeichen = new Array();
 	 this.pagestart = [{line:0,posinall:0}];
 	 this.pageend = new Array();
 	 this.lastcursorpos = 0;//
@@ -60,30 +58,9 @@ mapping.prototype.addElement = function(element2){
 	this.insertedhtmlinline[element.line].push(element);
 	if(element.typ === "image")this.insertedimages.push(element);
 };
-mapping.prototype.addVeraenderung = function(element){
-	if(element.posinall==null)element.posinall=element.pos+this.linestart[element.line];
-	element.angezeigteszeichen=true;
-	//this.lineend.push(lastpos);
-	this.angezeigtezeichen.push(element);
-}
-mapping.prototype.ganzeZeileVeraendern = function(zeile){
-	if(this.insertedhtmlinline[zeile]!=null){
-		var insertedhtml = this.insertedhtmlinline[zeile];
-		for(var x=0;x<insertedhtml.length;x++){
-			var elem=insertedhtml[x];
-			if(elem.wystextveraenderung!=0)this.addVeraenderung({line:elem.line,
-				pos:elem.pos, posinall:elem.posinall, mdcode:elem.mdcode, html:elem.html,
-				typ:elem.typ, angezeigteszeichen:true,
-				wystextveraenderung:0-elem.wystextveraenderung
-			});
-		}
 
-	}
 
-}
-mapping.prototype.resetVeraenderungen = function(){
-	this.angezeigtezeichen=new Array();
-}
+
 
 mapping.prototype.allElementsInLine = function(linenr){
 	return this.insertedhtmlinline[linenr];
@@ -143,75 +120,6 @@ mapping.prototype.positionInHtml = function(position, line){
 	}
 	return {position:newpos,onelements:onelements, posinelements:posinelements, lastelement:lastelement,nextelement:nextelement};
 };
-
-mapping.prototype.WystextToSource = function(position){
-	var veraenderungen = new Array();
-	for(var x=0;x<this.insertedhtmlelements.length;x++){
-		if(this.insertedhtmlelements[x].wystextveraenderung!=0)veraenderungen.push(this.insertedhtmlelements[x]);
-	}
-	for(x=0;x<this.angezeigtezeichen.length;x++){
-		veraenderungen.push(this.angezeigtezeichen[x]);
-	}
-	veraenderungen.sort(function(a, b){return a.posinall - b.posinall});
-	//console.log("veraenderungen:");
-	//console.log(veraenderungen);
-	//veraenderungen sind jetzt sortiert und enthalten alle insertedhtmls und angezeigte zeichen
-	var aktpos=position;
-	var onlink=false;
-	for(x=0;x<veraenderungen.length;x++){
-		//jetzt veraenderungen durchlaufen:
-		if(veraenderungen[x].posinall<aktpos){
-		//console.log("aktposalt:"+aktpos);
-			aktpos+=veraenderungen[x].wystextveraenderung;
-		//console.log("veränderung gefunden:"+veraenderungen[x].mdcode + " -> "+veraenderungen[x].wystextveraenderung);
-		//console.log("aktpos:"+aktpos);
-		}
-		//console.log("posinall:"+veraenderungen[x].posinall);
-		//console.log(veraenderungen[x]);
-		if(aktpos>veraenderungen[x].posinall &&
-			aktpos<veraenderungen[x].posinall+veraenderungen[x].mdcode.length  &&
-			veraenderungen[x].typ=="link" && !veraenderungen[x].angezeigteszeichen){
-				//auf link gelandet
-				//stimmt nicht unbedingt: wenn im link noch md-code ist stimmts evtl. nicht
-				//TODO: md-code im link-fehler abfangen
-				//schaue nach, ob weitere veränderungen innerhalb des links passieren:
-				var verinlink = 0;
-				for (var vx=x+1;vx<veraenderungen.length;vx++){
-					if(veraenderungen[vx].posinall <= veraenderungen[x].posinall+veraenderungen[x].mdcode.length &&
-					  veraenderungen[vx].posinall > veraenderungen[x].posinall){
-						//veränderung ist innerhalb des links:
-						verinlink+=veraenderungen[vx].wystextveraenderung;
-					}
-				}
-
-				//console.log("auf link gelandet an "+aktpos + " verinlink:"+verinlink);
-				//console.log(veraenderungen[x]);
-				//console.log("wirklich auf link gelandet?");
-				if(aktpos<veraenderungen[x].posinall+veraenderungen[x].mdcode.length-verinlink){
-					//console.log("ja, wirklich");
-					aktpos=aktpos-veraenderungen[x].wystextveraenderung+1;
-					//if(veraenderungen[x+1]!=null && veraenderungen[x+1].angezeigteszeichen &&
-					//veraenderungen[x+1].typ=="link")aktpos--;
-					onlink=true;
-				}
-		}
-		//console.log
-		if(veraenderungen[x].typ=="link" && veraenderungen[x].angezeigteszeichen &&
-		onlink){
-			//link ist bereits angezeigt:mache daher aktpos wieder rückgängig?
-				aktpos--;
-				aktpos-=veraenderungen[x].wystextveraenderung;
-				//console.log("rückgängig gemacht auf:"+aktpos);
-		}
-		if(veraenderungen[x].typ=="proposedsymbol" && aktpos<veraenderungen[x].posinall){
-				//auf proposedsymbol gelandet
-				//console.log("auf proposedsymbol gelandet an"+aktpos);
-				//aktpos=aktpos-veraenderungen[x].wystextveraenderung;//+veraenderungen[x].mdcode.length;
-		}
-
-	}
-	return aktpos;
-}
 
 mapping.prototype.pageAtPosition = function(position){
 	var result = 0;
@@ -302,7 +210,6 @@ function emdparser(text){
 	this.parsedcode = text;  //string with the code parsed to html
 	this.errorcode = text; //string with the code parsed to html including error-spans and error-description-spans
 	this.errorsourcecode = text; //string with the code including error-spans
-	this.errorlines = new Array(); //wird nicht genutzt - war gedacht als direktes einpflegen in errorlines während dem parsen
 	this.lineswitherrors = new Array(); // array with strings of errorcode parsed as lines into array
 	this.errorsourcelines = new Array(); //array with strings of errorsourcecode parsed as lines into array
 	this.imgurlpre = "images/"; //string with the beginning for image-urls, depending on the server and the nodeid, maybe not necesary
@@ -326,17 +233,6 @@ function emdparser(text){
 		//this.parseelemente.push(new parseobjekt("`","`","<code>","</code>","code")); //darf auch nicht über eine zeile hinausgehen
 		//this.parseelemente.push(new parseobjekt("-----","\n","<hr>","","pagebreak")); //ist ein zeilending, kein einfaches element
 	}
-	//wysiwyg-erweiterung:
-	//insertedhtmlinline wird benutzt, um später die position genauer herauszufinden
-	this.insertedhtmlinline = new Array(); //array with inserted htmlcodes
-	for(var ix=0;ix<this.lines.length;ix++)this.insertedhtmlinline.push(new Array());
-	//zeilenansatz funktioniert nicht für umgekehrt, daher füg ich mal ein weiteres array hinzu
-	//dieses array speichert die position des changes ab, den typus des changes sowie die effektive länge des gekürzten oder längeren textes
-	//bspw: * wird zu 1, da html-code NICHT mitgerechnet wird, der text also nachher um 1 zeichen kürzer ist
-	//this.veraenderungen = new Array(); //array with array of changes made at position (typ, position, laenge) -> funktioniert so nicht. hol ich aus insertedhtmlinline
-	//es müssen die letzten angezeigten zeichen gespeichert werden um den effekt zu vermeiden, dass er springt wenn
-	this.angezeigtezeichen = new Array();
-	this.originallinien = new Array();
 
 	//neuneuneu: ansatz über mapping-objekt:
 	this.map = new mapping(this);
@@ -389,254 +285,6 @@ emdparser.prototype.positionOfLine = function(line){
 };
 
 
-/* parsewysiwyghtml:
-* erstellt html für wysiwyg
-* inklusive cursor oder selection
-*/
-emdparser.prototype.parsewysiwyghtml= function(){
-	var temptext = ""; //wird aus lines gewonnen:
-	var errorlines=new Array();
-	console.log("parsewysiwyghtml");
-	var lines = this.returnparsedlines(this.parsedcode);
-	var sourcelines = this.returnparsedlines(this.sourcecode);
-	var proposedsymbols = new Array(); //linenr, symbol-code
-	//parsefehlerbearbeitung: symbol vorschlagen
-	//nur einen gleichen parseerror anzeigen lassen pro zeile, first comes first:
-	//var lasterrorline;
-	console.log(this.perror);
-	for(var x=0;x<this.perror.length;x++){
-			//if(lasterrorline != this.perror[x].line){
-				//console.log(this.perror[x].errorclass);
-				var proposedsymbol = this.perror[x].proposeEnding();
-				//proposedsymbols[x]=proposedsymbol;
-				if(proposedsymbol != ""){
-						if(proposedsymbols[this.perror[x].line]==null)proposedsymbols[this.perror[x].line]="";
-					//	proposedsymbols[this.perror[x].line]+='<span class="proposedsymbol">'+proposedsymbol+'</span>';
-						proposedsymbols[this.perror[x].line]= proposedsymbol+" "+proposedsymbols[this.perror[x].line];
-					//proposedsymbols[this.perror[x].line]= proposedsymbol;
-					 //lines[this.perror[x].line]+='<span class="proposedsymbol">'+proposedsymbol+'</span>';
-					if(lines[this.perror[x].line].indexOf("<br>">-1)){
-						lines[this.perror[x].line] = lines[this.perror[x].line].replace("<br>","") + "<br>";
-					}
-				}
-
-			//}
-			//lasterrorline = this.perror[x].line;
-	}
-
-	//wysiwyg: cursor an position setzen:
-
-	var texteditor = document.getElementById("quelltext");
-	var altecursorposition = texteditor.selectionEnd;
-	var alteselectionstart = texteditor.selectionStart;
-	var selectiondirection = texteditor.selectionDirection;
-	var neuecursorline = this.lineAtPosition(altecursorposition);
-	//console.log(this.positionOfLine(neuecursorline));
-	var cursorinlinealt = altecursorposition - this.positionOfLine(neuecursorline);
-	var cursorinlineneu = cursorinlinealt;
-	//jetzt zeile durchgehen und sonderzeichen zählen:
-	var emdpositionen = new Array();
-	var aktuellezeile = lines[neuecursorline];
-	//console.log(neuecursorline + "vs" + this.insertedhtmlinline.length);
-	if(this.insertedhtmlinline[neuecursorline] == null){
-		this.insertedhtmlinline[neuecursorline] = new Array();
-		console.log("wasn los");
-	}
-	if(alteselectionstart < altecursorposition){
-	//es wurde etwas per maus oder tastatur ausgewählt:
-	//welche richtung? muss gleichlang sein
-		var seldir = "bacw"
-		if(selectiondirection=="forward")seldir="forw";
-		var neueselectionstartline = this.lineAtPosition(alteselectionstart);
-		var neueselectionendline = neuecursorline;
-		//alert(neueselectionstartline+" bis "+neueselectionendline);
-		this.originallinien[0]=neueselectionstartline;
-		this.originallinien[1]=neueselectionendline;
-		console.log("neue markierung von zeile"+neueselectionstartline+" bis "+neueselectionendline);
-		this.map.resetVeraenderungen();
-
-		for(var selline=neueselectionstartline;selline<=neueselectionendline;selline++){
-			//tausche den html-text durch originaltext aus:
-			//if(this.lineswithhtml[selline].substring(0,1)!="h") //nicht machen bei titeln
-			//replace < mit ersatzzeichen, damit html nicht gebrochen wird
-			lines[selline]=this.replace(sourcelines[selline],"<","&lt;")+"<br>";
-			this.map.ganzeZeileVeraendern(selline);
-			//zeichen zum austauschen: ≤ 〈 ‹∠
-			//h-tags anzeigen weil sonst nervig springt -> geht nicht, weil sonst mapping zerstört wird
-			// wenn gewünscht ist, muss mapping angepasst werden
-			//if(this.lineswithhtml[selline]=="h1")lines[selline]='<h1>'+lines[selline]+'</h>';
-			//this.map.addVeraenderung({line:selline, pos:0, mdcode:"#",html:"<h1>",typ:"angezeigteszeichen",wystextveraenderung:0});
-
-		}
-		//setze selection-start und end-tag:
-		var selstartinline = alteselectionstart - this.positionOfLine(neueselectionstartline);
-		var selendinline = cursorinlinealt;
-		if(neueselectionstartline == neueselectionendline){
-			//in der selben linie:
-			lines[neueselectionstartline] = this.replace(sourcelines[neueselectionstartline].substring(0,selstartinline),"<","&lt;") +
-																			'<span class="wysiwygselection '+seldir+'">' +
-																			this.replace(sourcelines[neueselectionstartline].substring(selstartinline,selendinline),"<","&lt;")+
-																			'</span>' +
-																			this.replace(sourcelines[neueselectionstartline].substring(selendinline),"<","&lt;")
-																			+'<br>';
-		} else {
-			lines[neueselectionstartline]= this.replace(sourcelines[neueselectionstartline].substring(0,selstartinline),"<","&lt;")+
-										'<span class="wysiwygselection '+seldir+'">' +
-										this.replace(sourcelines[neueselectionstartline].substring(selstartinline),"<","&lt;")
-										+'<br>';
-			lines[neueselectionendline]=this.replace(sourcelines[neueselectionendline].substring(0,selendinline),"<","&lt;")+
-																	'</span>' +
-																	this.replace(sourcelines[neueselectionendline].substring(selendinline),"<","&lt;")
-																	+'<br>';
-		}
-		/*alt:
-		var selstartinline = alteselectionstart - this.positionOfLine(neueselectionstartline);
-		lines[neueselectionstartline]=lines[neueselectionstartline].substring(0,selstartinline)+'<span class="wysiwygselection '+seldir+'">'+lines[neueselectionstartline].substring(selstartinline);
-		//alert(lines[neueselectionstartline]);
-		var selendinline = cursorinlinealt;
-		if(neueselectionstartline == neueselectionendline)selendinline+=36; //alert("zeilengleichheit");}
-		lines[neueselectionendline]=lines[neueselectionendline].substring(0,selendinline)+'</span>'+lines[neueselectionendline].substring(selendinline);
-		*/
-		//alert(lines[neueselectionendline]);
-		//fast fertig - jetzt muss noch überprüft werden ob html zerschossen wird,
-		//also ob selectionanfang oder selectionende innerhalb
-		//tabelle, ol, ul, code, quote oder text ist:
-		var linecode = this.lineswithhtml[neueselectionstartline];
-		if(linecode=="table" || linecode =="ol" || linecode == "ul" || linecode =="code" || linecode=="quote" || linecode=="text"){ //zitat fehlt noch, ist aber eh grad kaputt
-			var preselectionline = neueselectionstartline;
-			while(preselectionline>=0 && this.lineswithhtml[preselectionline]==linecode)preselectionline--;
-			preselectionline++; //wieder auf richtige linie bringen
-			this.originallinien[0]=preselectionline;
-			for(var presel=preselectionline;presel<neueselectionstartline;presel++){
-				lines[presel]=this.replace(sourcelines[presel],"<","&lt;")+"<br>"; //sourcelines[presel]+"<br>";
-				this.map.ganzeZeileVeraendern(presel);
-			}
-		}
-		linecode = this.lineswithhtml[neueselectionendline];
-		if(linecode=="table" || linecode =="ol" || linecode == "ul" || linecode =="code" || linecode=="quote" || linecode=="text"){ //zitat fehlt noch, ist aber eh grad kaputt
-			var afterselectionline = neueselectionendline;
-			while(afterselectionline<this.lineswithhtml.length && this.lineswithhtml[afterselectionline]==linecode)afterselectionline++;
-			this.originallinien[1]=afterselectionline;
-			for(var asel=neueselectionendline+1;asel<afterselectionline;asel++){
-				lines[asel]=this.replace(sourcelines[asel],"<","&lt;")+"<br>"; //sourcelines[asel]+"<br>";
-				this.map.ganzeZeileVeraendern(asel);
-			}
-		}
-
-	}else {
-		this.map.resetVeraenderungen();
-		//es wurde nichts ausgewählt:
-		var cursormdinline = cursorinlinealt;
-			var wysposobj = this.map.positionInHtml(cursorinlinealt,neuecursorline);
-			var lastelement = wysposobj.lastelement;
-			var nextelement = wysposobj.nextelement;
-		//wyscodeposobj = {position, onelements[], posinelements[], lastelement, nextelement};
-			var wyspos = wysposobj.position;
-			var insertbeforecursor = "";
-			var insertaftercursor = "";
-			var objbeforecursor = new Array();
-			var objaftercursor = new Array();
-			if(lastelement !=null && lastelement.pos+lastelement.mdcode.length == cursormdinline){
-				//lastelement grenzt an aktuelle cursorposition. einfache objekte anzeigen, links und images nix tun:
-				if(lastelement.typ!= "image" && lastelement.typ != "link" && lastelement.typ!= "<" && lastelement.typ!="hotcode"){ //könnte auch im objekt bereits gesetzt werden
-					insertbeforecursor+=lastelement.mdcode;
-					this.map.addVeraenderung({line:lastelement.line, pos:lastelement.pos,
-						posinall:lastelement.posinall, typ:lastelement.typ,
-						mdcode:lastelement.mdcode, html:lastelement.html,
-						wystextveraenderung:0-lastelement.wystextveraenderung});
-						if(lastelement.typ=="start" && lastelement.brotherelement!= null)objaftercursor.push(lastelement.brotherelement);
-				} else if(lastelement.typ=="image" || lastelement.typ=="link"){
-					objbeforecursor.push(lastelement);
-				}
-			}
-			if(wysposobj.onelements!=null){
-				//es wurde auf mind. einem element gelandet
-				for(var onx=wysposobj.onelements.length-1;onx>=0;onx--){
-					//tausche von hinten nach vorne aus:
-					var elem = wysposobj.onelements[onx];
-					if(elem.typ =="link"){
-
-						//link wurde gefunden. text muss ausgetauscht werden:
-						elem.linktext = lines[elem.line].substring(elem.htmlpos + elem.linkurl.length +"<a href=''>".length, lines[elem.line].indexOf("</a>",elem.htmlpos));
-						lines[elem.line] = lines[elem.line].substring(0,elem.htmlpos)+
-										"[" + elem.linktext +
-										"](" + elem.linkurl + ")" +
-										lines[elem.line].substring(elem.htmlpos+elem.linktext.length+elem.linkurl.length + "<a href=''></a>".length);
-						this.map.addVeraenderung({line:elem.line, pos:elem.pos, mdcode:elem.mdcode, angezeigteszeichen:true, typ:elem.typ, wystextveraenderung:0-elem.wystextveraenderung});
-					} else if(elem.typ=="image"){
-						//image wurde gefunden. text muss ausgetauscht werden:
-						lines[elem.line] = lines[elem.line].substring(0, elem.htmlpos) + elem.mdcode + lines[elem.line].substring(elem.htmlpos+elem.html.length);
-						this.map.addVeraenderung({line:elem.line, pos:elem.pos, mdcode:elem.mdcode, angezeigteszeichen:true,typ:elem.typ, wystextveraenderung:0-elem.wystextveraenderung});
-					} else if(elem.typ=="<" || elem.typ=="hotcode"){
-						//mach ich da was?
-					}else {
-						insertbeforecursor+=elem.mdcode.substring(0,wysposobj.posinelements[onx]);
-						insertaftercursor+=elem.mdcode.substring(wysposobj.posinelements[onx]);
-						this.map.addVeraenderung({line:elem.line, pos:elem.pos, posinall:elem.posinall, typ:elem.typ, mdcode:elem.mdcode, html:elem.html, wystextveraenderung:0-elem.wystextveraenderung});
-					}
-				}
-			}		//text ist jetzt ausgetauscht falls cursor auf einem mdcode-element sein sollte, position ist richtig
-			if(nextelement!=null && cursormdinline == nextelement.pos){
-				//es folgt ein objekt direkt nach dem cursor:
-				if(nextelement.typ!="link" && nextelement.typ!="image" && nextelement.typ!="hotcode" &&nextelement.typ!="<"){
-					console.log("an einem objekt rechts dran:"+nextelement.mdcode+" darstellen");
-					insertaftercursor+=nextelement.mdcode;
-					this.map.addVeraenderung({line:nextelement.line, pos:nextelement.pos, posinall:nextelement.posinall, typ:nextelement.typ, mdcode:nextelement.mdcode, html:nextelement.html, wystextveraenderung:0-nextelement.wystextveraenderung});
-				}
-			}
-			cursorinlineneu = wyspos;
-			//console.log("cursor gesetzt von"+cursorinlinealt+"auf:"+cursorinlineneu);
-			//console.log(wysposobj);
-			//console.log(this.map);
-			//proposedsymbols
-		var proposedsymbol = proposedsymbols[neuecursorline];
-		var proposedsymbolhtml = "";
-		if(proposedsymbol==null)proposedsymbol=""; else proposedsymbolhtml = '<span class="proposedsymbol">'+proposedsymbol+'</span>';
-
-		//console.log("proposedsymbol:"+proposedsymbol + " neuecursorline:"+neuecursorline);
-		//console.log(proposedsymbols);
-
-		//cursor setzen
-		//überarbeiten: cursor sollte das nächste wort umfassen und links border haben und nach links "collapsen" anstelle zum ende.
-		//sonst bricht der vorm wort um und dadurch kann nicht ordentlich am anfang der linie runter gegangen werden
-		//also hier die line durchsuchen bis zum nächsten leerzeichen und bis dahin das span ziehen
-		var nextspace = lines[neuecursorline].indexOf(" ",cursorinlineneu);
-		if(nextspace==-1)nextspace=cursorinlineneu;
-		lines[neuecursorline] = lines[neuecursorline].substring(0,cursorinlineneu)
-											+ insertbeforecursor
-											+ '<span class="cursor">&zwj;'
-											//+ lines[neuecursorline].substring(cursorinlineneu,nextspace) //klappt noch nicht so richtig
-											+ '</span>'
-											+ insertaftercursor
-											//+ '<span class="proposedsymbol">'
-											+ proposedsymbolhtml //+ "</span>"
-											+lines[neuecursorline].substring(cursorinlineneu);
-										//	+lines[neuecursorline].substring(nextspace); //klappt noch nicht so richtig
-
-		//wenn cursor einen buchstaben bekommt sollte es auch gemerkt werden:
-		//this.angezeigtezeichen.push(new Array(neuecursorline, cursorinlinealt,"|")); //zeichen merken
-		this.map.addVeraenderung({line:neuecursorline, pos:cursorinlinealt, typ:"cursor", mdcode:"|", wystextveraenderung:-1});
-		//auch die proposedsymbols sollten gemerkt werden
-		//this.angezeigtezeichen.push(new Array(neuecursorline, cursorinlinealt, proposedsymbol));
-		this.map.addVeraenderung({line:neuecursorline, pos:cursorinlinealt, typ:"proposedsymbol", mdcode:proposedsymbol, wystextveraenderung:0-proposedsymbol.length});
-
-	}//else vom if(selection)
-
-	//alle lines fertig: erstelle ein textstring daraus und übergebe es an this.errorcode:
-	for(var x=0;x<lines.length;x++)temptext += lines[x] + "\n";
-	//doppelte leerzeichen entfernen:
-	if(temptext.indexOf("  ")>-1)temptext = this.replace(temptext,"  ","&nbsp; ");
-	if(temptext.indexOf("\n ")>-1)temptext=this.replace(temptext,"\n ","\n&nbsp;");
-	if(temptext.indexOf(" <br>")>-1)temptext=this.replace(temptext," <br>","&nbsp;<br>"); //braucht firefox
-	//if(temptext.indexOf("\t")>-1)temptext = this.replace(temptext,"\t","&nbsp;&nbsp;&nbsp; ");
-	if(temptext.indexOf("\t")>-1)temptext = this.replace(temptext,"\t","&emsp;");
-	//if(temptext.indexOf("<")>-1)temptext = this.replace(temptext,"<","&lt;");
-
-	this.errorcode = temptext;
-	this.lineswitherrors = errorlines;
-
-
-};
 /* parseerrorsourcehtml erstellt html für die erweiterte fehlerdarstellung des sourcecodes
 *
 */
@@ -652,60 +300,7 @@ emdparser.prototype.parseerrorsourcehtml= function(){
 	this.errorsourcecode = temptext;
 };
 
-/*	parseerrorsourcebackground erstellt einen string für das #errorsourcecodelayer
- *	zur anzeige hinter dem texteditor. also den gleichen text wie errorsourcecodelayer, nur
- * 	mit den errorspans im hintergrund
- * 	holt sich den code vom sourcecode, gibt ergebnis als string zurück
-*/
-emdparser.prototype.parseerrorsourcebackground = function(){
-	//this.parsenachzeilen(); //erstmal aktualisieren
-	var lines = this.returnparsedlines(this.replace(this.sourcecode,"<","&lt;"));
-	//this.returnparsedlines(this.replace(this.replace(this.sourcecode,"<","&lt;"),"\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"));
-	var temptext = "";
-	/* dont remember why i wrote this but it doesnt have any effect so get rid of it:
-	for(var x=0;x<lines.length;x++){
-		var pseudoline="&nbsp;";
-		for(var y;y<lines[x].length;y++)pseudoline+=pseudoline;
-		//lines[x]=pseudoline+".";
-	} */
-	//nur einen gleichen error anzeigen lassen pro zeile, first comes first:
-	var lasterrorline;
-	var x;
-	//* vor ** anzeigen lassen:
-	var doppelsternchen = new Array();
-	for(x=0;x<this.perror.length;x++){
-			if(lasterrorline != this.perror[x].line){
-				console.log(this.perror[x].errorclass);
-				//if(this.perror[x].errorclass=="bold")doppelsternchen.push(x);
-				lines[this.perror[x].line]=this.perror[x].encapsulehtml(lines[this.perror[x].line]);
-				var proposedsymbol = this.perror[x].proposeEnding();
-				if(proposedsymbol != ""){
-					if(this.perror[x].errorclass=="bold")doppelsternchen.push(x); else
-					 lines[this.perror[x].line]+='<span class="proposedsymbol">'+proposedsymbol+'</span>';
-				}
 
-			}
-			lasterrorline = this.perror[x].line;
-
-	}
-	//doppelsternchenfehler anzeigen lassen:
-	for(x=0;x<doppelsternchen.length;x++)lines[this.perror[doppelsternchen[x]].line]+='<span class="proposedsymbol">' + this.perror[doppelsternchen[x]].proposeEnding() + '</span>';
-		//+'<span class="errordescription">'+this.perror[x].errorclass+': '+this.perror[x].errortext+"</span>";
-	for(x=0;x<lines.length;x++){
-	//temptext+='<div><span class="linenr">'+x+'</span>'+this.replace(lines[x],"  ","&nbsp; ")+'&nbsp;</div>\n';
-	//divs funktionieren im firefox, aber nicht im chrome, daher lieber mit br arbeiten:
-	var leerzeichen="";
-	if(lines[x].length<1)leerzeichen="&nbsp;";
-	temptext +='<span class="linenr">'+x+'</span><span class="backgroundline">'+this.replace(lines[x],"  ","&nbsp; ")+leerzeichen+'</span><br>\n';
-
-
-	}
-	temptext +="&nbsp;";
-	//temptext += "</ol>";
-	//if(temptext.indexOf('backgroundline"> ')>-1)this.replace(temptext,'backgroundline"> ','backgroundline">&nbsp;');
-	return temptext;
-
-};
 /* renderCodeeditorBackground:
  *  makes use of the map to render background for md-Code-Editor
  */
@@ -1842,8 +1437,7 @@ emdparser.prototype.parseMap = function(){
 	      temptext = temptext.substring(0,actpos)+substitutewitheuro(symbol.length)+temptext.substring(actpos+symbol.length);
 	      this.map.addElement({
 	        line:x,pos:actpos,posinall:linestartpos+actpos,
-	        html:newsymbol,mdcode:symbol,typ:"<",
-	        wystextveraenderung:0
+	        html:newsymbol,mdcode:symbol,typ:"<"
 	      });
 	    }
 		}
@@ -1865,8 +1459,7 @@ emdparser.prototype.parseMap = function(){
       ersatz = ersatz.substring(0,rauten.length);
       this.map.addElement({
 				line:x,pos:0,html:"<h"+rauten.length+">",mdcode:rauten,
-				typ:"start", tag:"title", htmlend:"</h"+rauten.length+">",
-				wystextveraenderung:rauten.length
+				typ:"start", tag:"title", htmlend:"</h"+rauten.length+">"
 			});
 			this.lineswithhtml[x]="h"+rauten.length;
 			var rautentext = ["", "H1", "H2", "H3"];
@@ -1932,7 +1525,7 @@ emdparser.prototype.parseMap = function(){
 			// add ul/ol-tag element to map:
 		  this.map.addElement({
 		    line:x, pos:0, html:liststarthtml, mdcode:"", typ:"start",
-		    wystextveraenderung:0, weight:1
+		    weight:1
 		  });
 		  var listzeichenarr = [". ", ".) ", ") ", ") ", ") ", "- ", "* ", "+ "];
 		  var listzeichen = listzeichenarr[nlregnr];
@@ -1940,7 +1533,7 @@ emdparser.prototype.parseMap = function(){
 			//add first li-tag element to map:
 		  this.map.addElement({
 		    line:x, pos:0, html:"<li>", mdcode: listmdcode,
-		    typ:"start", wystextveraenderung:listmdcode.length,
+		    typ:"start",
 		    tag:listtyp+"-li-start", weight:2
 		  });
 		  //ol/ul-start-tag + first li-tag are now set
@@ -1969,7 +1562,7 @@ emdparser.prototype.parseMap = function(){
 		      //other listtype found: add br to last line
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"<br>", mdcode:"",
-		        typ:"end", wystextveraenderung:0,
+		        typ:"end",
 		        tag:listtyp+"-sublist-start-br", weight:3+listweight
 		      });
 		      sublist = true;
@@ -1992,7 +1585,7 @@ emdparser.prototype.parseMap = function(){
 		      //found other element of origlist, so close sublist in previous line:
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		        typ:"end", wystextveraenderung:0,
+		        typ:"end",
 		        tag:listtyp+"-sublist-end-li", weight:3+listweight,
 						whitespaces:listspaces
 		      });
@@ -2001,7 +1594,7 @@ emdparser.prototype.parseMap = function(){
 					listmdcode = lines[listx].substring(0,lines[listx].indexOf(listzeichen)+listzeichen.length);
 		      this.map.addElement({
 		        line:listx, pos:0, html:"<li>", mdcode:listmdcode,
-		        typ:"start", wystextveraenderung:listmdcode.length,
+		        typ:"start",
 		        tag:listtyp+"-start-li", weight:0,
 						whitespaces:listspaces
 		      });
@@ -2013,7 +1606,7 @@ emdparser.prototype.parseMap = function(){
 		      //found other element of origlist without being in a sublist
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		        typ:"end", wystextveraenderung:0,
+		        typ:"end",
 		        tag:listtyp+"-sublist-end-li", weight:3+listweight,
 						whitespaces:listspaces
 		      });
@@ -2021,7 +1614,7 @@ emdparser.prototype.parseMap = function(){
 					listmdcode = lines[listx].substring(0,lines[listx].indexOf(listzeichen)+listzeichen.length);
 		      this.map.addElement({
 		        line:listx, pos:0, html:"<li>", mdcode:listmdcode,
-		        typ:"start", wystextveraenderung:listmdcode.length,
+		        typ:"start",
 		        tag:listtyp+"-start-li", weight:0,
 						whitespaces:listspaces
 		      });
@@ -2033,7 +1626,7 @@ emdparser.prototype.parseMap = function(){
 		      //no listelement in line - add /li and end the loop
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		        typ:"end", wystextveraenderung:0,
+		        typ:"end",
 		        tag:listtyp+"-end-li", weight:3+listweight,
 						whitespaces:listspaces
 		      });
@@ -2046,7 +1639,7 @@ emdparser.prototype.parseMap = function(){
 		    //last line is still a sublist, so one /li is missing
 		    this.map.addElement({
 		      line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		      typ:"end", wystextveraenderung:0,
+		      typ:"end",
 		      tag:listtyp+"sublist-end-li", weight:2,
 					whitespaces:listspaces
 		    });
@@ -2056,7 +1649,7 @@ emdparser.prototype.parseMap = function(){
 		  //if(sublist)sublistweight=3;
 		  this.map.addElement({
 		    line:listx-1, pos:lines[listx-1].length, html:"</"+listtyp+">", mdcode:"",
-		    typ:"end", wystextveraenderung:0,
+		    typ:"end",
 		    tag:listtyp+"-end-li", weight:4+listweight
 		  });
 			//set lineswithhtml:
@@ -2080,30 +1673,23 @@ emdparser.prototype.parseMap = function(){
   			//console.log("wasn los? qlc="+qlc+" lines-länge:"+lines.length + "lines[qlc]="+lines[qlc]);
   			while(qlc<lines.length && lines[qlc].substring(0,2)=="> " ){ //}&& confirm("weiter in line?"+qlc+"llenght:"+lines.length)){
   				lines[qlc] = "€€"+lines[qlc].substring(2);
-  				//this.veraenderungen.push(new Array("quote",laengebiszeileglc,2));
-  				//laengebiszeileglc += lines[qlc].length;
   				qlc++;
   			}
-  			//if(confirm("abbrechen?"))break;
   			//console.log("quote gefunden von"+x+" bis:"+qlc)
   			qlc--;
-  			//lines[x]="<quote>"+lines[x];
-
   			if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-  			this.map.addElement({line:x,pos:0,html:"<quote>",mdcode:"> ",typ:"start",wystextveraenderung:2});
+  			this.map.addElement({line:x,pos:0,html:"<quote>",mdcode:"> ",typ:"start"});
 
   			for(var ql=x;ql<qlc;ql++)this.map.addElement({line:ql,pos:lines[ql].length,
-          html:"<br>",mdcode:"",typ:"end",
-          wystextveraenderung:0
+          html:"<br>",mdcode:"",typ:"end"
         })//lines[ql]+="<br>";
   			//console.log("quotes br-tags abgeschlossen");
   			//lines[qlc]+="</quote>";
         this.map.addElement({line:qlc,pos:lines[qlc].length,
-          html:"</quote>",mdcode:"",typ:"end",
-          wystextveraenderung:0
+          html:"</quote>",mdcode:"",typ:"end"
         })
   			for(var qil=x+1;qil<=qlc;qil++){
-  				this.map.addElement({line:qil,pos:0,html:"",mdcode:"> ",typ:"start",wystextveraenderung:2});
+  				this.map.addElement({line:qil,pos:0,html:"",mdcode:"> ",typ:"start"});
   			}
   			letztezeile = qlc;
   			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
@@ -2161,10 +1747,10 @@ emdparser.prototype.parseMap = function(){
 											this.lineswithhtml[x]="data";
 											this.lineswithhtml[dataende]="data";
 										}
-			              var mapstartel = {line:x,pos:0,html:"<section>",mdcode:lines[x],typ:"start",wystextveraenderung:0};
-			    					var mapendel = {line:dataende,pos:0,html:"</section>",mdcode:lines[dataende],typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
+			              var mapstartel = {line:x,pos:0,html:"<section>",mdcode:lines[x],typ:"start"};
+			    					var mapendel = {line:dataende,pos:0,html:"</section>",mdcode:lines[dataende],typ:"end", brotherelement: mapstartel};
 			    					mapstartel.brotherelement = mapendel;
-			    					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</section>",mdcode:"",typ:"end",wystextveraenderung:0});
+			    					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</section>",mdcode:"",typ:"end"});
 			    					//save dataobject:
 			    					if(this.dataobjects == null)this.dataobjects = new Array();
 										if(datahead.indexOf("//")>-1){
@@ -2208,11 +1794,11 @@ emdparser.prototype.parseMap = function(){
 			          //codeend found:
 			          this.map.addElement({
 			            line:x,pos:0,html:"<code>",mdcode:lines[x],typ:"start",
-			            tag:"codestart", wystextveraenderung:lines[x].length
+			            tag:"codestart"
 			          });
 			          this.map.addElement({
 			            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"start",
-			            tag:"codeende",wystextveraenderung:lines[codeende].length
+			            tag:"codeende"
 			          });
 			          for(var cx = x;cx<=codeende;cx++){
 			            lines[cx]=substitutewitheuro(lines[cx].length); //substitute line to avoid further parsing
@@ -2256,12 +1842,12 @@ emdparser.prototype.parseMap = function(){
 						//codeend found in same line:
 						var mapcstart = {
 							line:x, pos:codestart, html:"<code>",mdcode:"`",
-							typ:"start", wystextveraenderung:1,
+							typ:"start",
 							tag: "inlinecodestart"
 						};
 						var mapcend = {
 							line:x, pos:codeend, html:"</code>", mdcode:"`",
-							typ:"end", wystextveraenderung:1,
+							typ:"end",
 							tag:"inlinecodeend", brotherelement:mapcstart
 						};
 						mapcstart.brotherelement=mapcend;
@@ -2315,7 +1901,7 @@ emdparser.prototype.parseMap = function(){
             this.map.addElement({
               line:x, pos:imgpos, html: imghtml,
               mdcode:lines[x].substring(imgpos,imgposend+1),
-              typ:"image", wystextveraenderung:5+imgurl.length+imgalt.length,
+              typ:"image",
               src:imgurl, midpos:imgposmid, endpos:imgposend,
               alt:imgalt
             });
@@ -2389,8 +1975,7 @@ emdparser.prototype.parseMap = function(){
           }else{
             this.lineswithhtml[x] = "pagebreak";
             this.map.addElement({
-              line:x,pos:0,html:"<hr>",mdcode:lines[x],typ:"pagebreak",
-              wystextveraenderung:lines[x].length
+              line:x,pos:0,html:"<hr>",mdcode:lines[x],typ:"pagebreak"
             });
             this.map.pageend.push({line:x-1, posinall: this.map.lineend[x-1]});
             this.map.pagestart.push({line:x+1, posinall: this.map.linestart[x+1]});
@@ -2438,9 +2023,9 @@ emdparser.prototype.parseMap = function(){
     							//everything is good, save the map-parsing:
     							this.lineswithhtml[footnoteline]="footnote";
     							var fstart = {line:x,pos:actpos,html:"<sup>",mdcode:"[^",
-    								typ:"start",wystextveraenderung:2, footnoteline:footnoteline, tag:"footnote-anchor"};
+    								typ:"start", footnoteline:footnoteline, tag:"footnote-anchor"};
     							var fend = {line:x, pos:endpos, html:"</sup>",typ:"end",mdcode:"]",
-    								brotherelement:fstart, wystextveraenderung:1, tag:"footnote-anchor"};
+    								brotherelement:fstart, tag:"footnote-anchor"};
     							fstart.brotherelement = fend;
     							var fnote = {line:footnoteline, pos:0, typ:"start",
     								html:"<p>"+footname+":",mdcode:footident,
@@ -2552,13 +2137,13 @@ emdparser.prototype.parseMap = function(){
           if(found){
             var mapstart = {
               line:x, pos:startpos, html:pelement.htmlstart,
-              mdcode:mdstart, typ:"start",wystextveraenderung:mdstart.length,
+              mdcode:mdstart, typ:"start",
 							weight:1
             };
             var mapend = {
               line:endline, pos:endpos, html:pelement.htmlend, mdcode:mdend,
 							typ:"end",
-              wystextveraenderung:mdend.length, brotherelement:mapstart,
+              brotherelement:mapstart,
 							weight:1
             };
             mapstart.brotherelement = mapend;
@@ -2595,836 +2180,8 @@ emdparser.prototype.parseMap = function(){
 }
 
 
-/* parsenachzeilen: - soll ersetzt werden, kommt weg
- * parst emd-text zeilenweise (this.sourcecode)
- * speichert geparsten und mit html versehenen code in this.parsedcode
- * speichert gefundene fehler in this.perror - array
- * speichert zeilenmuster in this.lineswithhtml (h1-4, ul, ol, quote, table, code, text )
-*/
-var parsetest = true;
-emdparser.prototype.parsenachzeilen = function(parsemaptest){
-	//testweise mal ausstellen die funktion und stattdessen parseMap aufrufen:
-	if(parsetest){
-	this.parseMap();
-	return;
-	}
-	//erstmal nach zeilen, dann ist auch die * aufzählung weg:
-	//var lines = new Array();
-	var lines = this.returnparsedlines(this.sourcecode);
-	var pseudolines = this.returnparsedlines(this.sourcecode);
-	var sourcelines = this.returnparsedlines(this.sourcecode);
-	var text = this.sourcecode;
-	//alert("nach zeilen scannen ergebnis:\n"+lines.toString());
-	var letztezeile=0;
-	//var laengebiszeile=0;
-	//< aussortieren und durch &lt; ersetzen:
-
-	for(var lt=0;lt<lines.length;lt++){
-		var symbol = "<";
-		var newsymbol = "&lt;"
-		var temptext = lines[lt];
-		var indexinorig = -1;
-		var indexinhtml = 0;
-		while(temptext.indexOf(symbol)>=0){
-			indexinhtml = temptext.indexOf(symbol);
-			indexinorig = pseudolines[lt].indexOf(symbol,indexinorig+1);
-			temptext = temptext.substring(0,temptext.indexOf(symbol))+newsymbol+temptext.substring(temptext.indexOf(symbol)+symbol.length);
-			//this.insertedhtmlinline[lt].push(new Array(indexinorig,"&","&lt;"))
-			this.map.addElement({line:lt,pos:indexinorig,html:"&lt;",mdcode:"<",typ:"<",wystextveraenderung:0});
-		}
-		lines[lt] = temptext;
-	}
-
-	for(var x=0;x<lines.length;x++){
-		linestart = lines[x].substring(0,1);
-		//if(x>0)laengebiszeile+=lines[x-1].length;
-		//headers:
-		if(linestart=="#"){
-			var rautenanzahl=1;
-			for(var rautencount=1;rautencount<5;rautencount++){
-				if(lines[x].substring(rautencount,rautencount+1)=="#")rautenanzahl++; else rautencount=5;
-			}
-			var ersatz ="";
-			var rauten = "";
-			for(var ec=0;ec<rautenanzahl;ec++){ ersatz+="€"; rauten+="#";}
-			lines[x]= "<h"+rautenanzahl+">"+lines[x].substring(rautenanzahl)+"</h"+rautenanzahl+">";
-			//pseudolines[x]=ersatz+lines[x].substring(rautenanzahl)+ersatz; //wird das überhaupt noch gebraucht?
-			//if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x] = new Array();
-			//this.insertedhtmlinline[x].push(new Array(0,rauten,"<h"+rautenanzahl+">"));
-			//this.veraenderungen.push(new Array("titel",laengebiszeile,rauten));
-			this.map.addElement({line:x,pos:0,html:"<h"+rautenanzahl+">",mdcode:rauten,typ:"start",wystextveraenderung:rautenanzahl});
-			this.lineswithhtml[x]="h"+rautenanzahl;
-		} //lines[x] fängt jetzt mit <h an
-		//generic list
-		if(lines[x].substring(0,2)=="* " || lines[x].substring(0,2)=="- "){
-			glc=x;
-			//var laengebiszeileglc = laengebiszeile;
-			var listzeichen = lines[x].substring(0,2);
-			this.map.addElement({line:x,pos:0,html:"<ul>",mdcode:"",typ:"start",wystextveraenderung:0});
-			var linessearch = lines[glc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
-			while(glc < lines.length && lines[glc]!=null && (lines[glc].substring(0,2)==listzeichen || linessearch==0)){
-				if(lines[glc].substring(0,2)==listzeichen){
-					lines[glc] = "<li>"+ lines[glc].substring(2)+"</li>";
-					this.map.addElement({line:glc,pos:0,html:"<li>",mdcode:listzeichen,typ:"start",wystextveraenderung:2});
-					this.lineswithhtml[glc]="ul";
-					pseudolines[glc]= "€"+pseudolines[glc].substring(1);
-				} else if(lines[glc].substring(0,2)=="  "){
-					lines[glc]=lines[glc].substring(2);
-					this.map.addElement({line:glc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
-				}
- 				glc++;
-				if(glc<lines.length){
-					linessearch = lines[glc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
-				}
-			}
-			glc--;
-			lines[x]="<ul>"+lines[x];
-			//muss ich oben machen
-			lines[glc]=lines[glc]+"</ul>";
-			this.map.multilineobjects.push({typ:"ul", tag:"ul", startline:x, endline:glc});
-			letztezeile=glc;
-		}
-		//lines[x] fängt jetzt mit ul an:
-		if(lines[x].substring(0,1)=="*"){
-			this.perror.push(new parsererror(x,1,lines[x].length-1,"list","missing space after *"));
-		}
-		//numeric list
-		//console.log("x:"+x+"lwh:"+this.lineswithhtml[x]);
-		if(this.lineswithhtml[x]!="code"&& this.lineswithhtml[x]!="data" &&
-						//hier kommt die regex hin, die prüft ob eine liste anfängt:
-						//bei performace-problemen hier die regex durch andere prüfung ersetzen.
-						//lines[x].search(/[0-9]+\.\s/)==0)
-						lines[x].search(/^([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\))\s/)==0)
-						{
-			//es gibt eine liste, prüfen mit welchem zeichen/welcher logik:
-			var numlistregexlist = [/^[0-9]+\.\s/, //1.
-													/^[0-9]+\.\)\s/, //1.)
-												 	/^[0-9]+\)\s/, //1)
-											 		/^[a-z]\)\s/, //a)
-													/^[IVX]+\)\s/ ]; //I)
-			var numlistregex;
-			var nlregnr
-			for (var nlrit = 0; nlrit < numlistregexlist.length;nlrit++)if(lines[x].search(numlistregexlist[nlrit])==0)nlregnr=nlrit;
-			numlistregex=numlistregexlist[nlregnr];
-			//numlistregex ist jetzt die gefundene regex
-			var listzeichenarr = [". ", ".) ", ") ", ") ", ") "];
-			var listzeichen = listzeichenarr[nlregnr];
-			var start;
-			if(nlregnr<2)start=lines[x].substring(0,lines[x].indexOf("."));
-				else if(nlregnr==2)start=lines[x].substring(0,lines[x].indexOf(")"));
-			var starttext = "<ol";
-			if(start>0)starttext+=' start="'+start+'"';
-			starttext +=">";
-			this.map.addElement({line:x,pos:0,html:starttext,mdcode:"",typ:"start",wystextveraenderung:0});
-			nlc=x;
-			var linessearch = lines[nlc].search(numlistregex); //lines[nlc].search(/[0-9]+\.\s/);
-			var linessearch2 = lines[nlc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
-			while(nlc <lines.length && (linessearch ==0 || linessearch2 ==0)){
-				if(linessearch==0){
-					var tmpmdcode = lines[nlc].substring(0,lines[nlc].indexOf(listzeichen)+listzeichen.length);//". ")+2);
-					this.map.addElement({line:nlc,pos:0,html:"<li>",mdcode:tmpmdcode,
-					typ:"start",wystextveraenderung:tmpmdcode.length});
-					lines[nlc] = "<li>"+lines[nlc].substring(lines[nlc].indexOf(listzeichen)+listzeichen.length)+"</li>";
-					this.lineswithhtml[nlc]="ol";
-				}else if(lines[nlc].substring(0,2)=="  "){
-					//linessearch==2, also leerzeichen gefunden. leerzeichen rausnehmen:
-					//dann wird beim nächsten durchlauf neue liste in liste angelegt
-					lines[nlc]=lines[nlc].substring(2);
-					this.map.addElement({line:nlc,pos:0,html:"",mdcode:"  ",typ:"start",wystextveraenderung:2});
-				}
-				nlc++;
-				if(nlc<lines.length){
-					linessearch = lines[nlc].search(numlistregex);///[0-9]+\.\s/); //else linessearch=null;
-					linessearch2 = lines[nlc].search(/^([-*]|(\s{0,2})([0-9]+(\.|\)|\.\))|([a-z]|[IVX]+)\)))\s/);
-				}
-			}
-			nlc--;
-
-			lines[x] = starttext + lines[x];
-			lines[nlc]+= "</ol>";
-			letztezeile=nlc;
-			//folgendes geht nicht mehr so, wenn eingerückte listen gibt:
-			//for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="ol";
-			this.map.multilineobjects.push({typ:"ol", tag:"ol", startline:x, endline:nlc});
-		}
-		//lines[x]fängt jetzt mit <ol> an
-		if(lines[x].search(/[0-9]/)==0&&this.lineswithhtml[x]!="data"&&this.lineswithhtml[x]!="code"){
-			this.perror.push(new parsererror(x,1,lines[x].length,"numeric list","dot and/or whitespace missing"+this.lineswithhtml));
-		}
-		//quotes
-		if(linestart==">" && !(lines[x].substring(0,2)=="> ")){
-		this.errorlines[x] = '<span class="error quotes">'+lines[x]+'</span>  ';
-		this.errorsourcelines[x] = '<span class="error">'+lines[x]+'</span>  ';
-		this.perror.push(new parsererror(x,1,lines[x].length,"quotes","missing space after >"));
-		}
-		if(lines[x].substring(0,2)=="> "){
-			qlc=x;
-			//console.log("quote gefunden: "+lines[qlc]);
-			//console.log("wasn los? qlc="+qlc+" lines-länge:"+lines.length + "lines[qlc]="+lines[qlc]);
-			//var laengebiszeileglc = laengebiszeile;
-			while(qlc<lines.length && lines[qlc].substring(0,2)=="> " ){ //}&& confirm("weiter in line?"+qlc+"llenght:"+lines.length)){
-				lines[qlc] = lines[qlc].substring(2);
-				//this.veraenderungen.push(new Array("quote",laengebiszeileglc,2));
-				//laengebiszeileglc += lines[qlc].length;
-				qlc++;
-			}
-			//if(confirm("abbrechen?"))break;
-			//console.log("quote gefunden von"+x+" bis:"+qlc)
-			qlc--;
-			lines[x]="<quote>"+lines[x];
-			if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-			//this.insertedhtmlinline[x].push(new Array(0,"> ","<quote>"));
-			this.map.addElement({line:x,pos:0,html:"<quote>",mdcode:"> ",typ:"start",wystextveraenderung:2});
-
-			for(var ql=x;ql<qlc;ql++)lines[ql]+="<br>";
-			//console.log("quotes br-tags abgeschlossen");
-			//if(this.insertedhtmlinline[qlc]==null)this.insertedhtmlinline[qlc]=new Array();
-			//this.insertedhtmlinline[qlc].push(new Array(lines[qlc].length,"","</quote>"));
-			lines[qlc]+="</quote>";
-			for(var qil=x+1;qil<=qlc;qil++){
-				//if(this.insertedhtmlinline[qil]==null)this.insertedhtmlinline[qil]=new Array();
-				//this.insertedhtmlinline[qil].push(new Array(0,"> ",""));
-				this.map.addElement({line:qil,pos:0,html:"",mdcode:"> ",typ:"start",wystextveraenderung:2});
-			}
-			letztezeile = qlc;
-			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
-			this.map.multilineobjects.push({typ:"quote", tag:"quote", startline:x, endline:qlc});
-		}//lines[x] fängt jetzt mit <quote> an
-
-		// codeblock
-		//alert(lines[x].substring(0,3));
-		if(lines[x].length>2 && lines[x].substring(0,3)=="```"){
-			var codeende=x+1;
-			var scanweiter=true;
-			while(codeende<lines.length && scanweiter)	if(lines[codeende].substring(0,3)=="```")scanweiter=false;else codeende++;
-			if(codeende==lines.length || lines[codeende].substring(0,3)!="```"){
-				this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol ```"));
-				this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
-				this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
-			}else {
-				var altelinie=lines[x];
-				var altelinieende=lines[codeende];
-				lines[x]="<code>";
-				for(var codez=x+1;codez<codeende;codez++){
-					lines[codez]=this.sanitizeemdcodeline(lines[codez]);
-					var hotpositions = this.sanitizedcodepositions(lines[codez]);
-					for(var hotp=0;hotp<hotpositions.length;hotp++){
-						//if(hotpositions[hotp][1]!="&lt;")
-						//this.insertedhtmlinline[codez].push(new Array(hotpositions[hotp][0], "&",hotpositions[hotp][1]));
-						this.map.addElement({line:codez,pos:hotpositions[hotp][0],html:hotpositions[hotp][1],mdcode:"&",typ:"hotcode",wystextveraenderung:0});
-					}
-				}
-				lines[codeende]="</code>";
-				//console.log("code-lines sanitized:"+lines[x+1]+lines[x+2]);
-				for(var lwh=x;lwh<=codeende;lwh++)this.lineswithhtml[lwh]="code";
-				//insertedhtmlinline:
-				//this.insertedhtmlinline[x].push(new Array(0,altelinie,"<code>"));
-				//this.insertedhtmlinline[codeende].push(new Array(0,altelinieende,"</code>"));
-				this.map.addElement({line:x,pos:0,html:"<code>",mdcode:altelinie,typ:"start",wystextveraenderung:altelinie.length});
-				this.map.addElement({line:codeende,pos:0,html:"</code>",mdcode:altelinieende,typ:"start",wystextveraenderung:altelinieende.length});
-				//for(var cil=x+1;cil<codeende;cil++)this.insertedhtmlinline[cil].push(new Array(lines[cil].length,"\n","\n"));
-
-			}
-		}//lines[x] fängt jetzt mit <code> an
-		//datablock:
-		if(lines[x].length>2 && lines[x].substring(0,2)=="||" && this.lineswithhtml[x]!="data"){
-			//datablock gefunden?
-			//überprüfung von gültigem datablockhead:
-			var datahead;
-			var datatyp;
-			var rawdata;
-			if(lines[x].indexOf("||",2)<0){
-				//kein gültiger datahead gefunden:
-				this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol ||"));
-				this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
-				this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
-			}else{
-				//gültiger datahead gefunden:
-				datahead  = lines[x];
-				datatyp = datahead.substring(2,datahead.indexOf("||",2));
-				var datatag = "||"+datatyp+"||";
-				var dataende = x+1;
-				var scanweiter = true;
-				while(dataende<lines.length && scanweiter) if(lines[dataende].substring(0,datatag.length)==datatag)scanweiter=false;else dataende++;
-			 	if(!slidenote.datatypes.isvalid(datatyp)){
-					this.perror.push(new parsererror(x,0,lines[x].length-1,"data","not a valid datatype"));
-				} else if(dataende==lines.length || lines[dataende].substring(0,datatag.length)!=datatag){
-					this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol "+datatag));
-					this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol "+datatag));
-					this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
-					this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
-				}else{
-					//datablock ist konsistent von lines[x] bis lines[dataend]
-					var altelinie=lines[x];
-					var altelinieende=lines[dataende];
-					lines[x]="<section>"+lines[x];
-					lines[dataende]+="</section>";
-					//console.log("dataende:"+dataende+"zeile:"+lines[dataende]);
-					var rawdata = new Array();
-					//sanitize-code of datablock für wysiwyg und parser:
-					for(var dataz=x+1;dataz<dataende;dataz++){
-						rawdata.push(lines[dataz]);
-						lines[dataz]=this.sanitizeemdcodeline(lines[dataz]);
-						var hotpositions= this.sanitizedcodepositions(lines[dataz]);
-						for(var hotp=0;hotp<hotpositions.length;hotp++){
-							this.map.addElement({line:dataz,pos:hotpositions[hotp][0],html:hotpositions[hotp][1],mdcode:"&",typ:"hotcode",wystextveraenderung:0});
-						}
-					}
-					//lineswithhtml:
-					for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data";
-					//mapping des gesamten blocks:
-					//this.map.addElement({line:x,pos:0,html:"<section>",mdcode:altelinie,typ:"start",wystextveraenderung:altelinie.length});
-					//this.map.addElement({line:dataende,pos:0,html:"</section>",mdcode:altelinieende,typ:"start",wystextveraenderung:altelinieende.length});
-					var mapstartel = {line:x,pos:0,html:"<section>",mdcode:altelinie,typ:"start",wystextveraenderung:0};
-					var mapendel = {line:dataende,pos:0,html:"</section>",mdcode:altelinieende,typ:"end",wystextveraenderung:0, brotherelement: mapstartel};
-					mapstartel.brotherelement = mapendel;
-
-					//this.map.addElement({line:dataende,pos:altelinieende.length-1,html:"</section>",mdcode:"",typ:"end",wystextveraenderung:0});
-					//datenobjekt speichern:
-					if(this.dataobjects == null)this.dataobjects = new Array();
-					this.dataobjects.push({type:datatyp, head:datahead, raw:rawdata });
-					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
-					this.map.addElement(mapstartel);
-					this.map.addElement(mapendel);
-					//console.log("neues dataobjekt hinzugefügt");
-					//console.log(this.dataobjects);
-				}
-			}
-		} //end of datablock, lines[x] fängt jetzt mit <section> an
-		//image: (has to check for alt-text too:)
-		if(lines[x].indexOf("![")>-1){
-
-			var imgaktpos=0;
-			var pseudozeile=pseudolines[x];
-			while(pseudozeile.indexOf("![", imgaktpos)>-1){ //können ja mehrere sein
-				var imgpos =pseudozeile.indexOf("![",imgaktpos);
-				var imgposmid = pseudozeile.indexOf("](",imgpos);
-				var imgposend = pseudozeile.indexOf(")",imgpos);
-				var imginimg = pseudozeile.indexOf("![]",imgpos+1)
-				var nextspace = pseudozeile.indexOf(" ",imgpos)
-				var error="";
-
-				if(imginimg>-1 && imginimg<imgposend){
-					this.perror.push(new parsererror(x,imgpos,nextspace,"image","image in image"));//
-					error="imginimg";
-					//console.log("image in image: imgpos:"+imgpos+"imginimg"+imginimg+"imgposend"+imgposend);
-
-				}
-				if(imgposend==-1 && imginimg==-1){
-					this.perror.push(new parsererror(x,imgpos,nextspace,"image","missing endsymbol )"));//
-					error="imgende";
-					//console.log("image: missing endsymbol"+imgpos+"->"+nextspace);
-
-				}
-				if(imgposmid==-1){
-					this.perror.push(new parsererror(x,imgpos,lines[x].length-1,"image","missing midsymbol )"));//
-					error="imgmid";
-				}
-				imgaktpos=imgpos+4;
-				//console.log("image imgpos:"+imgpos+"imgaktpos:"+imgaktpos+"nextspace:"+nextspace+"error:"+error);
-				var imgurl = pseudozeile.substring(imgposmid+2,imgposend);
-				var imgalt = pseudozeile.substring(imgpos+2,imgposmid);
-				//TODO: if-abfrage ob img unter url existiert, sonst fehler
-				var imghtml = '<img alt ="'+imgalt+'"src="'+imgurl+'">';
-				if(error.length==0){
-					var imgpos2 = lines[x].indexOf("![");
-					var imgpos2end = lines[x].indexOf(")",imgpos2);
-					lines[x] = lines[x].substring(0,imgpos2)+imghtml+lines[x].substring(imgpos2end+1);
-					//if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-					//this.insertedhtmlinline[x].push(new Array(pseudozeile.indexOf("![]("),"![]("+imgurl+")",imghtml));
-					this.map.addElement({line:x,pos:pseudozeile.indexOf("!["),
-															html:imghtml,
-															mdcode:"!["+imgalt+"]("+imgurl+")",
-															typ:"image",
-															wystextveraenderung:5+imgurl.length,
-															src:imgurl, midpos:imgposmid,endpos:imgposend, alt:imgalt
-														});
-					//this.veraenderungen.push(new Array("image",laengebiszeile+imgpos,imgposend-imgpos));
-					var pseudoimgpos = pseudozeile.indexOf("![");
-					pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€"+pseudozeile.substring(pseudoimgpos+2);
-					//image is ready parsed, so get rid of of it totaly:
-				//	var pseudoersatz = "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€";
-				//	while(pseudoersatz.length<imgurl.length+imgalt.length)pseudoersatz+=pseudoersatz;
-				//	pseudoersatz = pseudoersatz.substring(0,imgurl.length+5+imgalt.length);
-				//	pseudozeile = pseudozeile.substring(0,pseudoimgpos)+pseudoersatz+pseudozeile.substring(imgposend+1);
-	/*				pseudozeile = pseudozeile.substring(0,pseudoimgpos)+"€€"+
-												pseudozeile.substring(pseudoimgpos+2,imgposmid)+
-												pseudoersatz+
-												pseudozeile.substring(imgposend+1);
-*/
-					pseudolines[x]=pseudozeile;
-				}else {
-					//alert(error);
-					//lines[x]=lines[x].substring(0,imgpos)+lines[x].substring(imgpos+4);
-					pseudozeile = pseudozeile.substring(0,imgpos)+"€€"+pseudozeile.substring(imgpos+2); //dont scan image again!
-					this.errorlines[x]='<span class="error">'+lines[x]+'</span>  ';
-					this.errorsourcelines[x]='<span class="error">'+lines[x]+'</span>';
-				}
-			}
-		}
-		//link:
-		//if(lines[x].indexOf("](")>0){
-		var linkpos = 0;
-		var pseudozeile=pseudolines[x];
-		while(lines[x].indexOf("](",linkpos)>0){
-			//muss vergrößert werden auf mehrere links pro zeile
-			//var neuelinkpos = lines[x].indexOf("](",linkpos+3);
-			//alert("linkpos:"+linkpos+lines[x].substring(linkpos)+"neue linkpos"+lines[x].indexOf("](",linkpos)+"\n"+lines[x].substring(neuelinkpos));
-			var linktextstartsymbol=lines[x].indexOf("[");
-			var error=this.perror.length;
-			if( linktextstartsymbol==-1)this.perror.push(new parsererror(x,0,lines[x].length-1,"link","missing startsymbol ("));//error="linkstartsymbol";
-				else	var linktextendsymbol=lines[x].indexOf("](",linktextstartsymbol);
-			var linkurlstart=linktextendsymbol+2;
-			var linkurlend = lines[x].indexOf(")",linkurlstart);
-			if(linkurlend == -1)this.perror.push(new parsererror(x,0,lines[x].length-1,"link","missing link endsymbol )"));//error="linkurlendsymbol";
-			if(this.perror.length==error){
-				var linktext = lines[x].substring(linktextstartsymbol+1,linktextendsymbol);
-				var linkurl = lines[x].substring(linkurlstart,linkurlend);
-				//alert(linkurl+"???"+linkurlstart+"/"+linkurlend+lines[x].substring(linkurlstart,linkurlend)+"\n"+linktext);
-				var lineanfang =lines[x].substring(0,linktextstartsymbol);
-				var lineende = lines[x].substring(linkurlend+1);
-				lines[x]=lineanfang+ '<a href="'+linkurl+'">'+linktext+'</a>'+lineende;
-				var pseudoanf = pseudozeile.indexOf("[");
-				var pseudoend = pseudozeile.indexOf(")");
-				var pseudomitte = pseudozeile.indexOf("](");
-
-				if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x] = new Array();
-				//this.insertedhtmlinline[x].push(new Array(pseudoanf,pseudozeile.substring(pseudoanf,pseudoend+1),'<a href="'+linkurl+'">'+linktext+'</a>'));
-				var tmplinktext = pseudozeile.substring(pseudoanf+1,pseudomitte);
-				var tmphtml = '<a href="'+linkurl+'">'+tmplinktext+'</a>';
-				var tmpmdcode = sourcelines[x].substring(pseudoanf,pseudoend+1);
-				//console.log("tmpmdcode:"+tmpmdcode + "sourceline:"+sourcelines[x]);
-				this.map.addElement({line:x,pos:pseudoanf,html:tmphtml,mdcode:tmpmdcode,
-					typ:"link",
-					wystextveraenderung:tmpmdcode.length-tmplinktext.length,
-					linkurl:linkurl, linktext:linktext});
-				//this.veraenderungen.push(new Array("link",laengebiszeile+linktextstartsymbol,linkurl.length+4));
-				pseudozeile=pseudozeile.substring(0,pseudoanf)+"€"+pseudozeile.substring(pseudoanf+1,pseudomitte)+"€€"
-							+pseudozeile.substring(pseudomitte+2,pseudoend)+"€"+pseudozeile.substring(pseudoend+1);
-
-			}else{
-				this.errorlines[x]=lines[x].substring(0,lines[x].indexOf("]("))+'<span class="error">'+lines[x].substring(lines[x].indexOf("]("))+'</span>';
-				this.errorsourcelines[x]=lines[x].substring(0,lines[x].indexOf("]("))+'<span class="error">'+lines[x].substring(lines[x].indexOf("]("))+'</span>';
-				 //alert(this.perror[this.perror.length-1].errortext);
-				linkpos=lines[x].indexOf("](",linkpos)+3;
-			}
-		}//ende link
-		//page-break
-		if(lines[x].indexOf("---")==0){
-			if(lines[x].length>5){
-				var pagebreakcheck = lines[x].substring(5);
-				var pagebreakonlyminus = true;
-				while(pagebreakcheck.length>0 && pagebreakonlyminus){
-					if(pagebreakcheck.substring(0,1)!="-")pagebreakonlyminus=false;
-					pagebreakcheck = pagebreakcheck.substring(1);
-				}
-				if(pagebreakonlyminus){
-					this.lineswithhtml[x] = "pagebreak";
-					//this.insertedhtmlinline[x].push(new Array(0,lines[x],"<hr>"));
-					this.map.addElement({line:x,pos:0,html:"<hr>",mdcode:lines[x],typ:"pagebreak",wystextveraenderung:lines[x].length});
-					//this.insertedhtmlinline[x].push(new Array(5,lines[x].substring(5),""));
-					lines[x]="<hr>";
-				}
-			}else{
-				lines[x]="<hr>";
-				this.lineswithhtml[x] = "pagebreak";
-				this.insertedhtmlinline[x].push(new Array(0,"-----","<hr>"));
-				this.map.addElement({line:x,pos:0,html:"<hr>",mdcode:"-----",typ:"pagebreak",wystextveraenderung:5});
-
-			}
-			this.map.pageend.push({line:x});
-			this.map.pagestart.push({line:x+1});
 
 
-		}//page-break ist jetzt eingefügt
-		//footnote-anchor
-		if(lines[x].indexOf("[^")>0){ //footnote-anchors arent allowed at linestart
-			//console.log("footnoteanchor start at line"+x);
-			var pseudozeile = pseudolines[x];
-			while(pseudozeile.indexOf("[^")>-1){
-				var actpos = pseudozeile.indexOf("[^");
-				var endpos = pseudozeile.indexOf("]",actpos);
-				var footname;
-				var error=null;
-				if(endpos!=-1){
-					footname = pseudozeile.substring(actpos+2,endpos);
-					var footident = "[^"+footname+"]:";
-					//search for footnote:
-					var footnoteline=null;
-					for(var fx=x+1;fx<lines.length;fx++){
-						//console.log("footnoteparse fx"+fx);
-						if(lines[fx].substring(0,3)==="---")break;
-						if(lines[fx].substring(0,footident.length)===footident){
-							footnoteline=fx;
-							//console.log("footnoteline:"+footnoteline+"fx"+fx);
-						}
-					}
-					//console.log("footnote "+footident+" line:"+footnoteline);
-					if(footnoteline==null){
-						//error: no footnote found
-						error="no footnote found";
-						this.perror.push(new parsererror(x,actpos,endpos+1,"footnote-anchor",error));
-					}else{
-						//footnote anchor is ready, footnote found on same page at line footnoteline
-						//check if footnote is last element on page or only followed by other footnotes:
-						var islastelement=true;
-						for(var fx=footnoteline;fx<lines.length;fx++){
-							if(this.lines[fx].substring(0,3)==="---")break;
-							if(lines[fx].substring(0,2)!="[^" && this.lineswithhtml!="footnote"){
-								islastelement=false;
-								//console.log("footnote afterline "+fx+":"+lines[fx])
-							}
-						}
-						if(islastelement){
-							//everything is good, save the map-parsing:
-							this.lineswithhtml[footnoteline]="footnote";
-							var fstart = {line:x,pos:actpos,html:"<sup>",mdcode:"[^",
-								typ:"start",wystextveraenderung:2, footnoteline:footnoteline, tag:"footnote-anchor"};
-							var fend = {line:x, pos:endpos, html:"</sup>",typ:"end",mdcode:"]",
-								brotherelement:fstart, wystextveraenderung:1, tag:"footnote-anchor"};
-							fstart.brotherelement = fend;
-							var fnote = {line:footnoteline, pos:0, typ:"start",
-								html:"<p>"+footname+":",mdcode:footident,
-							 	footanchor:fstart, tag:"footnote"};
-							fstart.footer = fnote;
-							this.map.addElement(fstart);
-							this.map.addElement(fend);
-							this.map.addElement(fnote);
-							//do the changes to actual lines:
-							var rstart = lines[x].indexOf("[^");
-							var rend = lines[x].indexOf("]",rstart);
-							//console.log("footnote change linesx:"+rstart+","+rend+"\n"+lines[x]);
-							lines[x] = lines[x].substring(0,rstart)+"<sup>"+
-													lines[x].substring(rstart+2,rend)+"</sup>"+
-													lines[x].substring(rend+1);
-							lines[footnoteline] = "<p>"+footname+":"+
-																		lines[footnoteline].substring(footident.length)+"</p>";
-
-						}else{
-							//error footnote is not the last element on the page
-							error = "footnote is not last element on the page";
-						}
-					}
-				}else{
-					error= "footnote-anchor not ready yet - missing symbol ]";
-					var nextspace = pseudozeile.indexOf(" ",actpos);
-					this.perror.push(new parsererror(x,actpos,nextspace,"footnote-anchor","missing endsymbol ]"));
-				}
-				if(error!=null){
-					//console.log("footnote error:"+error);
-					break;
-				}
-				pseudozeile = pseudozeile.substring(0,actpos)+ "€€"+
-											pseudozeile.substring(actpos+2);
-			}//while-loop
-		}
-		//end of footnote-anchor
-		//footnote
-		if(lines[x].substring(0,2)==="[^"){
-			//footnote shouldnt appear right now, therefore its missing an anchor or else:
-			var pseudozeile = pseudolines[x];
-			var endpos = pseudozeile.indexOf("]:");
-			if(endpos===-1){
-				var nextspace = pseudozeile.indexOf(" ");
-				this.perror.push(new parsererror(x,0,nextspace,"footnote","missing endsymbol ]:"));
-			}else{
-				this.perror.push(new parsererror(x,0,endpos+2,"footnote","missing footanchor"));
-				//console.log("footnote missing footanchor");
-			}
-		}
-		//end of footnote
-		//inline code:
-		if(lines[x].indexOf("`")>-1){
-			var codepos =0;
-			while(codepos<lines[x].length && lines[x].indexOf("`", codepos)>-1){
-					// &&confirm("inlinecode"+codepos+" linex.length:"+lines[x].length + "\n" + lines[x]		)){
-				var codestart = lines[x].indexOf("`",codepos);
-				//console.log("codepos:"+codepos+"codestart:"+codestart);
-				var codeend = -1;
-				if(codestart < lines[x].length-2)codeend = lines[x].indexOf("`",codestart+2);
-				//console.log("codeend:"+codeend);
-				if(codeend == -1){
-					this.perror.push(new parsererror(x,codepos,lines[x].length-1,"inlinecode","missing endsymbol `"));
-					codepos = lines[x].length; //es macht keinen sinn weiter zu suchen
-					//console.log("inlinecodeerror neue codepos:"+codepos);
-				}else{
-					//alert(codestart+","+codeend+":"+lines[x].substring(codestart,codeend));
-					//codeummantelung vor weiterem parsen schützen
-					var softcode = this.sanitizeemdcodeline(lines[x].substring(codestart+1,codeend));
-					lines[x]=lines[x].substring(0,codestart)+"<code>"+softcode+"</code>"+lines[x].substring(codeend+1);
-					//wysiwyg: position merken
-					var textareacodestart = pseudolines[x].indexOf("`");
-					var textareacodeend = pseudolines[x].indexOf("`",textareacodestart+2);
-					var hotcode = pseudolines[x].substring(textareacodestart+1,textareacodeend);
-					if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-					this.insertedhtmlinline[x].push(new Array(textareacodestart,"`","<code>"));
-					this.map.addElement({line:x,pos:textareacodestart,html:"<code>",mdcode:"`",typ:"start",wystextveraenderung:1});
-					//this.insertedhtmlinline[x].push(new Array(textareacodestart,"`"+hotcode+"`","<code>"+softcode+"</code>"));
-					this.insertedhtmlinline[x].push(new Array(textareacodeend,"`","</code>"));
-					this.map.addElement({line:x,pos:textareacodeend,html:"</code>",mdcode:"`",typ:"end",wystextveraenderung:1});
-					var hotpositions = this.sanitizedcodepositions(softcode);
-					for(var hotp=0;hotp<hotpositions.length;hotp++){
-						if(hotpositions[hotp][1]!="&lt;")
-						//this.insertedhtmlinline[x].push(new Array(codestart+1+hotpositions[hotp][0], "&",hotpositions[hotp][1]));
-						this.map.addElement({line:x,pos:codestart+1+hotpositions[hotp][0],html:hotpositions[hotp][1],mdcode:"&",typ:"hotcode",wystextveraenderung:0});
-					}
-					//auch für einfache zeichen vor codeummantelung schützen:
-					//console.log("inlinecode hotcode vor change:"+hotcode+" length:"+hotcode.length);
-					var oldsymbol = new Array("*", "<",">","~","[","]","(",")","|","-","_");
-//					var newsymbol = new Array("&lowast;","&lt;","&gt;","&tilde;","&#91;","&#93;","&#40;","&#41;","&#124;","&#45;");
-					for(var sym=0;sym<oldsymbol.length;sym++)hotcode = this.replace(hotcode,oldsymbol[sym],"€");
-					//console.log("inlinecode hotcode nach change:"+hotcode+" length:"+hotcode.length);
-					//console.log("inlinecode pseudoline:"+pseudolines[x]);
-					pseudolines[x]=pseudolines[x].substring(0,textareacodestart)+"€"+hotcode+"€"+pseudolines[x].substring(textareacodeend+1);//+1
-					//console.log("inlinecode pseudoline after:"+pseudolines[x]);
-					//console.log("inlinecode abgeschlossen");
-					codepos=codeend+1; //suche nach dem endzeichen weiter
-
-				}
-			}
-			}//ende inlinecode
-		//for(var testx=0;testx<this.lineswithhtml.length;testx++)
-				//console.log(testx + "- " +this.lineswithhtml[testx]);
-
-
-		//if(letztezeile>x)x=letztezeile; //scan nach letzter zeile des gefundenen weiter - funktioniert irgendwie nicht
-		//dadurch tritt dreifache fehlerausgabe bei tabelle auf, aber ist nicht so schlimm, markiert halt jede tabellenzeile ;)
-		//darf auch nicht mehr weil sonst img und link untergehen. wenn also erwünscht ist dann muss link und img erneut gescannt werden
-	}//for lines[x]
-		//ansatz für einfache parselemente per zeile:
-		//console.log("zeilendurchlauf beendet. starte einfache parseelemente. pseudolines:");
-		//console.log(pseudolines);
-		function getFirstStartInLineX(mdcode,line,parser){
-			var posInPseudoLine = pseudolines[line].indexOf(mdcode);
-			var onelement = parser.CarretOnElement(parser.map.linestart[line]+posInPseudoLine);
-			var startInLinesX = 0;
-			while(onelement!=null && onelement.typ===image){
-				startInLines
-			}
-
-		}
-	for(var x=0;x<lines.length;x++){
-		for(var pare=0;pare<this.parseelemente.length;pare++){
-					var posInPseudoLine = pseudolines[x].indexOf(this.parseelemente[pare].emdstart);
-					var onelement = this.CarretOnElement(this.map.linestart[x]+posInPseudoLine);
-					var startInLinesX = 0;
-					//console.log("onelement:"+(onelement!=null)+" pos:"+pseudolines[x].indexOf(this.parseelemente[pare].emdstart)+ "el:"+this.parseelemente[pare].emdstart);
-					while(onelement!=null && onelement.typ==="image"){
-						//console.log("on element"+onelement.typ + "pos"+posInPseudoLine);
-						//continue; //dont parse on image!
-						startInLinesX=lines[x].indexOf(this.parseelemente[pare].emdstart,startInLinesX)+this.parseelemente[pare].emdstart.length;
-						posInPseudoLine = pseudolines[x].indexOf(this.parseelemente[pare].emdstart,posInPseudoLine+this.parseelemente[pare].emdstart.length);
-						onelement = this.CarretOnElement(this.map.linestart[x]+posInPseudoLine);
-					}
-					var pestart=lines[x].indexOf(this.parseelemente[pare].emdstart,startInLinesX);
-					//var peend = lines[x].indexOf(this.parseelemente[pare].emdend,pestart+1);
-					var peend = lines[x].indexOf(this.parseelemente[pare].emdend,pestart+this.parseelemente[pare].emdstart.length);
-					var aktppos = 0;
-					var mline=-1;
-					while(pestart>-1){
-						//parseelement wurde gefunden, suche nach endzeichen
-						if(peend<=pestart){
-							//kein endzeichen gefunden, suche in nächster zeile fortsetzen?
-							//zur erinnerung codes: text==null momentan, table, pagebreak, code, h1, ul, ol, quote
-							//stimmt nicht: näxte line ist noch nicht gescannt - nur für tables, code, ul, ol und quote stimmt das, nicht für h und pagebreak
-							//multiline erlaubt in text/null, quote - erstmal ohne quote, weil sonst über beginnenden quote hinaus gesucht wird:
-							//console.log(this.parseelemente[pare].nombre+" gefunden in line" + x +", pos "+pestart
-								//		+"lineswithhtml:"+this.lineswithhtml[x] + "next line:" + this.lineswithhtml[x+1]
-									//	+this.lines.length	);
-							if(this.lineswithhtml[x]==null && this.lineswithhtml[x+1]==null && x<this.lines.length-1){
-								//multiline-suche: suche auf nächste zeilen ausdehnen
-								//console.log("multiline-search für textblock startet");
-									mline = x+1;
-									while(this.lineswithhtml[mline]==null
-											&& lines[mline].indexOf(this.parseelemente[pare].emdend)==-1
-											&& mline<lines.length-1
-											&& lines[mline].substring(0,5)!="-----" //pagebreak ist abbruchsignal
-											&& lines[mline].substring(0,1)!="#"  //titel ebenfalls
-											){
-										mline++;
-									}
-
-									//mline ist jetzt entweder die line wo ein treffer erwartet wird oder die nächste line mit html-code oder letzte linie
-									var anf = (lines[mline].substring(0,1)!="#" && lines[mline].substring(0,5)!="-----" && this.lineswithhtml[mline]==null);
-									if(!anf)mline--;
-									//if(this.lineswithhtml[mline]!=null && mline>0)mline--;
-									//console.log("mline ist auf "+mline + "-> " +lines[mline].substring(0,5)+"anf:"+anf);
-									if(this.lineswithhtml[mline]==null)peend = lines[mline].indexOf(this.parseelemente[pare].emdend);
-
-
-							}
-							if(this.lineswithhtml[x]=="quote" && x+1<lines.length){
-									mline=x;
-									while(this.lineswithhtml[mline]==null && lines[mline].indexOf(this.parseelemente[pare].emdend)==-1 && mline<lines.length-1){
-										mline++;
-									}
-									if(this.lineswithhtml[mline]=="quote")peend = lines[mline].indexOf(this.parseelemente[pare].emdend);
-							}
-
-
-						}
-						if(peend==pestart+1  && (this.parseelemente[pare].emdstart=="*" || this.parseelemente[pare].emdstart=="_")){
-							//doppelsternchen und doppel__ und trippel leider noch nicht - das muss doch einfacher gehen. *** ___
-							//|| lines[x].substring(pestart-1,1)==lines[x].substring(pestart,1))
-							pestart=peend;
-
-						}else if(mline==-1 && peend>=pestart+this.parseelemente[pare].emdstart.length ){
-							//endzeichen wurde gefunden
-
-							//ersetzen durch html zeichen:
-							lines[x] = lines[x].substring(0,pestart)+this.parseelemente[pare].htmlstart
-										+ lines[x].substring(pestart+this.parseelemente[pare].emdstart.length, peend)
-										+ this.parseelemente[pare].htmlend + lines[x].substring(peend+this.parseelemente[pare].emdend.length);
-							//positionsbestimmung für wysiwyg:
-							//console.log("pseudolines["+x+"] ="+pseudolines[x]);
-							var posanf = pseudolines[x].indexOf(this.parseelemente[pare].emdstart);
-							var posend = pseudolines[x].indexOf(this.parseelemente[pare].emdend,
-																pseudolines[x].indexOf(this.parseelemente[pare].emdstart)
-																+this.parseelemente[pare].emdstart.length);
-							if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-							var insertanf = new Array(posanf, this.parseelemente[pare].emdstart, this.parseelemente[pare].htmlstart);
-							var insertend = new Array(posend, this.parseelemente[pare].emdend, this.parseelemente[pare].htmlend);
-							insertanf[3] = {line:x , position:posend, emdcode:this.parseelemente[pare].emdend, htmlcode:this.parseelemente[pare].htmlend}; //insertend;
-							insertend[3] = {line:x, position:posanf, emdcode:this.parseelemente[pare].emdstart, htmlcode:this.parseelemente[pare].htmlstart};//insertanf;
-							this.insertedhtmlinline[x].push(insertanf);
-							this.insertedhtmlinline[x].push(insertend);
-							var elemanf = {line:x, pos:posanf, mdcode:this.parseelemente[pare].emdstart, html:this.parseelemente[pare].htmlstart, typ:"start", wystextveraenderung:this.parseelemente[pare].emdstart.length};
-							var elemend = {line:x, pos:posend, mdcode:this.parseelemente[pare].emdend, html:this.parseelemente[pare].htmlend, typ:"end", wystextveraenderung:this.parseelemente[pare].emdend.length};
-							elemanf.brotherelement = elemend;
-							elemend.brotherelement = elemanf;
-							//this.map.addElement({line:x,pos:textareacodestart,html:"<code>",mdcode:"`",typ:"start",wystextveraenderung:1});
-							this.map.addElement(elemanf);
-							this.map.addElement(elemend);
-							//this.insertedhtmlinline[x].push(new Array(posanf, this.parseelemente[pare].emdstart, this.parseelemente[pare].htmlstart));
-							//this.insertedhtmlinline[x].push(new Array(posend, this.parseelemente[pare].emdend, this.parseelemente[pare].htmlend));
-							//this.veraenderungen.push(new Array(this.parseelemente[pare].emdstart,laengebiszeile+posanf,this.parseelemente[pare].emdstart.length));
-							//this.veraenderungen.push(new Array(this.parseelemente[pare].emdend,laengebiszeile+posend,this.parseelemente[pare].emdend.length));
-							var ersatzanf = "";
-							var ersatzend = "";
-							for(eax=0;eax<this.parseelemente[pare].emdstart.length;eax++)ersatzanf+="€";
-							for(eax=0;eax<this.parseelemente[pare].emdend.length;eax++)ersatzend+="€";
-							//console.log(this.parseelemente[pare].emdstart + " wird zu "+ersatzanf);
-							pseudolines[x] = pseudolines[x].substring(0,posanf)+ersatzanf
-											+pseudolines[x].substring(posanf+ersatzanf.length,posend)
-											+ersatzend
-											+pseudolines[x].substring(posend+ersatzend.length);
-							//console.log("pseudoline[x]"+pseudolines[x]);
-							//console.log("pseudoline-end");
-						}else if(peend>-1 && pestart>-1 && mline>-1){
-							//endzeichen in multiline gefunden:
-							lines[x]= lines[x].substring(0,pestart)+this.parseelemente[pare].htmlstart
-										+ lines[x].substring(pestart+this.parseelemente[pare].emdstart.length);
-							lines[mline]=lines[mline].substring(0,peend)+this.parseelemente[pare].htmlend
-										+ lines[mline].substring(peend+this.parseelemente[pare].emdend.length);
-							if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-							//positionsbestimmung für wysiwyg:
-							var posanf = pseudolines[x].indexOf(this.parseelemente[pare].emdstart);
-							var posend = pseudolines[mline].indexOf(this.parseelemente[pare].emdend);
-							if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-							if(this.insertedhtmlinline[mline]==null)this.insertedhtmlinline[mline]=new Array();
-							var insanf = new Array(posanf, this.parseelemente[pare].emdstart, this.parseelemente[pare].htmlstart);
-							var insend = new Array(posend, this.parseelemente[pare].emdend, this.parseelemente[pare].htmlend);
-							insanf[3] = {line:mline, position:posend, emdcode:this.parseelemente[pare].emdend, htmlcode:this.parseelemente[pare].htmlend};//insend;
-							insend[3] = {line:x, position:posanf, emdcode:this.parseelemente[pare].emdstart, htmlcode:this.parseelemente[pare].htmlstart};//insanf;
-							this.insertedhtmlinline[x].push(insanf);
-							this.insertedhtmlinline[mline].push(insend);
-							var elemanf = {line:x, pos:posanf, mdcode:this.parseelemente[pare].emdstart, html:this.parseelemente[pare].htmlstart, typ:"start", wystextveraenderung:this.parseelemente[pare].emdstart.length};
-							var elemend = {line:mline, pos:posend, mdcode:this.parseelemente[pare].emdend, html:this.parseelemente[pare].htmlend, typ:"end", wystextveraenderung:this.parseelemente[pare].emdend.length};
-							elemanf.brotherelement = elemend;
-							elemend.brotherelement = elemanf;
-							//this.map.addElement({line:x,pos:textareacodestart,html:"<code>",mdcode:"`",typ:"start",wystextveraenderung:1});
-							this.map.addElement(elemanf);
-							this.map.addElement(elemend);
-							//this.insertedhtmlinline[x].push(new Array(posanf, this.parseelemente[pare].emdstart, this.parseelemente[pare].htmlstart));
-							//this.insertedhtmlinline[mline].push(new Array(posend, this.parseelemente[pare].emdend, this.parseelemente[pare].htmlend));
-							//this.veraenderungen.push(new Array(this.parseelemente[pare].emdstart,laengebiszeile+posanf,this.parseelemente[pare].emdstart.length));
-							//var laengebismultizeile = laengebiszeile;
-							//for(var lbmz=x;lbmz<mline;lbmz++)laengebismultizeile+=lines[lbmz].length;
-							//this.veraenderungen.push(new Array(this.parseelemente[pare].emdend,laengebismultizeile+posend,this.parseelemente[pare].emdend.length));
-							var ersatzanf = "";
-							var ersatzend = "";
-							for(eax=0;eax<this.parseelemente[pare].emdstart.length;eax++)ersatzanf+="€";
-							for(eax=0;eax<this.parseelemente[pare].emdend.length;eax++)ersatzend+="€";
-							pseudolines[x] = pseudolines[x].substring(0,posanf)+ersatzanf+pseudolines[x].substring(posanf+ersatzanf.length);
-							pseudolines[mline] = pseudolines[mline].substring(0,posend)
-											+ersatzend+pseudolines[mline].substring(posend+ersatzend.length);
-						}else{
-							//kein endzeichen gefunden
-							this.perror.push(new parsererror(x,pestart,lines[x].length-1,this.parseelemente[pare].nombre,
-																"missing endsymbol "+this.parseelemente[pare].emdend, this.parseelemente[pare]));
-							if(mline>-1)this.perror.push(new parsererror(mline,0,lines[mline].length-1,this.parseelemente[pare].nombre,
-																			"missing endsymbol "+this.parseelemente[pare].emdend));
-						}
-					//while schleife ist durchgelaufen:
-					aktppos = pestart+1;
-					pestart=lines[x].indexOf(this.parseelemente[pare].emdstart,aktppos);
-					peend = lines[x].indexOf(this.parseelemente[pare].emdend,pestart+1);
-
-					}
-		}
-	} //ende ansatz zeilendurchlaufen
-	//this.parsewysiwyghtml();
-	//
-	//console.log(this.lineswithhtml);
-	for(var lwh=0;lwh<lines.length;lwh++){
-		if(this.lineswithhtml[lwh]==null && lines[lwh].length==0){
-			this.lineswithhtml[lwh]="empty";
-		}	else if(this.lineswithhtml[lwh]==null){
-			//console.log("text nach lwh"+lwh);
-			this.lineswithhtml[lwh]="text";
-			//lines[lwh]='<div class="text">'+lines[lwh];
-			lines[lwh]='<p>'+lines[lwh];
-			//if(this.insertedhtmlinline[lwh]==null)this.insertedhtmlinline=new Array();
-			//this.insertedhtmlinline[lwh].push(new Array(0,"","<p>")); //i have to get rid of insertedhtmlinline
-			this.map.addElement({line:lwh, pos:0, html:"<p>", mdcode:"", typ:"start", wystextveraenderung:0});
-			var followlines=lwh+1;
-			//console.log("lineswithhtmllength:"+this.lineswithhtml.length);
-				while(this.lineswithhtml[followlines]==null &&
-								followlines<lines.length &&
-								lines[followlines].length>0
-								){
-					this.lineswithhtml[followlines]="text";
-					followlines++;
-					//console.log("fll++");
-				}
-			followlines--; //followlines geht jetzt bis zur letzten zeile
-			//console.log("lwh->followlines"+lwh+" -> "+followlines);
-			//lines[followlines]+="</div>";
-			if(this.insertedhtmlinline[followlines]==null)this.insertedhtmlinline[followlines]=new Array();
-			//this.insertedhtmlinline[followlines].push(new Array(lines[followlines].length,"","</p>"));
-			this.map.addElement({line:followlines, pos:lines[followlines].length, html:"</p>", mdcode:"", typ:"end", wystextveraenderung:0});
-			lines[followlines]+="</p>";
-
-			if(lwh==followlines && lines[lwh]==''){
-				lines[lwh]="";
-				//this.lineswithhtml[lwh]="leerzeile";
-			}
-		}
-	}
-	//alert(this.lineswithhtml.toString());
-	//lineswithhtml ist jetzt gefüttert mit jeder zeile
-	//add last pageend:
-	this.map.pageend.push({lines:lines.length});
-	//save cursorpos:
-	this.parsedcursorpos = slidenote.textarea.selectionEnd;
-	//fehlende zeilenumbrüche in html-blöcken text und code einsetzen:
-	var temptext ="";
-	for(var lx=0;lx<lines.length;lx++){
-		temptext +=lines[lx];
-		//if(lines[lx].indexOf(">",lines[lx].length-2)==-1 && lines[lx].substring(0,5)!="-----")temptext+="<br>";
-		if(this.lineswithhtml[lx]=="text" && lines[lx].indexOf("</p>")==-1 && lx<lines.length-1)temptext+="<br>";
-		if(this.lineswithhtml[lx]=="code"&& lx<lines.length-1)temptext+="<br>";
-		//if(this.lineswithhtml[x]=="text")alert(lines[x]+lines[x].indexOf("</div>"));
-		//alert(this.lineswithhtml[x]);
-		if(lx<lines.length-1)temptext +="\n";
-
-	}
-	this.parsedcode=temptext;
-	//temptext müsste jetzt komplett emded nach html geparsed sein:
-	this.parsedcode = temptext;
-	this.parselines(temptext); //lines mit neu zugefügtem html einlesen
-
-}
 /*	*stylepager: objekt mit einem muster, nach welchem die page per zeile geparst wird und mit zusätzlichem html und/oder klassen versehen wird
 	* braucht beim erstellen muster nach dem gescannt werden kann -> array mit zeilenelement-code: text, table, ul, li, head usw.
 	* start: htmlcodestarttag, end: htmlcodeendtag
@@ -4080,7 +2837,7 @@ pagegenerator.prototype.showpresentation = function(){
 	if(!fullscreen){
 		//this.init();
 		fullscreen=true;
-		if(parsetest)slidenote.parser.renderMapToPresentation();
+		slidenote.parser.renderMapToPresentation();
 		document.getElementById("praesentation").innerHMTL = "";
 		this.init(slidenote.parser, document.getElementById("praesentation"));
 		//var test2 = document.getElementsByTagName("code");
@@ -4281,11 +3038,10 @@ Theme.prototype.loadConfigString = function(data){
 /*neuer aufbau für die steuerung und ablauf usw. des programms:
 */
 
-function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage, presentationdiv){
+function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentationdiv){
 	//grundlegender zugriff auf alle wichtigen html-elemente:
 	this.textarea = texteditor;
 	this.texteditorerrorlayer = texteditorerrorlayer;
-	this.wysiwygarea = wysiwygarea;
 	this.htmlerrorpage = htmlerrorpage;
 	//this.htmlerrorpagerahmen = htmlerrorpage.parentNode;
 	this.presentationdiv = presentationdiv;
@@ -4293,8 +3049,6 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 
 	//das wichtigste: das parsingobjekt:
 	this.parser = new emdparser(this.textarea.value);
-	//das nächste ist der wysiwyg-editor:
-	this.wysiwyg = new wysiwygcontroller(this.textarea, this.wysiwygarea, this);
 	//als letztes die präsentation:
 	this.themeobjekts="";
 	this.presentation = new pagegenerator(this.parser,this.presentationdiv, this);
@@ -4326,9 +3080,7 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 	*/
 
 	//edit-modus:
-	this.wysiwygactivated = false;
 	this.texteditorerroractivated = true;
-	this.wysiwygarea.classList.add("hidden");
 	this.texteditorerrorlayer.classList.remove("hidden");
 
 	//markdowneditor-sachen:
@@ -4338,46 +3090,20 @@ function slidenotes(texteditor, texteditorerrorlayer, wysiwygarea, htmlerrorpage
 
 slidenotes.prototype.choseEditor=function(editor){
 	this.editormodus=editor;
-	if(editor=="wysiwyg"){
-		this.wysiwygactivated=true;
-		this.texteditorerroractivated=false;
-		this.wysiwygarea.classList.remove("hidden");
-		this.texteditorerrorlayer.classList.add("hidden");
-		document.getElementById("slidenotediv").classList.remove("vollbild");
-	}else if(editor=="md-texteditor"){
-		this.wysiwygactivated=false;
+	 if(editor=="md-texteditor"){
 		this.texteditorerroractivated = true;
-		this.wysiwygarea.classList.add("hidden");
 		this.texteditorerrorlayer.classList.remove("hidden");
-		document.getElementById("slidenotediv").classList.remove("vollbild");
 		document.getElementById("nicesidebarsymbol").style.display="unset";
 	}else if(editor=="focus"){
-		this.wysiwygactivated=false;
 		this.texteditorerroractivated = true;
-		this.wysiwygarea.classList.add("hidden");
 		this.texteditorerrorlayer.classList.remove("hidden");
-		document.getElementById("slidenotediv").classList.remove("vollbild");
 		document.getElementById("sidebar").innerHTML="";
 		document.getElementById("nicesidebarsymbol").style.display="none";
-	}else if(editor=="wysiwygfullscreen"){
-		this.wysiwygactivated=true;
-		this.texteditorerroractivated=false;
-		this.wysiwygarea.classList.remove("hidden");
-		this.texteditorerrorlayer.classList.add("hidden");
-		document.getElementById("slidenotediv").classList.add("vollbild");
-	} else {
-		this.wysiwygactivated=false;
+	}else {
 		this.texteditorerroractivated = false;
-	}
-	if(editor=="wysiwygdebugmode"){
-		this.wysiwygactivated=true;
-		this.wysiwygarea.classList.remove("hidden");
 		this.texteditorerrorlayer.classList.add("hidden");
-		document.getElementById("slidenotediv").classList.remove("vollbild");
-		this.wysiwygarea.classList.add("debugmode");
-	}else{
-		this.wysiwygarea.classList.remove("debugmode");
 	}
+
 	document.getElementById("editorchoice").value = editor;
 	console.log("choseEditor parse:");
 	this.parseneu();
@@ -4402,7 +3128,6 @@ slidenotes.prototype.parseneu = function(){
 	var startzeit = new Date();
 	this.oldparser = this.parser;
 	this.parser = new emdparser(this.textarea.value);
-	//this.parser.parsenachzeilen();
 	this.parser.parseMap();
 	var zwischenzeit = new Date();
 	var nachrendernzeit;
@@ -4412,49 +3137,43 @@ slidenotes.prototype.parseneu = function(){
 	var scrollzeit;
 	var rahmensetzenzeit;
 	var compareResult = this.parser.comparePages();
-	if(this.wysiwygactivated){
-		//hier kommt wysiwygkram rein
-		/*this.parser.parsewysiwyghtml();
-		this.wysiwygarea.innerHTML = this.parser.errorcode;
-		this.wysiwyg.scrollToCursor();*/
-		this.renderwysiwyg();
-	} else {
-		//MDCodeEditor:
-		if(this.texteditorerroractivated){
-			//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
-			this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
-			//add sidebar here
-			nachrendernzeit = new Date();
-			if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus"){
-				//this.parser.generateSidebar(compareResult);
-				this.parser.setDropDownMenu();
-				if(compareResult)	setTimeout("slidenote.parser.generateSidebar({start:"+compareResult.start+",end:"+compareResult.end+"})",10);
-				  else this.parser.generateSidebar();
-				 //this.parser.generateSidebar();
-					//this.parser.setDropDownMenu();
-			}
 
-			sidebarzeit = new Date();
-			if(this.afterCodeEditorrender)this.afterCodeEditorrender();
-			themechangeszeit = new Date();
-			//getting rid of false lines from proposedsymbols:
-			var proposedsymbols = document.getElementsByClassName("proposedsymbol");
-			for(var pps = 0;pps<proposedsymbols.length;pps++){
-				if(proposedsymbols[pps].offsetLeft<10) proposedsymbols[pps].style.display = "none";
-			}
-			handlingproposedsymbolszeit = new Date();
-			this.scroll(this.textarea);
-			scrollzeit = new Date();
-			//this.texteditorImagesPreview = document.getElementById("texteditorimagespreview");
-			//this.texteditorImagesPreview.innerHTML = this.parser.renderCodeeditorImagePreview();
-			//warum musste ich an dieser stelle den rahmen neu setzen???
-			//this.texteditorrahmensetzen();
-			rahmensetzenzeit = new Date();
-			for(var x=0;x<this.presentation.themes.length;x++){
-				if(this.presentation.themes[x].active)this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
-			}
+	//MDCodeEditor:
+	if(this.texteditorerroractivated){
+		//this.texteditorerrorlayer.innerHTML = this.parser.parseerrorsourcebackground();
+		this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
+		//add sidebar here
+		nachrendernzeit = new Date();
+		if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus"){
+			//this.parser.generateSidebar(compareResult);
+			this.parser.setDropDownMenu();
+			if(compareResult)	setTimeout("slidenote.parser.generateSidebar({start:"+compareResult.start+",end:"+compareResult.end+"})",10);
+			  else this.parser.generateSidebar();
+			 //this.parser.generateSidebar();
+				//this.parser.setDropDownMenu();
+		}
+
+		sidebarzeit = new Date();
+		if(this.afterCodeEditorrender)this.afterCodeEditorrender();
+		themechangeszeit = new Date();
+		//getting rid of false lines from proposedsymbols:
+		var proposedsymbols = document.getElementsByClassName("proposedsymbol");
+		for(var pps = 0;pps<proposedsymbols.length;pps++){
+			if(proposedsymbols[pps].offsetLeft<10) proposedsymbols[pps].style.display = "none";
+		}
+		handlingproposedsymbolszeit = new Date();
+		this.scroll(this.textarea);
+		scrollzeit = new Date();
+		//this.texteditorImagesPreview = document.getElementById("texteditorimagespreview");
+		//this.texteditorImagesPreview.innerHTML = this.parser.renderCodeeditorImagePreview();
+		//warum musste ich an dieser stelle den rahmen neu setzen???
+		//this.texteditorrahmensetzen();
+		rahmensetzenzeit = new Date();
+		for(var x=0;x<this.presentation.themes.length;x++){
+			if(this.presentation.themes[x].active)this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
 		}
 	}
+
 	var endzeit = new Date();
 	var parszeit = zwischenzeit - startzeit;
 	var renderzeit = endzeit - zwischenzeit;
@@ -4474,44 +3193,7 @@ slidenotes.prototype.parseneu = function(){
 	if(slidenoteguardian)slidenoteguardian.autoSaveToLocal(new Date().getTime());
 };
 
-slidenotes.prototype.renderwysiwyg = function(){
-	//nur wysiwyg neu aufbauen
-	var st = this.wysiwygarea.scrollTop;
-	this.parser.parsewysiwyghtml();
-	this.wysiwygarea.innerHTML = this.parser.errorcode;
-	//ergänzung für base64-urls:
-	if(this.base64images!=null){
-		//ersetze img-srcs durch entsprechende base64-codes:
-		//console.log("base64 nicht leer - bilder ersetzen");
-		var b64imges = this.wysiwygarea.getElementsByTagName("img");
-		for(var x=0;x<b64imges.length;x++){
-			var b64url=this.base64images.imageByName(b64imges[x].src.substring(b64imges[x].src.lastIndexOf("/")+1));
-			if(b64url!=null)b64imges[x].src = b64url.base64url;
-		}
-	}
-	this.wysiwygarea.scrollTop = st;
-	this.wysiwyg.scrollToCursor();
-	console.log("renderwysiwyg abgeschlossen");
-}
 
-slidenotes.prototype.parseLater = function(){
-	var lasttyping = new Date().getTime();
-	var pause = 500;
-	var diff = lasttyping - this.lasttyping;
-	console.log("parselater()"+diff);
-	this.lasttyping = lasttyping;
-	setTimeout("slidenote.parseLater2("+pause+")",pause);
-}
-slidenotes.prototype.parseLater2 = function(pause){
-	var lasttyping = new Date().getTime();
-	var diff = lasttyping - this.lasttyping;
-
-	if(diff>pause-10){
-		console.log("parse von parselater2");
-		this.parseneu();
-	}
-	console.log("parselater2:"+diff+(diff>pause));
-}
 
 slidenotes.prototype.parseAfterPause = function(){
 	this.keypressstack--;
@@ -4535,7 +3217,7 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			key = getKeyOfKeyCode(event.keyCode);
 	}
 	//mdcode-editor-part:
-	if(!this.wysiwygactivated&&this.texteditorerroractivated){
+	if(this.texteditorerroractivated){
 		//var renderkeys = "*_#"
 		if(key==="Enter"){// || key==="Backspace" || renderkeys.indexOf(key)>-1){
 			console.log("parse keypressdown");
@@ -4563,60 +3245,13 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 					if(this.keypressstack===undefined)this.keypressstack=0;
 					this.keypressstack++;
 					setTimeout("slidenote.parseAfterPause()", 500);
-
 					console.log("actkey:"+key+"last key:"+this.lastpressedkey);
 				}
 			}
-
-			//this.parseLater();
 		}
 	}
-
-	//from here on only if wysiwyg is activated:
-	if(!this.wysiwygactivated){
-
-		return;
-	}
-
-	if(key==="Shift")this.wysiwyg.shiftdown = true;
-	console.log("key:"+key);
-	var keydown = this.keydown; //braucht das noch? erstmal zum testen hier temporär, wenns funktioniert
-	//kann es ganz weg, sonst wieder global machen
-	//die logik macht doch keinen sinn... a
-	//if(!keydown &&(key=="ArrowDown" || key=="ArrowUp" || key=="End" || key=="Home")){
-	if(inputobject == this.textarea  &&
-		(key=="ArrowDown" || key=="ArrowUp" || key=="End" || key=="Home")){
-		//Sonderfälle für wysiwyg:
-		//alert()
-		console.log("steuerkeydown:"+key + " lasttyping:"+this.wysiwyg.lasttypingtext);
-		if(this.wysiwyg.lasttypingtext.length>1){
-			console.log("parse wegen steuerkey");
-			this.parseneu();
-			this.wysiwyg.lasttypingtext="";
-		}
-		this.wysiwyg.setCursor();
-		//this.keydown=true;
-
-	}else if(inputobject==this.textarea && key=="Shift"){
-		console.log("Shift gedrückt");
-		var alteselection = document.getElementsByClassName("wysiwygselection")[0];
-		if(alteselection!=null){
-			//old selection exists, so reuse this
-			var oldtop = this.wysiwygarea.scrollTop; //remember old scrollTop
-			this.wysiwygarea.focus(); //focus on wysiwygarea
-			this.wysiwyg.setCursorToElement(alteselection, true); //set selection on wysiwygarea
-			this.wysiwygarea.scrollTop = oldtop; //set old scrollTop so browser does not scroll to top
-		}
-	}
-	if(key.length<2 && !event.ctrlKey)
-	this.wysiwyg.lasttypingtext+=key;
 };
-slidenotes.prototype.keypresswebkit = function(event, inputobject){
-	if(webkit){
-		var key= String.fromCharCode(event.keyCode);
-		this.wysiwyg.lasttypingtext+=key;
-	}
-}
+
 
 slidenotes.prototype.keypressup = function(event, inputobject){
 	var key = ""+event.key;
@@ -4747,60 +3382,8 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 		}
 		if(this.lastpressedkey ==="Dead" && key ==="Shift")this.lastpressedkey = "Dead";
 			else	this.lastpressedkey = key;
-
 	}
 
-
-	if(!this.wysiwygactivated)return;
-	if(key=="Shift"){
-		this.wysiwyg.shiftdown = false;
-		console.log("Shift up");
-	}
-	console.log(key + " textarea?"+(inputobject == this.textarea)+"ctrl?"+event.ctrlKey);
-	if(inputobject == this.textarea &&
-		(key=="ArrowDown" || key=="ArrowUp" || key=="End" || key=="Home")){
-	//textarea feuert arrow-down etc.: soll nix gemacht werden oder?
-		//alert("feuert :(");
-	} else if(inputobject == this.wysiwygarea &&
-		//(key=="ArrowDown" || key=="ArrowUp")){
-		//key.indexOf("Arrow")>-1 &&
-		key.substring(0,5)=="Arrow" &&
-		event.shiftKey){
-		//wysiwygarea feuert arrow-down oder arrow-up
-		//copyCursorToTextarea(); nur wenn fertig ist
-		console.log("keyupdown-timeout starten");
-		this.wysiwyg.lasttyping = new Date().getTime();
-		setTimeout("slidenote.wysiwyg.keyupdown()",201);
-		//this.wysiwyg.typing(key);
-
-	}	else if(inputobject==this.wysiwygarea){
-		console.log("inputobject wysiwygarea keyup" + key);
-		//keypressup wurde vom wysiwygarea gefeuert: copywysiwyg-cursorpos zu textarea
-		//if(key!="Shift")
-		this.wysiwyg.copyCursorToTextarea(event);
-	}else if(inputobject == this.textarea){
-		//alert("feuert?");
-		//if(!this.keydown)this.parseneu();
-		//console.log("parsen?");
-		//wirklich immer parsen? lieber keystrokes abwarten:
-		//this.parseneu();
-		//console.log(key);
-		if(this.wysiwygactivated){
-			if(key=="ArrowLeft"||key=="ArrowRight"){
-					this.renderwysiwyg();
-				console.log("left-right-key"+key);
-			}else if(key=="Control" || event.ctrlKey){
-				console.log("start parse");
-				this.parseneu();
-			}else {//if(!event.ctrlKey){
-				console.log("tippen mit:"+key + " metakey:"+event.metaKey);
-				this.wysiwyg.typing(key);
-			}
-		} else if(!this.texteditorerroractivated) {
-			console.log("parsen....");
-			this.parseneu();
-		}
-	}
 };
 
 slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode){
@@ -4953,8 +3536,6 @@ slidenotes.prototype.scroll = function(editor){
 		//console.log("scroll");
 
 	}
-	//TODO: wysiwyg-scroll wenn cursor aus dem bild kommt
-	//kommt das wirklich hier rein? eher nach wysiwyg-html-rendern oder?
 };
 
 slidenotes.prototype.initpresentation = function(){
@@ -4981,335 +3562,7 @@ slidenotes.prototype.addTheme = function(theme){
 	//welches auch den parser beeinflusst o.ä.
 }
 
-function wysiwygcontroller(textarea, wysiwyfield, ersteller){
-	this.textarea = textarea;
-	this.wysiwygarea = wysiwygarea;
-	this.ersteller = ersteller;
-	this.lasttyping = 0;
-	this.lasttypingloops =0;
-	this.lasttypingtext ="";
-	this.shiftdown = false; //hab nix besseres gefunden,
-	//daher manuell: gibt an ob shift noch gedrückt ist
-	//this.lastscroll = wysiwygarea.scrollTop;
-	//this.actstroll = lastscroll;
-}
-wysiwygcontroller.prototype.keyupdown = function(){
-	console.log("keyupdown:"+this.lasttyping+"act:"+new Date().getTime());
-	if(this.lasttyping+200<new Date().getTime()){
-		console.log("keyupdown feuert"+this.lasttyping)
-		this.copyCursorToTextarea();
-	}
-}
-wysiwygcontroller.prototype.typing = function(key){
-	var timeact = new Date().getTime();
-	this.lasttyping = timeact;
-	var cursor = this.Cursor();
-	if(cursor!=null && key.length<2){
-		//this.lasttypingtext += key;
-		cursor.innerHTML = this.lasttypingtext +"&zwj;";
-		console.log("loop startet mit key:" +key);
-		setTimeout("slidenote.wysiwyg.typingloop();",500);
-	}else if(key!="Control"){
-		console.log("parsen wyswig direkt mit key:" +key);
-		this.ersteller.parseneu();
-		this.lasttypingtext="";
-	}
-}
-wysiwygcontroller.prototype.typingloop = function(){
-	var timeact = new Date().getTime();
-	if(timeact < this.lasttyping +501){
-		//this.lasttypingloops++;
-		//setTimeout("slidenote.wysiwyg.typingloop();",101);
-	}else{
-		if(this.lasttypingtext!=""){
-			console.log("parsen loop"+this.lasttypingtext);
-			this.ersteller.parseneu();
-			this.lasttypingtext="";
-		}
-		//this.lasttyping = timeact + (this.lasttypingloops*100);
-	}
-}
-wysiwygcontroller.prototype.shiftkeydown = function(event){
-	var key=""+event.key;
-	if(key=="undefined")key=String.fromCharCode(event.keyCode);
 
-	var steuerkeys ="ArrowUp,ArrowDown,ArrowLeft,ArrowRight,End,Home";
-	console.log("shiftdown: key gedrückt:"+key)
-	if(key.length<2 || (key.length>1 && steuerkeys.indexOf(key)==-1)){
-		//was anderes als steuerkeys
-		//this.textarea.focus();
-		console.log("shiftdown text überschreiben");
-		var oldselect = document.getElementsByClassName("wysiwygselection")[0];
-		if(oldselect!=null)oldselect.classList.remove("wysiwygselection");
-		this.copyCursorToTextarea();
-
-	}
-}
-wysiwygcontroller.prototype.Cursor = function(){
-	return document.getElementsByClassName("cursor")[0];
-};
-wysiwygcontroller.prototype.positionOfElement = function(element){
-	var cursor = element;
-	if(cursor==null){
-		return -1;
-	}else{
-		var range = document.createRange();
-		range.selectNodeContents(this.wysiwygarea);
-		range.setEndBefore(cursor);
-		var pos = range.toString().length;
-		//range wieder freigeben
-		return pos;
-
-	}
-};
-
-wysiwygcontroller.prototype.scrollToCursor = function(){
-	var cursor = this.Cursor();
-	var cursortop;
-
-	if(cursor!=null){
-		cursortop = cursor.offsetTop;// - this.wysiwygarea.offsetTop;
-		//var wysiwygareaoffset = this.wysiwygarea.offsetTop;
-		//console.log("wysareaoffset:"+wysiwygareaoffset);
-		var wysiwygmaxheight = this.wysiwygarea.clientHeight - cursor.offsetHeight;
-		//var wysiwygmax = this.wysiwygarea.scrollTop + this.wysiwygarea.offsetHeight-this.wysiwygarea.offsetTop;
-		var wysiwygmax = wysiwygmaxheight + this.wysiwygarea.scrollTop;
-		var wysiwygmin = this.wysiwygarea.scrollTop;
-		//firefox scheint images nicht im offsetTop mitzudenken:
-		/*
-		console.log("offsetparent"+cursor.offsetParent+" -> ist wysiwygarea?"+(cursor.offsetParent==this.wysiwygarea));
-		console.log(cursor.offsetParent);
-		console.log("cursor.offsettop"+cursor.offsetTop+" parentoffsetTop:"+cursor.offsetParent.offsetTop+" wysoftop"+this.wysiwygarea.offsetTop);
-		console.log("wysiwygscrolltop"+this.wysiwygarea.scrollTop + "maxheight:"+wysiwygmaxheight);
-		console.log("clientHeight:"+this.wysiwygarea.clientHeight + "offsetHeight:"+this.wysiwygarea.offsetHeight);
-		console.log("cursortop:"+cursortop + "wysmin:"+wysiwygmin+"wysmax"+wysiwygmax);
-		*/
-
-		if(cursortop>wysiwygmax){
-			console.log("scrolling"+this.wysiwygarea.scrollTop + "->"+ cursortop);
-			this.wysiwygarea.scrollTop = cursortop;
-
-		}else if(cursortop<wysiwygmin){
-			//console.log("scrollup:"+this.wysiwygarea.scrollTop + "<-"+cursortop);
-			//this.wysiwygarea.scrollTop = cursor.offsetTop + 109;
-		}
-		//cursor.scrollIntoView();
-
-	}
-}
-wysiwygcontroller.prototype.setCursor = function(){
-	//TODO: document durch this.wysiwygarea austauschen um cursor-namen einheitlich ändern zu können
-	//var cursor = document.getElementsByClassName("cursor")[0];
-	var cursor = this.Cursor();
-	if(cursor!=null){
-		console.log("cursor in wysiiwyg-setzen und fokusieren"+cursor);
-		//scrollen verhindern, sonst bleibt er immer in der letzten zeile:
-		var wysscrolltop = this.wysiwygarea.scrollTop;
-		this.wysiwygarea.focus();
-		this.setCursorToElement(cursor, false);
-		//console.log()
-		this.wysiwygarea.scrollTop = wysscrolltop;
-
-	}else{
-		var wyssel = document.getElementsByClassName("wysiwygselection")[0];
-		if(wyssel!=null){
-			//es gibt ne selection
-			//hier muss noch mehr rein getCaretCharacterOffsetWithin
-			//TODO: alte markierung erweiterbar machen
-			this.setCursorToElement(wyssel,true);
-			this.wysiwygarea.focus();
-		}
-	}
-};
-wysiwygcontroller.prototype.setCursorToElement = function(element,selectionorcursor){
-	//element sollte der cursor-span sein oder die selectionspan
-	if(typeof window.getSelection != "undefined" && typeof document.createRange != "undefined"){
-	//firefox und chrome:
-		var range = document.createRange();
-		range.selectNodeContents(element); //add the contents of the given element to the range
-		if(selectionorcursor== false)range.collapse(true); //collapse the range
-		console.log("setcursortoelement-elementclasses:"+element.classList.contains("bacw"));
-		if(selectionorcursor && element.classList.contains("bacw")){
-			//selection wurde von rechts nach links ausgewählt:
-			// (startContainer, startOffset)
-			var selstartnode = range.startContainer;
-			var selstartoff = range.startOffset;
-			range.collapse(false);
-			var sel = window.getSelection(); //Returns a Selection object representing the range of the text selected by the user or the current position of the caret.
-			sel.removeAllRanges(); //removes all ranges from the selection, leaving the anchorNode and focusNode properties equal to null and leaving nothing selected.
-			sel.addRange(range); //adds the range we created to the selection, effectively setting cursor position
-			sel.extend(selstartnode,selstartoff);
-			//range.extend(selstartnode,selstartoff);
-		}else{
-			var sel = window.getSelection(); //Returns a Selection object representing the range of the text selected by the user or the current position of the caret.
-			sel.removeAllRanges(); //removes all ranges from the selection, leaving the anchorNode and focusNode properties equal to null and leaving nothing selected.
-			sel.addRange(range); //adds the range we created to the selection, effectively setting cursor position
-		}
-	}
-	else if (typeof document.body.createTextRange != "undefined") {
-		//internetexplorer - really?
-		var textRange = document.body.createTextRange();
-		textRange.moveToElementText(element);
-		textRange.collapse();
-		textRange.select();
-	}
-};
-wysiwygcontroller.prototype.getSelectionLength = function(element){
-    var doc = element.ownerDocument || element.document;
-    var win = doc.defaultView || doc.parentWindow;
-	var sel = win.getSelection();
-	//alert("String:"+sel.toString()+"eol");
-	return sel.toString().length;
-};
-wysiwygcontroller.prototype.isSelectionBackwards= function(){
-	var backwards = false;
-	if (window.getSelection) {
-		var sel = window.getSelection();
-		if (!sel.isCollapsed) {
-				var range = document.createRange();
-				range.setStart(sel.anchorNode, sel.anchorOffset);
-				range.setEnd(sel.focusNode, sel.focusOffset);
-				backwards = range.collapsed;
-				range.detach();
-		}
-	}
-return backwards;
-}
-
-wysiwygcontroller.prototype.getCaretCharacterOffsetWithin = function(element) {
-    var caretOffset = 0;
-    var doc = element.ownerDocument || element.document;
-    var win = doc.defaultView || doc.parentWindow;
-    var sel;
-    if (typeof win.getSelection != "undefined") {
-        sel = win.getSelection();
-        if (sel.rangeCount > 0) {
-            var range = win.getSelection().getRangeAt(0);
-            var preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(element);
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            caretOffset = preCaretRange.toString().length;
-						/*console.log("keyupdown: carret gefunden an"+caretOffset);
-						console.log(range);
-						console.log(sel);*/
-						if(sel.anchorNode==this.textarea){
-							console.log("textarea-selection!");
-							caretOffset=-1;
-						}
-        }
-    } else if ( (sel = doc.selection) && sel.type != "Control") {
-        var textRange = sel.createRange();
-        var preCaretTextRange = doc.body.createTextRange();
-        preCaretTextRange.moveToElementText(element);
-        preCaretTextRange.setEndPoint("EndToEnd", textRange);
-        caretOffset = preCaretTextRange.text.length;
-    }
-    return caretOffset;
-};
-
-wysiwygcontroller.prototype.copyCursorToTextarea = function(event){
-	var debugzeitstart = new Date();
-	var sellength = this.getSelectionLength(this.wysiwygarea);
-	var wysiwygcursorpos =  this.getCaretCharacterOffsetWithin(this.wysiwygarea);
-	var selbackwards = this.isSelectionBackwards();
-	var aktpos = wysiwygcursorpos;
-	var startpos = aktpos-sellength;
-
-	if(sellength>0){
-		//es gibt eine neue selection
-		aktpos = this.ersteller.parser.map.WystextToSource(aktpos);
-		startpos = this.ersteller.parser.map.WystextToSource(startpos);
-
-	} else{
-		//es gibt keine neue selection
-			aktpos = this.ersteller.parser.map.WystextToSource(aktpos);
-			startpos = aktpos;
-	}
-	//console.log("copyCursorToTextarea wyspos:"+wysiwygcursorpos+" aktpos:"+aktpos+" startpos:"+startpos);
-	//console.log(this.ersteller.parser.map);
-	var debugzeitwystexttosource = new Date() - debugzeitstart;
-	console.log("wystexttosource brauchte:"+debugzeitwystexttosource+"ms");
-		this.textarea.focus();
-		this.textarea.selectionEnd = aktpos; //cursor an stelle setzen
-		this.textarea.selectionStart = startpos;
-		this.textarea.selectionDirection="forward";
-		if(selbackwards)this.textarea.selectionDirection = "backward";
-		//this.ersteller.parseneu();
-		//nicht neu parsen - es reicht, html für wysiwyg neu zu rendern
-		this.ersteller.renderwysiwyg();
-		keydown=false;
-		var debugzeitend = new Date() - debugzeitstart;
-		console.log("copyCursorToTextarea brauchte "+debugzeitend+"ms")
-};
-
-wysiwygcontroller.prototype.pastefromwysiwyg = function(pastedtext){
-
-}
-
-wysiwygcontroller.prototype.mousedown = function(event){
-
-	console.log("maus gedrückt");
-	if(event.which==3 || event.button=="2"){
-		//rechte maustaste wurde gedrückt:
-		console.log("rechte maustaste wurde gedrückt");
-		//this.textarea.focus();
-		var cursor = this.Cursor();
-		if(cursor!=null){
-			//this.wysiwygarea.focus();
-			this.setCursorToElement(cursor,false);
-		}
-		var alteselection = document.getElementsByClassName("wysiwygselection")[0];
-		if(alteselection!=null){
-
-			this.setCursorToElement(alteselection,true);
-		}
-
-	}
-	if(event.shiftKey){
-		//maus wurde gedrückt und shift ist aktiviert
-	/*	var alteselection = document.getElementsByClassName("wysiwygselection")[0];
-		if(alteselection!=null){
-			this.setCursorToElement(alteselection,true);
-
-		}*/
-		//evtl. einfach nur focus wechseln:
-		var cursor = this.Cursor();
-		if(cursor!=null){
-
-			var sel = window.getSelection();
-			if(sel.rangeCount>0){
-				var range=window.getSelection().getRangeAt(0);
-				range.collapse();
-				range.setStartBefore(cursor);
-				sel.removeAllRanges();
-			 	sel.addRange(range);
-				setTimeout("slidenote.keypressdown({key:'Shift'},slidenote.textarea)",100);
-
-			}
-			/*
-			var oldselect = document.getElementsByClassName("wysiwygselection")[0];
-			if(oldselect!=null){
-				var sel = window.getSelection();
-				if(sel.rangeCount>0){
-					var range=window.getSelection().getRangeAt(0);
-					range.collapse();
-					if(oldselect.classList.contains("bacw")){
-						range.setStartBefore(oldselect);
-					}else{
-						range.setStartAfter(oldselect);
-					}
-					sel.removeAllRanges();
-				 	sel.addRange(range);
-					setTimeout("slidenote.keypressdown({key:'Shift'},slidenote.textarea)",400);
-
-				}
-			}*/
-			this.wysiwygarea.focus();
-
-		}
-	}
-	console.log("wysiwyg.mousedown abgeschlossen");
-}
 //webkit-hacks:
 var webkit = false;
 function getKeyOfKeyCode(keycode){
@@ -5329,34 +3582,3 @@ function getKeyOfKeyCode(keycode){
   if(keycodes[keycode]==null)return "webkitbug"+keycode;
   return keycodes[keycode];
 }
-
-wysiwygcontroller.prototype.hideorshowcursor = function(){
-	//console.log("hideorshow:");
-	//console.log(document.activeElement);
-	var cursor = this.Cursor();
-	if(cursor != null){
-		var active = document.activeElement;
-		if(active == this.textarea || active == this.wysiwygarea){
-			//console.log("show cursor");
-			cursor.style.display="unset";
-		} else {
-			//console.log("hide cursor");
-			cursor.style.display="none";
-		}
-
-	}
-}
-/*
-wird scheinbar doch nicht gebraucht
-function cutcurrentselection(){
-	var textarea = slidenote.textarea;
-	var selstart= textarea.selectionStart;
-	var selend = textarea.selectionEnd;
-	console.log(selstart+"->"+selend+" cutcurrentselection")
-	textarea.value = textarea.value.substring(0,selstart)+
-									textarea.value.substring(selend);
-	slidenote.textarea.selectionEnd=selstart;
-	textarea.focus();
-	slidenote.parseneu();
-}
-*/

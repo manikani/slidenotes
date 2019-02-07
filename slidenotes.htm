@@ -11,15 +11,6 @@
 var slidenote;
 var slidenoteguardian;
 var presentation; //TODO: sollte noch entfernt werden. nur noch slidenote-objekt global
-/* = new slidenotes(document.getElementById("quelltext"),
-							document.getElementById("texteditorerrorlayer"),
-							document.getElementById("wysiwygarea"),
-							document.getElementById("fehlercode"),
-							document.getElementById("praesentation")
-						);
-dubbidu
-*/
-
 var editorinit=false; //wird nicht mehr gebraucht?
 
 function initeditor(){
@@ -28,23 +19,21 @@ function initeditor(){
 	if(slidenote==null){
 		var texted = 		document.getElementById("quelltext");
 		var texterr =		 document.getElementById("texteditorerrorlayer");
-		var wys = 			document.getElementById("wysiwygarea");
 		var errordet =	 document.getElementById("fehlercode");
 		var slideshow = 	document.getElementById("praesentation");
-		if(texted==null||texterr==null||wys==null||errordet==null||slideshow==null){
+		if(texted==null||texterr==null||errordet==null||slideshow==null){
 			//etwas fehlt noch...
 			console.log("etwas fehlt noch")
 			setTimeout("initeditor()",500); //gib ihm noch Zeit
 		} else{
-			slidenote = new slidenotes(texted, texterr, wys, errordet, slideshow );
+			slidenote = new slidenotes(texted, texterr, errordet, slideshow );
 			presentation = slidenote.presentation;
 			//texted.onresize = slidenote.parseneu;
 			texted.onresize= function(){slidenote.parseneu();};
 			texted.onkeydown= function(event){
-				//if(slidenote.wysiwygactivated)slidenote.keypressdown(event, texted); else slidenote.parseneu()
 				slidenote.keypressdown(event, texted);
 			};
-			texted.onkeypress= function(event){if(slidenote.wysiwygactivated)slidenote.keypresswebkit(event, texted);};
+
 			texted.onkeyup=function(event){slidenote.keypressup(event, texted);};
 			texted.onpaste=function(){setTimeout('slidenote.parseneu()',150)};
 			texted.oncut=function(){setTimeout('slidenote.parseneu()',150)};
@@ -113,62 +102,10 @@ function initeditor(){
 			});
 
 			//texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
-			wys.onmouseup=function(event){slidenote.wysiwyg.copyCursorToTextarea(event); console.log("onmouseupend");};
-			wys.onmousedown=function(event){slidenote.wysiwyg.mousedown(event);};
-			wys.onpaste=function(event){
-				console.log(event.clipboardData.getData('Text'));
-				console.log("textareaselstartend:"+slidenote.textarea.selectionStart + "->" +slidenote.textarea.selectionEnd);
-				var selstart=slidenote.textarea.selectionStart;
-				var selend = slidenote.textarea.selectionEnd;
-				var pastetext = event.clipboardData.getData('Text');
-				if(!webkit){
-					//chromium: does not select textarea, so insert "by hand" (firefox ignores this because it never fires on wysiwyg i think)
-					slidenote.textarea.value = slidenote.textarea.value.substring(0,selstart)+
-																				pastetext +
-																				slidenote.textarea.value.substring(selend);
-
-					setTimeout('slidenote.textarea.focus()',150);
-					slidenote.textarea.selectionEnd= selend+pastetext.length;
-					slidenote.textarea.selectionStart = slidenote.textarea.selectionEnd;
-				}else{
-					//webkit-version: just set a new selectionstart/end to select textarea as insert-point
-					slidenote.textarea.selectionStart = selstart;
-					slidenote.textarea.selectionEnd = selend;
-
-				}
-				setTimeout('slidenote.parseneu()',160);
-			};
-			wys.oncut=function(event){
-				if(!webkit){
-					//chromium:
-					var selstart = slidenote.textarea.selectionStart;
-					slidenote.textarea.value = slidenote.textarea.value.substring(0,slidenote.textarea.selectionStart)+
-																		slidenote.textarea.value.substring(slidenote.textarea.selectionEnd);
-
-				  slidenote.textarea.selectionEnd = selstart;
-					slidenote.textarea.selectionStart = selstart;
-					setTimeout('slidenote.textarea.focus()',100);
-
-					setTimeout('slidenote.parseneu()',100);
-					//return false;
-				}else{
-					//webkit: verzöger action weil sonst nichts ins clipboard kopiert wird
-					//setTimeout("cutcurrentselection()",200);
-					//neu: webkit: selection neu auswählen sorgt bereits für richtige selection
-					slidenote.textarea.selectionEnd = slidenote.textarea.selectionEnd;
-					slidenote.textarea.selectionStart = slidenote.textarea.selectionStart;
-					slidenote.textarea.focus();
-					setTimeout('slidenote.parseneu()',200);
-				}
-
-			};
-			//wys.onkeyup=function(){setTimeout('slidenote.wysiwyg.copyCursorToTextarea()',1);};
-			wys.onkeyup=function(event){slidenote.keypressup(event,wys)};
-			wys.onkeydown=function(event){slidenote.wysiwyg.shiftkeydown(event);};
 			slidenote.parseneu();
 			console.log("slidenotes geladen");
 			console.log(slidenote);
-			//texted.addEventListener("focusout", function(){setTimeout("slidenote.wysiwyg.hideorshowcursor()", 100);});
+
 			document.getElementById("praesentationrahmen").onkeyup = function(event){
 				//Keyboardsteuerung der Slideshow:
 				var key=""+event.key;
@@ -228,20 +165,6 @@ function parsetesting(){
 </head>
 <body onload="initeditor()">
 <div id="slidenotediv">
-<!--
-	<div id="slidenotebuttons">
-		<input type="button" onclick="slidenote.presentation.showpresentation()" value="show presentation">
-		<input type="button" onclick="slidenote.showErrorDetails()" value="show parseerrors">
-		<input type="button" onclick="document.getElementById('slidenotediv').classList.add('vollbild');document.getElementById('quelltext').focus();" value="wysiwyg-vollbild">
-		<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
-			<option value="wysiwyg">WYSIWYM-Editor</option>
-			<option value="wysiwygfullscreen">WYSIWYM-Editor Fullscreen</option>
-			<option value="md-texteditor" selected>MD-Code Editor</option>
-			<option value="wysiwygdebugmode">WYSIWYM-debug mode</option>
-		</select>
-		<input type="button" onclick="slidenote.presentation.showThemes()" value="Options">
-	</div>
--->
 	<div id="editorblock">
 		<div id="editorheader">
 			<button><img src="images/buttons/home.png">HOME</button>
@@ -295,7 +218,6 @@ function parsetesting(){
 			<div id="texteditorerrorlayer"></div>
 			<textarea spellcheck="false" id="quelltext" onload="" autofocus onfocus="setTimeout('initeditor()',100);"></textarea>
 			<div id="texteditorimagespreview"></div>
-			<div id="wysiwygarea" contenteditable="true" spellcheck="false"></div>
 		</div>
 		<div id="optionmenu">
 			<h3>PRESENTATION DESIGN</h3>
@@ -311,7 +233,7 @@ function parsetesting(){
 		</div>
 
 			<div><select onchange="slidenote.presentation.getThemeByName('highlight').changeDesignOption(0,this.value)">
-				<option value="" hidden selected="selected" disabled>CODE HIGHLIGHTING</option>
+				<option value="" hidden selected disabled>CODE HIGHLIGHTING</option>
 				<option value="agate">agate</option>
 				<option value="androidstudio">androidstudio</option>
 				<option value="arduino-light">arduino-light</option>
