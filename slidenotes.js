@@ -1705,9 +1705,17 @@ emdparser.prototype.parseMap = function(){
 				var head=lines[x];
 				//look out for datablock:
 				var datablocktypefound =null;
+				//check for default:
+				if(lines[x]==="```"){
+					//set default to
+				}
 				for(var blocktype=0;blocktype<slidenote.datatypes.length;blocktype++)if(head.indexOf(slidenote.datatypes[blocktype].type)>-1)datablocktypefound = slidenote.datatypes[blocktype];
-				//datablocktypefound is now either null for codeblock or the datatype
-				if(datablocktypefound){
+				//datablocktypefound is now either null for default or the datatype
+				//check for default:
+				if(datablocktypefound===null && slidenote.standarddatablocktype){
+					datablocktypefound=slidenote.standarddatablocktype;
+				}
+				if(datablocktypefound && datablocktypefound.type!="code"){
 					//datablock found:
 					var datahead = head;
 					var datatyp = datablocktypefound.type;
@@ -3067,6 +3075,7 @@ function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentatio
 		for(var x=0;x<this.length;x++)if(this[x].type===datatype)result=this[x];
 		return result;
 	}
+	this.datatypes.push({type:"code",mdcode:false,theme:null});
 	/*examples:
 	slidenote.datatypes = [
 		{type:"chart", mdcode:false, theme:chartjs},
@@ -3472,7 +3481,7 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	}else if(emdzeichen=="%code"){
 		var selectedtext = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
 		if(selectedtext.indexOf("\n")>-1){
-			emdstart="\n```\n";
+			emdstart="\n```code\n";
 			emdend="\n```\n";
 		}else{
 			emdstart="`";

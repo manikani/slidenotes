@@ -14,6 +14,29 @@ newtheme.helpText = function(dataobject){
 newtheme.addEditorbutton('Layout',"```layout","```");
 
 slidenote.datatypes.push({type:"layout", mdcode:true, theme:newtheme});
+slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:newtheme};
+
+newtheme.addGlobalOption("checkbox","Use Github-Default (``` is codeblock, not section)","githubcodeblock",false);
+
+newtheme.changeGlobalOption = function(optionnr, value){
+  if(slidenote.standarddatablocktype.type ==="layout"){
+    slidenote.standarddatablocktype=null;
+  } else{
+    slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:this};
+  }
+}
+
+newtheme.saveConfigString = function(){
+  return (slidenote.standarddatablocktype === null);
+}
+
+newtheme.loadConfigString = function(data){
+  if(data==="true"){
+    slidenote.standarddatablocktype=null;
+  }else{
+    slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:this};
+  }
+}
 
 newtheme.styleThemeSpecials = function(){
   //get all data-blocks:
