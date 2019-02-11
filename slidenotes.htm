@@ -94,11 +94,15 @@ function initeditor(){
 					toggler.classList.remove("off");
 					toggler.classList.add("on");
 					document.getElementById("slidenotediv").classList.add("nightmode");
-		   }else{
-				toggler.classList.remove("on");
-				toggler.classList.add("off");
-				document.getElementById("slidenotediv").classList.remove("nightmode");
-       }
+		    }else{
+					toggler.classList.remove("on");
+					toggler.classList.add("off");
+					document.getElementById("slidenotediv").classList.remove("nightmode");
+	      }
+				//save config after changing to nightmode:
+				if(slidenoteguardian){
+					slidenoteguardian.saveConfig("local");
+				}
 			});
 
 			//texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
@@ -246,6 +250,7 @@ function parsetesting(){
 				<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
 					<option value="md-texteditor" selected>context-mode (default)</option>
 					<option value="focus">focus-mode</option>
+					<option value="raw-text">raw text</option>
 				</select>
 			</div>
 			<div>NIGHT MODE <a href="#" class="off" id="nightmodetoggle"><span>OFF</span>|<span>ON</span></a></div>

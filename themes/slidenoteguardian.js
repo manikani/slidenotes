@@ -382,6 +382,16 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   var editorchoiceString = savedConfigString.substring(savedConfigString.indexOf("$$")+2,savedConfigString.indexOf("€€"));
   slidenote.choseEditor(editorchoiceString);
   console.log("choseeditor:"+editorchoiceString);
+
+  //Nightmode yes or no?
+  var nightm = savedConfigString.substring(savedConfigString.indexOf("€€")+2,savedConfigString.indexOf("€$"));
+  console.log("nightmode:"+nightm);
+  if(nightm==="true"){
+    var toggler = document.getElementById("nightmodetoggle");
+    toggler.classList.remove("off");
+    toggler.classList.add("on");
+    document.getElementById("slidenotediv").classList.add("nightmode");
+  }
   //load Themes-Config:
   var savedConfigStrings = new Array();
   for(var x=0;x<themes.length;x++){
@@ -416,6 +426,10 @@ slidenoteGuardian.prototype.saveConfig = async function(destination){
   //stringToSave+="md-texteditor";
   stringToSave+=document.getElementById("editorchoice").value;
   stringToSave+="€€";
+  var nightm = document.getElementById("nightmodetoggle").classList.contains("on");
+  console.log("save nightmode:"+nightm);
+  stringToSave+=nightm;
+  stringToSave+="€$";
 
   for(var x=0;x<themes.length;x++){
 	    var actConfigString = themes[x].saveConfigString();
