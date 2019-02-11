@@ -1677,7 +1677,7 @@ emdparser.prototype.parseMap = function(){
   			}
   			//console.log("quote gefunden von"+x+" bis:"+qlc)
   			qlc--;
-  			if(this.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
+  			//if(this.map.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
   			this.map.addElement({line:x,pos:0,html:"<quote>",mdcode:"> ",typ:"start"});
 
   			for(var ql=x;ql<qlc;ql++)this.map.addElement({line:ql,pos:lines[ql].length,
