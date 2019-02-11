@@ -2785,6 +2785,7 @@ pagegenerator.prototype.showInsertMenu = function(){
 	//position insertmenu after carretsymbol or above:
 	var carretline = document.getElementsByClassName("carretline")[0];
 	var cursorlinesymbol = document.getElementById("cursorlinesymbol");
+	var symbol = document.getElementById("nicesidebarsymbol");
 	if(carretline){
 		var top = carretline.offsetTop + document.getElementById("sidebar").offsetTop +5;
 		if(top<0)top=8;
@@ -2800,17 +2801,31 @@ pagegenerator.prototype.showInsertMenu = function(){
 			cursorlinesymbol.style.top = "-7px";
 		}
 		insertmenu.style.top = top+"px";
+	}else{
+		var top = symbol.offsetTop + (symbol.offsetHeight/2);
+		var topmax = slidenote.textarea.offsetHeight - insertmenu.offsetHeight;
+		if(top>topmax){
+			top-=insertmenu.offsetHeight;
+			var cursorlinesymboltop = insertmenu.offsetHeight -9;
+			cursorlinesymbol.style.top = cursorlinesymboltop+"px";
+		} else{ cursorlinesymbol.style.top ="-7px";}
+		insertmenu.style.top = top+"px";
+
 	}
 	slidenote.textarea.focus(); //get focus on slidenote again to regain cursor
 	//insertmenu.focus();
-	carretline.style.visibility="hidden";
+	if(carretline)carretline.style.visibility="hidden";
+	symbol.style.visibility = "hidden";
 
 	var closeMenu = function(){
 		setTimeout(function (){
 			var insertmenu = document.getElementById("insertarea");
+			var symbol = document.getElementById("nicesidebarsymbol");
+			symbol.style.visibility = "visible";
 			insertmenu.tabIndex = undefined;
 			insertmenu.style.visibility = "hidden";
-			document.getElementsByClassName("carretline")[0].style.visibility="visible";
+			var carretline = document.getElementsByClassName("carretline")[0]
+			if(carretline)carretline.style.visibility="visible";
 			slidenote.textarea.focus();
 		},200);
 
@@ -3102,21 +3117,24 @@ slidenotes.prototype.choseEditor=function(editor){
 	 if(editor=="md-texteditor"){
 		this.texteditorerroractivated = true;
 		this.texteditorerrorlayer.classList.remove("hidden");
-		document.getElementById("nicesidebarsymbol").style.display="unset";
+		//document.getElementById("nicesidebarsymbol").style.display="unset";
 	}else if(editor=="focus"){
 		this.texteditorerroractivated = true;
 		this.texteditorerrorlayer.classList.remove("hidden");
 		document.getElementById("sidebar").innerHTML="";
-		document.getElementById("nicesidebarsymbol").style.display="none";
+		//document.getElementById("nicesidebarsymbol").style.display="none";
 	}else {
 		this.texteditorerroractivated = false;
 		this.texteditorerrorlayer.classList.add("hidden");
+		document.getElementById("nicesidebarsymbol").style.display="none";
 	}
 
 	document.getElementById("editorchoice").value = editor;
 	console.log("choseEditor parse:");
 	this.parseneu();
 	this.textarea.focus();
+	//save config imediately:
+	if(slidenoteguardian)slidenoteguardian.saveConfig("local");
 }
 
 slidenotes.prototype.texteditorrahmensetzen = function(){
@@ -3140,6 +3158,7 @@ slidenotes.prototype.parseneu = function(){
 	this.parser.parseMap();
 	var zwischenzeit = new Date();
 	var nachrendernzeit;
+	var dropdownmenuzeit;
 	var sidebarzeit;
 	var themechangeszeit;
 	var handlingproposedsymbolszeit;
@@ -3153,9 +3172,10 @@ slidenotes.prototype.parseneu = function(){
 		this.texteditorerrorlayer.innerHTML = this.parser.renderCodeeditorBackground();
 		//add sidebar here
 		nachrendernzeit = new Date();
+		this.parser.setDropDownMenu();
+		dropdownmenuzeit = new Date();
 		if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus"){
 			//this.parser.generateSidebar(compareResult);
-			this.parser.setDropDownMenu();
 			if(compareResult)	setTimeout("slidenote.parser.generateSidebar({start:"+compareResult.start+",end:"+compareResult.end+"})",10);
 			  else this.parser.generateSidebar();
 			 //this.parser.generateSidebar();
