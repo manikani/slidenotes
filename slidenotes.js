@@ -2334,7 +2334,8 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	this.loadTheme("prototyp");
 	this.loadTheme("highlight");
 	this.loadTheme("transition");
-	this.loadTheme("chartjs");
+	//this.loadTheme("chartjs");
+	this.loadTheme("chartist");
 	this.loadTheme("table");
 	this.loadTheme("imgtourl");
 	this.loadTheme("klatex");
@@ -2523,6 +2524,13 @@ pagegenerator.prototype.stylePages = function(){
 	this.presentationhtml = this.presentation.innerHTML;
 	//console.log("final output\n"+this.presentationhtml);
 
+}
+
+pagegenerator.prototype.afterStyle = function(){
+	//blocks are generated and everything is on its place. call hook-function of theme:
+	for(var x=0;x<this.themes.length;x++){
+		if(this.themes[x].active)this.themes[x].afterStyle();
+	}
 }
 
 //nextPage: "blättert um" zur nächsten Seite der Präsentation durch Anhängen der ".active" CSS-Klasse an das nächste Element
@@ -3011,6 +3019,9 @@ Theme.prototype.afterFinalizeHtml = function(){
 }
 Theme.prototype.afterStyleThemeSpecials = function(){
 	//Hook-Function, called after styleThemeSpecials
+}
+Theme.prototype.afterStyle = function(){
+	//Hook-Function, called after all styling is done
 }
 Theme.prototype.styleThemeMDCodeEditor = function(){
 	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
