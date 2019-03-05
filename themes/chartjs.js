@@ -69,7 +69,35 @@ newtheme.helpText = function(dataobject, more){
 var jsfile = document.createElement('script');
 jsfile.setAttribute("type","text/javascript");
 jsfile.setAttribute("src", "themes/chartjs/Chart.bundle.js");
+
+var jsfilec2svg = document.createElement("script");
+jsfilec2svg.setAttribute("type","text/javascript");
+jsfilec2svg.setAttribute("src","themes/chartjs/canvas2svg.js");
+jsfilec2svg.onload = function(){
+  C2S.prototype.getContext = function (contextId) {
+    if (contextId=="2d" || contextId=="2D") {
+        return this;
+    }
+    return null;
+  }
+
+  C2S.prototype.style = function () {
+      return this.__canvas.style
+  }
+
+  C2S.prototype.getAttribute = function (name) {
+      return this[name];
+  }
+
+  C2S.prototype.addEventListener =  function(type, listener, eventListenerOptions) {
+    console.log("canvas2svg.addEventListener() not implemented.")
+  }
+}
+
 document.getElementsByTagName("head")[0].appendChild(jsfile);
+document.getElementsByTagName("head")[0].appendChild(jsfilec2svg);
+
+
 
 //grundfarben festlegen:
 var chartjscolors = {
@@ -355,8 +383,8 @@ newtheme.styleThemeSpecials = function(){
 
 
       var ausgabeoptions = {
-          //responsive:false,
-          responsive:true,
+          responsive:false,
+          //responsive:true,
           maintainAspectRatio: false,
           title: {
                display:(datatitle!=null),
@@ -434,6 +462,25 @@ newtheme.styleThemeSpecials = function(){
         data: ausgabedata,
         options: ausgabeoptions
       }));
+      //try canvas2svg:
+      console.log("try canvas2svg: ausgabecan:");
+      console.log(ausgabecan);
+      ausgabeoptions.responsive = false;
+      ausgabeoptions.animation = false;
+      var svgContext = new C2S(500,300);
+      var svgChart = new Chart(svgContext, {
+        type:charttype,
+        data:ausgabedata,
+        options:ausgabeoptions
+      });
+      //console.log(svgContext.getSerializedSvg(true));
+      var chartsvg = svgContext.getSerializedSvg(true);
+      console.log(chartsvg);
+      //containerdiv.innerHTML = chartsvg;
+      var doublechart = svgContext.getSvg(true); //document.createElement("DIV");
+      //doublechart.innerHTML = chartsvg;
+      containerdiv.appendChild(doublechart);
+      //containerdiv.appendChild(chartsvg);
       // Change the display size
       //myChart.resize(300, 200); does not work
 
