@@ -22,6 +22,21 @@ document.getElementsByTagName("head")[0].appendChild(jsfile);
 newtheme.addEditorbutton('SVG-Chart','```chart'); //only for comparison right now
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme}); //TODO: change chartsvg to chart
 
+
+//internal vars:
+newtheme.charts = new Array();
+newtheme.chartcontainers = new Array();
+
+
+//internal function:
+newtheme.updatecharts = function(){
+  console.log("updating charts...");
+  for(var x=0;x<this.charts.length;x++){
+    this.charts[x].update();
+  }
+}
+
+
 newtheme.styleThemeSpecials = function(){
   //get all data-blocks with chart:
   var datadivs = slidenote.presentationdiv.getElementsByTagName("section");
@@ -173,6 +188,10 @@ newtheme.styleThemeSpecials = function(){
       //responsiveOptions: can be called aditionaly
       var responsiveOptions = this.getResponsiveOptions({headsub:headsub,charttype:charttype});
       var chsvg;
+      //chartoptions.width = "100%";
+      //chartoptions.height = "40vh";
+      console.log("chart:presentationdiv clientheight"+presentationdiv.clientHeight);
+
       if(charttype==="line"){
         chsvg = new Chartist.Line(presentationdiv, chartdata, chartoptions);
       }else if(charttype==="bar"){
@@ -185,9 +204,10 @@ newtheme.styleThemeSpecials = function(){
         }else{
           for(var lx=0;lx<numdata.length;lx++)pielabels[lx]=numdata[lx];
         }
-        //add percentage:
+        //change label:
         for(var lx=0;lx<pielabels.length;lx++){
-          pielabels[lx]+=" ";
+          if(ylabel)pielabels[lx]+=": "+series[lx]+" "+ylabel;
+          pielabels[lx]+=" \n";
           pielabels[lx]+= Math.round(series[lx] / series.reduce(sum) * 100);
           pielabels[lx]+="%";
         }
@@ -195,31 +215,59 @@ newtheme.styleThemeSpecials = function(){
         {labels:pielabels, series:series},
         chartoptions);
       }
+      //add viewbox to chart:
+      chsvg.on("created", function(data){
+        console.log("chart created");
+        console.log(data);
+        var w = data.svg._node.clientWidth;
+        var h = data.svg._node.clientHeight;
+        console.log("chartw/h:"+w+"/"+h);
+        data.svg.attr({
+          viewBox:"0 0 "+w+" "+h,
+          preserveAspectRatio:"xMinYMax meet"
+              });
+        //console.log(data.parent());
+        //console.log()
+      })
+      this.charts.push(chsvg);
       //console.log("chsvg:");console.log(chsvg);console.log(chsvg.svg);
       //console.log(presentationdiv.children);
       //adding labels to x and y axis:
-      if(xlabel){
+      if(xlabel && charttype!="pie"){
         console.log("x-axis-label:"+xlabel);
         var xlabeldiv = document.createElement("div");
         xlabeldiv.classList.add("chart-x-axis-label");
+        xlabeldiv.classList.add("ct-label");
         xlabeldiv.innerText=xlabel;
         presentationdiv.appendChild(xlabeldiv);
       }
-      if(ylabel){
+      if(ylabel && charttype!="pie"){
         var ylabeldiv = document.createElement("div");
         ylabeldiv.classList.add("chart-y-axis-label");
+        ylabeldiv.classList.add("ct-label");
         ylabeldiv.innerText=ylabel;
         presentationdiv.appendChild(ylabeldiv);
       }
+      console.log("chart:presentationdiv-height nach appending childs"+presentationdiv.clientHeight);
+
       if(datasetlabel.length>0){
         var dsetlabeldiv = document.createElement("div");
         dsetlabeldiv.classList.add("chart-datasetlabel-container");
 
         for(var dx=0;dx<datasetlabel.length;dx++){
           var dsetlabel = document.createElement("span");
-          dsetlabel.innerText=datasetlabel[dx];
+          var dsetlabeltext = document.createElement("span");
+          dsetlabeltext.innerText=datasetlabel[dx];
+          dsetlabel.appendChild(dsetlabeltext);
           dsetlabel.classList.add("chart-datasetlabel");
-          dsetlabel.classList.add("chart-datasetlabel-"+dx)
+          dsetlabel.classList.add("ct-label");
+          dsetlabel.classList.add("chart-datasetlabel-"+dx);
+          var labelbox = document.createElement("div");
+          labelbox.classList.add("chart-datasetlabel-box-"+dx);
+          labelbox.classList.add("chart-datasetlabel-box");
+          dsetlabel.appendChild(labelbox);
+          //var abc="abcdefghijklmnopqrstuvwxyz";
+          //dsetlabel.classList.add("ct-series-"+abc.substring(dx,dx+1));
           dsetlabeldiv.appendChild(dsetlabel);
         }
         presentationdiv.appendChild(dsetlabeldiv);
@@ -294,9 +342,10 @@ newtheme.getChartOptions = function(data){
 
 
   }else if(charttype=="bar"){
+    //options.chartPadding=20;
   	options.axisY = {
   		onlyInteger:true,
-  		offset:20
+  		//offset:20
   	}
   	if(head.indexOf("horizontal")>-1){
       //options.axisY = undefined;
@@ -304,7 +353,7 @@ newtheme.getChartOptions = function(data){
       options.seriesBarDistance = 10;
   		options.horizontalBars = true;
   		options.reverseData = true; //what does this do? test it
-  		options.axisY.offset = 70;
+  		//options.axisY.offset = 70;
       options.axisX = {onlyInteger:true};
   	}
   	if(head.indexOf("stack")>-1){
@@ -404,6 +453,10 @@ newtheme.getResponsiveOptions = function(data){
     }]
   ];//end of responsiveOptions
   if(data.charttype==="line"||data.charttype==="bar")return smalllabeloptions;
+}
+newtheme.afterStyle = function(){
+  console.log("update charts:");
+  this.updatecharts();
 }
 
 slidenote.presentation.addTheme(newtheme);
