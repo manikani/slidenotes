@@ -823,14 +823,15 @@ emdparser.prototype.generateSidebar = function(startend){
 	console.log("generate sidebar from"+startline+" to "+endline+" lines:"+oldlines.length+"/"+bglines.length)
 	var sidebarlines = new Array(bglines.length);
 	//get pixel-height of one line:
-	if(slidenote.standardlineheight===undefined){
+	console.log("check for error standardlineheight: "+slidenote.standardlineheight+" offsetheight:"+sidebar.offsetHeight +"scrollheight:"+slidenote.texteditorerrorlayer.scrollHeight)
+	if(slidenote.standardlineheight===undefined || (sidebar.offsetHeight - slidenote.texteditorerrorlayer.scrollHeight>100)){
 		var testline = document.createElement("span");
 		testline.classList.add("backgroundline");
-		testline.innerText="t";
+		testline.innerText="Test";
 		bglines[0].parentNode.appendChild(testline);
 		slidenote.standardlineheight = testline.offsetHeight;
 		testline.remove();
-		console.log("standard-height:"+standardlineheight);
+		console.log("standard-height:"+slidenote.standardlineheight);
 	}
 	var standardlineheight = slidenote.standardlineheight;
 	var testtime = new Date();
@@ -953,7 +954,9 @@ emdparser.prototype.generateSidebar = function(startend){
 				}
 			}
 			//if(lastlinespan)sidebarlines[actel.endline].appendChild(lastlinespan);
-			lastlinespan.innerText+="................".substring(0,innerelementlength-sidebarlines[actel.endline].innerText.length)
+			console.log("actel.endline:"+actel.endline+" sidebarlines.length:"+sidebarlines.length);
+			console.log("sidebarlines[actel.endline]"+sidebarlines[actel.endline]);
+			lastlinespan.innerText+="................".substring(0,innerelementlength-sidebarlines[actel.endline].innerText.length);
 				if(lastlinespan)sidebarlines[actel.endline].insertBefore(lastlinespan, sidebarlines[actel.endline].firstChild);
 
 		}
