@@ -77,6 +77,11 @@ slidenoteGuardian.prototype.init = function(){
   document.getElementById("optionsclose").addEventListener("click",function(event){
       slidenoteguardian.saveConfig("local");
   });
+  //more to save:
+  var savefunction = function(e){
+    slidenoteguardian.saveConfig("local");
+  };
+
   setTimeout("slidenoteguardian.autoSaveToCMS()",3000);
   slidenote.textarea.addEventListener("focus",function(event){
     if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null){
@@ -799,7 +804,7 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method){
             //reject(new Error("Wrong retype"));
             }
           document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
-  				document.body.removeChild(pwprompt);
+          if(pwprompt.parentElement === document.body)document.body.removeChild(pwprompt);
   			}else if(e.keyCode==27){
           document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
   				document.body.removeChild(pwprompt);
