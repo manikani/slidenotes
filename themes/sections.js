@@ -58,12 +58,30 @@ newtheme.styleThemeSpecials = function(){
             //sectiondata.removeChild(sectiondata.childNodes[1]);
             //use blocks if possible - maybe change it to something more plugable?
             sectiondata.childNodes[1].classList.add("bgimg");
-            var blocktheme = slidenote.presentation.getThemeByName("blocks");
-            if(blocktheme){
-              sectiondata.style.minHeight = sectiondata.childNodes[1].naturalHeight;
-              blocktheme.buildgrid(sectiondata);
-            }
+            sectiondata.style.minHeight = sectiondata.childNodes[1].naturalHeight;
       }//end of image as background
+      function checkforgridbuild(data){
+        //checks if we have to build a grid in the section:
+        var childs = data.children;
+        console.log(childs);
+        var result=false;
+        for(var x=0;x<childs.length;x++){
+          var child=childs[x];
+          console.log(child);
+          //on bgimage:
+          if(child.classList.contains("bgimg"))result=true;
+          //on charts: build grid
+          if(child.classList.contains("chart"))result=true;
+        }
+        return result;
+      }
+
+      if(checkforgridbuild(sectiondata)){
+        var blocktheme = slidenote.presentation.getThemeByName("blocks");
+        if(blocktheme){
+          blocktheme.buildgrid(sectiondata);
+        }
+      }
       //section left or right?
       if(dataobject.head.indexOf("left")>-1){
         //seems we found a left
