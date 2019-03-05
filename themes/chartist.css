@@ -723,6 +723,10 @@ section.chart{
 .chart-datasetlabel-box-3 {
     background: #d17905;
 }
+/*chartist-plugin pointlabel*/
+text.ct-pointlabel.ct-label.ct-label-stackbar {
+    fill: white;
+}
 
 /*zoomplugin:*/
 /* style the svg rect */
