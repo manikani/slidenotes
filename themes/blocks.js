@@ -11,7 +11,10 @@ newtheme.buildgrid = function(gridcontainer){
   var gridy = 0;
   var maxheight = 0;
   var heightleft = 0;
+  var hasleftorrightsection = false;
+  var footerline;
   var sections = new Array();
+  console.log("build grid for "+gridcontainer.classList);
   for(var x=0;x<gridelemente.length;x++){
   	var gridel = gridelemente[x];
     console.log("grid: start with element:"+gridel.innerHTML);
@@ -19,11 +22,22 @@ newtheme.buildgrid = function(gridcontainer){
     //console.log("gridarea before change:"+gridel.style.gridArea);
     if(gridel.classList.contains("bgimg")){
       //background-image found - dont insert into gridarray
+      console.log("grid: backgroundimage found");
       continue;
     }
   	if(!gridel.style.gridArea){
       gridel.style.gridArea="gridel"+x;
       gridel.areaname = "gridel"+x;
+    }
+    if(gridel.classList.contains("section")&&
+        (gridel.classList.contains("left") || gridel.classList.contains("right"))){
+      //maxheight = window.innerHeight;
+      console.log("left or right found:");
+      //save grid-y to object to attach left-section afterwards
+      gridel.gridy = gridy;
+      sections.push(gridel); //save left or right-section to sectionsarray
+      hasleftorrightsection = true;
+      continue; //do nothing more - dont attach left-right-section to array yet
     }
     console.log("grid: again clientHeight"+gridel.clientHeight);
     //console.log("gridel-gridarea:"+gridel.style.gridArea);
@@ -44,12 +58,7 @@ newtheme.buildgrid = function(gridcontainer){
       }
   		gridarray[gridy][gridx]=gridel;
   		maxheight=this.clientHeight(gridel) *1.5;
-      if(gridel.classList.contains("section")&&
-          (gridel.classList.contains("left") || gridel.classList.contains("right"))){
-        maxheight = window.innerHeight;
-        sections.push(gridel);
-      }
-  		heightleft = maxheight;
+      heightleft = maxheight;
       console.log("grid: vertical found with maxheight:"+maxheight);
       console.log("grid: clientHeight:"+gridel.clientHeight);
   		gridx++;
@@ -114,6 +123,8 @@ newtheme.buildgrid = function(gridcontainer){
             gridarray[gridy][0]=gridarray[gridy-1][0];
   				  heightleft-=height;
           }
+          //if chart dont put more elements next to vertical:
+          if(gridel.classList.contains("chart"))heightleft=0;
   			}
   		}else{
   			//its not on first or second position, so make shure to break into new row
@@ -123,6 +134,46 @@ newtheme.buildgrid = function(gridcontainer){
   			gridy++;
   		}
   	}
+
+  }
+  //check for left-right-sections:
+  console.log("has left or right section:"+hasleftorrightsection);
+  //hasleftorrightsection = false;
+  if(hasleftorrightsection){
+    if(gridarray.length>1){
+      console.log("check for footer:"+gridarray[gridarray.length-1][0].tagName);
+      if(gridarray[gridarray.length-1][0].tagName==="FOOTER"){
+        footerline = gridarray.pop();
+      }
+    }
+    //check if no content after left/right-sections:
+    console.log("gridarray.length:"+gridarray.length+"sections[0].gridy:"+sections[0].gridy);
+    if(gridarray.length<=sections[0].gridy){
+      gridarray.push(new Array());
+    }
+    //add section to gridarray:
+    for(var actsec=sections.length-1;actsec>=0;actsec--){
+        var sec = sections[actsec];
+        for(var secy=sec.gridy;secy<gridarray.length;secy++){
+          if(sec.classList.contains("left")){
+            gridarray[secy].unshift(sec);
+          }else{
+            gridarray[secy].push(sec);
+          }
+        }
+    }
+    //add last line to gridarray to make left-right-sections go till the end
+    var newline = new Array();
+    for(var x=0;x<gridarray[gridarray.length-1].length;x++){
+      var actelem = gridarray[gridarray.length-1][x];
+      if(actelem.classList.contains("left") || actelem.classList.contains("right")){
+        newline[x]=actelem;
+      }else{
+        newline[x]={areaname:".", classList:""};
+      }
+    }
+    gridarray.push(newline);
+    if(footerline)gridarray.push(footerline);
   }
   //now i should have array where i can build up the grid from:
   //first get the max amount of elements in a row:
@@ -133,6 +184,8 @@ newtheme.buildgrid = function(gridcontainer){
   	if(gridarray[x].length ==2 && colums ==2 && !gridarray[x][1].classList.contains("vertical"))colums=3;
   }
   console.log("gridarray:");
+  console.log(gridarray);
+  //build lastline for leftright-sections:
   console.log(gridarray);
   //now build the area-array:
   var gridarea = new Array();
@@ -177,6 +230,31 @@ newtheme.buildgrid = function(gridcontainer){
   //gridcontainer.style.gridTemplateRows = "repeat("+gridarray.length+", 1fr )";
   gridcontainer.classList.add("gridx"+colums);
   for(var x=0;x<gridelemente.length;x++)gridelemente[x].classList.add("griditem");
+  //add grid-row-heights if contains left or right sections:
+  if(hasleftorrightsection){
+    var rowheights = "";
+    var rows = gridarea.length-1;
+    if(footerline)rows--;
+    for(var x=0;x<rows;x++){
+      rowheights+="auto ";
+    }
+    rowheights+="1fr ";
+    if(footerline)rowheights+="auto";
+    gridcontainer.style.gridTemplateRows=rowheights;
+  }else{
+    function chartinline(line){
+      var result=false;
+      for(var cil=0;cil<line.length;cil++)if(line[cil].classList.contains("chart"))result=true;
+      //gridarray[x][0].classList.contains("chart")
+      return result;
+    }
+    var rowheights = "";
+    for(var x=0;x<gridarray.length;x++){
+      if(chartinline(gridarray[x]))rowheights+="1fr ";else rowheights+="auto ";
+    }
+    console.log("grid-rowheights:"+rowheights);
+    gridcontainer.style.gridTemplateRows=rowheights;
+  }
 }
 
 newtheme.clientHeight = function(element, width){
@@ -217,6 +295,7 @@ newtheme.addBlockClassesToElements = function(gridcontainer){
   var nodes = gridcontainer.children;
   for(var e=0;e<nodes.length;e++){
     var node = nodes[e];
+    console.log("grid: addClass to Node:"+node.className+"/"+node.nodeName);
     if(node.className === "imageblock" || node.nodeName==="IMG"){
       //imageblock: get clientWidth and clientHeight;
       var cliw = this.clientWidth(node); //does not work like this:
@@ -273,7 +352,13 @@ newtheme.addBlockClassesToElements = function(gridcontainer){
         (node.classList.contains("left")||node.classList.contains("right"))
           ){
       node.classList.add("vertical");
-
+    }
+    if(node.classList.contains("section")){
+      this.addBlockClassesToElements(node);
+      //if(node.firstElementChild.classList.contains("imageblock") ||
+        //node.firstElementChild.nodeName ==="IMG"){
+        //  node.firstElementChild.classList.add("bgimg");
+        //}
     }
   }//end of nodes
 }
@@ -318,14 +403,16 @@ newtheme.styleGrid = function(){
   var pagenodes = document.getElementsByClassName("ppage");
   for(var p=0;p<pagenodes.length;p++){
     var pagenode = pagenodes[p];
-    var nodes = pagenode.childNodes;
+    //var nodes = pagenode.childNodes;
     //add classes to distinguish between vertical, horizontal and flex:
     this.addBlockClassesToElements(pagenode);
     //build grid:
     this.buildgrid(pagenode);
 
   }//end for pagenodes
-
+  //all pages are now in grids
+  //call final function:
+  setTimeout("slidenote.presentation.afterStyle()",200);
 }
 
 slidenote.addTheme(newtheme);
