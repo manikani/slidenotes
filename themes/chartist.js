@@ -12,6 +12,10 @@ jsfile3 = document.createElement('script');
 jsfile3.setAttribute("type","text/javascript");
 jsfile3.setAttribute("src", "themes/chartist/chartist-plugin-zoom.js");
 document.getElementsByTagName("head")[0].appendChild(jsfile3);
+var jsfile4 = document.createElement('script');
+jsfile4.setAttribute("type","text/javascript");
+jsfile4.setAttribute("src", "themes/chartist/chartist-plugin-pointlabels.js");
+document.getElementsByTagName("head")[0].appendChild(jsfile4);
 }
 var jsfile = document.createElement('script');
 jsfile.setAttribute("type","text/javascript");
@@ -343,6 +347,15 @@ newtheme.getChartOptions = function(data){
 
   }else if(charttype=="bar"){
     //options.chartPadding=20;
+    //options.align = 'left';
+    //plugin-options for pointlabel:
+    var pointlabeloptions = {
+        textAnchor: 'middle',
+        labelClass: 'ct-pointlabel ct-label',
+        //align:'left'
+        align:'top',
+        labelOffset:{x:0,y:-2}
+      }
   	options.axisY = {
   		onlyInteger:true,
   		//offset:20
@@ -355,11 +368,22 @@ newtheme.getChartOptions = function(data){
   		options.reverseData = true; //what does this do? test it
   		//options.axisY.offset = 70;
       options.axisX = {onlyInteger:true};
+      pointlabeloptions.align="right";
+      pointlabeloptions.labelOffset={x:10,y:4};
   	}
+
+
   	if(head.indexOf("stack")>-1){
   		options.stackBars=true;
-
+      pointlabeloptions.align="middle";
+      pointlabeloptions.labelOffset = {x:0,y:2};
+      pointlabeloptions.labelClass +=" ct-label-stackbar";
   	}
+    options.plugins.push(
+      Chartist.plugins.ctPointLabels(
+        pointlabeloptions
+      ));
+
   }else if(charttype=="pie"){
   	if(head.indexOf("half")>-1||head.indexOf("gauge")>-1){
   		options.donut= true;
