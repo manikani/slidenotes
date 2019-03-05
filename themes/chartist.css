@@ -616,6 +616,16 @@
 
 /*/my additions*/
 
+section.left {
+  max-width:33vw;
+}
+
+section.left .chart{
+
+}
+
+
+/*with absolute positioning:
 section.chart {
   min-width:50%;
   min-height:50%;
@@ -644,6 +654,74 @@ section.chart.chart3{
     bottom: 10%;
     transform: rotate(-90deg);
     transform-origin: left;
+}
+*/
+/*form a grid: */
+section.chart{
+  display:grid;
+  grid-template:". datasetLabels"
+                "yAxis chartGraph"
+                ". xAxis";
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr auto;
+}
+
+.chart-datasetlabel-container{
+  grid-area:datasetLabels;
+  padding:2px;
+  text-align:center;
+}
+
+.chart-x-axis-label{
+  grid-area:xAxis;
+  text-align:center;
+}
+.chart-y-axis-label{
+  grid-area:yAxis;
+  text-align:center;
+  writing-mode:vertical-lr;
+  transform:rotate(180deg);
+}
+section.chart svg{
+  grid-area:chartGraph;
+}
+/*colors:*/
+
+section.chart.chart-pie{
+  background:unset;
+}
+
+section.chart{
+  background:white;
+}
+/*datasetlabels:*/
+.chart-datasetlabel{
+  border:1px solid lightgrey;
+  padding:3px;
+  margin-left:10px;
+}
+
+.chart-datasetlabel-box{
+  display:inline-block;
+  width:10px;
+  height:5px;
+  border:1px solid black;
+  margin-left:5px;
+}
+.chart-datasetlabel-box-0 {
+    background: #d70206;
+}
+
+.chart-datasetlabel-box-1 {
+    background: #f05b4f;
+}
+
+.chart-datasetlabel-box-2 {
+    background: #f4c63d;
+}
+
+.chart-datasetlabel-box-3 {
+    background: #d17905;
 }
 
 /*zoomplugin:*/
