@@ -330,14 +330,14 @@ newtheme.getChartOptions = function(data){
             onlyInteger: true,
             chartdatalabels:data.chartdata.labels,
             labelInterpolationFnc: function(value, labels, more, more2, more3, more4){
-              console.log("labelInterpolationFnc:"+"value:"+value+"labelvalue:"+labels[value])
-              console.log(value);
-              console.log(labels);
-              console.log(more);
-              console.log(more2);
-              console.log(more3);
-              console.log(more4);
-              return value;
+              //console.log(value);
+              //console.log(labels);
+              //console.log(data);
+              //console.log(options);
+              //console.log(this);
+              //console.log("bla");
+              //console.log(options.axisX.chartdatalabels[value]);
+              return options.axisX.chartdatalabels[value];
             }
     	};
     	options.axisY.type = Chartist.AutoScaleAxis;
@@ -386,12 +386,18 @@ newtheme.getChartOptions = function(data){
 
   }else if(charttype=="pie"){
   	if(head.indexOf("half")>-1||head.indexOf("gauge")>-1){
+      var total = 0;
+      for(var tx=0;tx<data.chartdata.series[0].length;tx++)total+=data.chartdata.series[0][tx];
+      total = total*2;
+      console.log("halfpie with total:"+total);
+      console.log(data.chartdata.series);
   		options.donut= true;
   		options.donutWidth= 60;
     		options.donutSolid= true;
     		options.startAngle= 270;
-        options.endAngle=90;
-    		//options.total= 200;
+        //options.endAngle=90;
+        //options.total=10;
+    		options.total= total;
     		options.showLabel= true;
   	}
   }else {
