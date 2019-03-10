@@ -734,3 +734,40 @@ text.ct-pointlabel.ct-label.ct-label-stackbar {
   fill: rgba(200, 100, 100, 0.3);
   stroke: red;
 }
+
+/*editor: insertmenu*/
+ul.chartist-chartbuttonarea {
+    border: 1px solid;
+    border-radius: 10px;
+    width: 2em;
+    padding: 5px;
+    list-style-type: none;
+    background: white;
+    margin:unset;
+}
+
+.chartist-chartbuttonarea li.active {
+    background: green;
+    display: block;
+}
+
+.chartist-chartbuttonarea li {
+    display: none;
+    text-align: center;
+    padding-top: 2px;
+    background: white;
+}
+
+.chartist-chartbuttonarea li:hover {
+    background: grey;
+}
+
+ul.chartist-chartbuttonarea:hover li {
+    display: block;
+}
+
+ul.chartist-chartbuttonarea:hover {
+    position: absolute;
+    width:90%;
+    margin-right:3px;
+}
