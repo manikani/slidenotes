@@ -23,14 +23,84 @@ jsfile.setAttribute("src", "themes/chartist/chartist.js");
 jsfile.onload = loadChartistPlugins;
 document.getElementsByTagName("head")[0].appendChild(jsfile);
 
-newtheme.addEditorbutton('SVG-Chart','```chart'); //only for comparison right now
+newtheme.addEditorbutton('Chart','```chart'); //only for comparison right now
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme}); //TODO: change chartsvg to chart
 
 
 //internal vars:
 newtheme.charts = new Array();
-newtheme.chartcontainers = new Array();
+//newtheme.chartcontainers = new Array();
+newtheme.hasInsertMenu = true;
+newtheme.insertMenuArea = function(dataobject){
+  var type = "line"; // line is standard-type:
+  if(dataobject.head.indexOf("pie")>-1)type="pie";
+  if(dataobject.head.indexOf("bar")>-1)type="bar";
 
+  var result = document.createElement("div");
+  result.classList.add("chartistinsertmenu")
+
+  var charttypes = ["line", "arealine", "bar", "horizontalbar", "stackbar", "horizontalstackbar", "pie", "halfpie"];
+  var chartbarea = document.createElement("ul");
+  for(var ct=0;ct<charttypes.length;ct++){
+    var ctype = charttypes[ct];
+    var button = document.createElement("li");
+    //button.classList.add("chartistbutton")
+    button.charttype = ctype;
+    button.addEventListener("click",function(){
+      slidenote.presentation.getThemeByName("chartist").changeChartType(this.charttype);
+    });
+    if(type===ctype)button.classList.add("active");
+    var buttonimg = new Image();
+    buttonimg.src="themes/chartist/"+ctype+"button.png";
+    button.appendChild(buttonimg);
+    chartbarea.appendChild(button);
+  }
+
+  chartbarea.classList.add("chartist-chartbuttonarea");
+  result.appendChild(chartbarea);
+
+  var buttonarea = document.createElement("div");
+  if(type!="pie"){
+    var xaxisbutton = document.createElement("button");
+    xaxisbutton.innerText = "X-Axis-Label";
+    buttonarea.appendChild(xaxisbutton);
+    var yaxisbutton = document.createElement("button");
+    yaxisbutton.innerText = "Y-Axis-Label";
+    buttonarea.appendChild(yaxisbutton);
+    var datasetlabel = document.createElement("button");
+    datasetlabel.innerText = "Datasetlabel";
+    buttonarea.appendChild(datasetlabel);
+  }
+
+  var example = document.createElement("button");
+  example.innerText = "Insert Example";
+  buttonarea.appendChild(example);
+
+  result.appendChild(buttonarea);
+  return result;
+}
+
+newtheme.changeChartType = function(charttype){
+  //var charttype = document.activeElement.value;
+  console.log("charttype:"+charttype);
+  var selectionend = slidenote.textarea.selectionEnd;
+  var selectionstart = slidenote.textarea.selectionStart;
+  var actelement = slidenote.parser.CarretOnElement(selectionend);
+  console.log(actelement);
+  var start = actelement.posinall //"´´´chart:".length;
+  console.log("insert "+charttype+" on ");
+  slidenote.textarea.value = slidenote.textarea.value.substring(0,start) +
+                              "```chart:"+
+                              charttype + //"\n"+
+                              slidenote.textarea.value.substring(slidenote.textarea.value.indexOf("\n",start));
+  console.log("parseneu forced by chartist-changeChartType");
+  var diff = charttype.length + 9 - actelement.mdcode.length;
+  console.log("charttype:"+charttype+" md:"+actelement.mdcode+" diff:"+diff);
+  slidenote.textarea.selectionEnd = selectionend+diff;
+  slidenote.textarea.selectionStart = selectionstart+diff;
+  slidenote.parseneu();
+  slidenote.textarea.focus();
+}
 
 //internal function:
 newtheme.updatecharts = function(){
@@ -38,6 +108,10 @@ newtheme.updatecharts = function(){
   for(var x=0;x<this.charts.length;x++){
     this.charts[x].update();
   }
+}
+
+newtheme.insertMenu = function(){
+
 }
 
 
