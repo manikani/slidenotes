@@ -744,6 +744,8 @@ ul.chartist-chartbuttonarea {
     list-style-type: none;
     background: white;
     margin:unset;
+    margin-left:auto;
+    margin-right:auto;
 }
 
 .chartist-chartbuttonarea li.active {
