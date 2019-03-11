@@ -142,6 +142,113 @@ newtheme.insert = function(selection){
 
 }
 
+newtheme.syntaxContainer = {
+  //define here new syntax to use for identifiers etc:
+  headseparator:"---",  //line with headseparator will separate metadata(before) from data(after)
+  dataseparators:[":","\t",",",";"], //possible separators for data-structure (csv or similar)
+  //metadata:
+  metadataseparator:":",  //separator for metadata-structure - eg: [identifier][separator][value] like xaxis:10
+  xaxis:"xaxis", //xaxis-label
+  yaxis:"yaxis", //yaxis-label
+  datasetidentifier:"dataset", //datasetidentifier
+  //description:"description", //for screenreaders, not implemented yet
+  //source:"source", //source of data, not implemented yet
+
+}
+
+newtheme.parseMetadata = function(rawdata){
+  var metadata = {};
+  var headseparator = this.syntaxContainer.headseparator;
+  var metadataseparator = this.syntaxContainer.metadataseparator;
+  var datasetidentifier = this.syntaxContainer.datasetidentifier; //dataset1, dataset2 etc.
+  metadata.datasetlabel = new Array();
+  var rawmetadata = new Array();
+  for(var x=0;x<rawdata.length;x++){
+    if(rawdata[x]===headseparator)break;
+    rawmetadata.push(rawdata[x]);
+  }
+  if(rawmetadata.length===rawdata.length)return {};
+  for(var x=0;x<rawmetadata.length;x++){
+    var identifier = rawmetadata[x].substring(0,rawmetadata[x].indexOf(metadataseparator));
+    var value = rawmetadata[x].substring(rawmetadata[x].indexOf(metadataseparator)+metadataseparator.length);
+    metadata[identifier] = value;
+    if(identifier.indexOf(datasetidentifier)===0){
+      var nr = identifier.substring(datasetidentifier.length);
+      if(isNaN(nr)){
+        metadata.datasetlabel.push(value);
+      }else{
+        metadata.datasetlabel[nr]=value;
+      }
+    }
+  }
+  if(metadata.datasetlabel[0]===undefined && metadata.datasetlabel.length>1){
+    //asume user started with 1 instead of 0, correct it:
+    metadata.datasetlabel.shift();
+  }
+  return metadata;
+}
+
+newtheme.parseData = function(origdata, metadata){
+  var data = {labels:new Array(), series:new Array()};
+  var headseparator = this.syntaxContainer.headseparator;
+  var datastart = 0;
+  for(var x=0;x<origdata.length;x++){
+    if(origdata[x]===headseparator){datastart=x+1;break;}
+  }
+  var rawdata = origdata.slice(datastart);
+  var rawdatastr = rawdata.join("\n");
+  var separators = this.syntaxContainer.dataseparators; //[":","\t",",",";"];
+  var sepmax = 0;
+  var separator = null;
+  for(var x=0;x<separators.length;x++){
+    var sepcount = rawdatastr.split(separators[x]).length-1;
+    if(sepcount > sepmax ){
+      sepmax = sepcount;
+      separator = separators[x];
+    }
+  }
+  if(sepmax===0||separator===null)return null; //no valid dataseparator found
+  //generate matrix:
+  var datamatrix = new Array();
+  for(var x=0;x<rawdata.length;x++){
+    if(rawdata[x].length>0){ //dont push empty lines - ignore them
+      datamatrix.push(rawdata[x].split(separator));
+    }
+  }
+  //check if horizontal or vertical datastructure:
+  var horizontal = false;
+  //if first line contains no-numbers apart from first element its for labels, therefore horizontal structure:
+  for (var x=1;x<datamatrix[0].length;x++){
+    if(isNaN(datamatrix[0][x]))horizontal = true;
+  }
+  if(horizontal){
+    console.log("horizontal data - label:");
+    data.labels = datamatrix.shift();
+    console.log(data.labels);
+    console.log(datamatrix);
+    for(var x=0;x<datamatrix.length;x++){
+      for(var dx=0;dx<datamatrix[x].length;dx++){
+        if(datamatrix[x][dx]==="" || isNaN(datamatrix[x][dx]))
+        datamatrix[x][dx]=null;else datamatrix[x][dx]=datamatrix[x][dx]*1;
+      }
+      data.series.push(datamatrix[x]);
+    }
+  }else{
+    //vertical structure:
+    for(var y=0;y<datamatrix.length;y++){
+      if(datamatrix[y].length===1)continue;
+      data.labels.push(datamatrix[y][0]);
+      for(var x=1;x<datamatrix[y].length;x++){
+        var actdata = datamatrix[y][x];
+        if(data.series[x-1]===undefined)data.series[x-1]=new Array();
+        if(actdata ==="" || isNaN(actdata))actdata=null;else actdata=actdata*1;
+        data.series[x-1].push(actdata);
+      }
+    }
+  }
+
+  return data;
+}
 
 newtheme.styleThemeSpecials = function(){
   //get all data-blocks with chart:
@@ -153,113 +260,20 @@ newtheme.styleThemeSpecials = function(){
     if(slidenote.parser.dataobjects[datax].type=="chart"){
       console.log("chart gefunden");
       var dataobject = slidenote.parser.dataobjects[datax];
-
-      var numdata = new Array();
-      var labeldata = new Array();
-      var datasetlabel = new Array();
-      var xlabel=null;
-      var ylabel=null;
-      var datatitle=null;
-      var charttype=null;
-      var datasetnr = 0;
-      //console.log( {labels:labeldata, numbers:numdata, datasetlabels:datasetlabel, xlabel:xlabel, ylabel:ylabel});
-      console.log("title"+datatitle+" xlabel"+xlabel);
-      for(var x=0;x<dataobject.raw.length;x++){
-      	var rawact = dataobject.raw[x];
-      	if(rawact.indexOf(":")>0){
-          //doppelpunktschreibweise
-      		var doppunkt = rawact.indexOf(":");
-      		if(datasetnr==0)labeldata.push(rawact.substring(0,doppunkt));
-      		if(rawact.indexOf(":",doppunkt+1)<0){
-            if(numdata[datasetnr]==null)numdata[datasetnr]=new Array();
-      			numdata[datasetnr].push(rawact.substring(doppunkt+1));
-      		}else{
-      			//mehr als ein doppelpunkt
-            if(numdata[datasetnr]==null)numdata[datasetnr]=new Array();
-            while(rawact.indexOf(":",doppunkt+1)>=0){
-              numdata[datasetnr].push(rawact.substring(doppunkt+1,rawact.indexOf(":",doppunkt+1)));
-              doppunkt=rawact.indexOf(":",doppunkt+1);
-              datasetnr++;
-              if(numdata[datasetnr]==null)numdata[datasetnr]=new Array();
-            }
-            numdata[datasetnr].push(rawact.substring(doppunkt+1));
-            console.log("subsrtingdoppunkt+1:"+rawact.substring(doppunkt+1));
-            console.log(numdata);
-            datasetnr=0;
-            //numdata[datasetnr].push(rawact.substring(doppunkt+1,rawact.indexOf(":",doppunkt)));
-
-      		}
-      	}
-        //if(rawact.indexOf("\t")>=0){
-        if(rawact.search(/[\t,;]/)>=0){
-          //separator rausfinden:
-          var separators = ["\t",",",";"];
-          var separator;
-          var sepcount = 0;
-          for (var sepx=0;sepx<separators.length;sepx++){
-            if(rawact.split(separators[sepx]).length>sepcount){
-              sepcount = rawact.split(separators[sepx]).length;
-              separator=separators[sepx];
-            }
-          }
-          console.log("separator:"+separator);
-          //openoffice schreibweise
-          console.log("rawact:"+rawact);
-          if(labeldata.length==0){
-            //noch keine label da, label einlesen:
-            var tabpos = 0;
-            var ldata;
-            while(tabpos>=0){
-              if(rawact.indexOf(separator,tabpos)>=0) ldata = rawact.substring(tabpos,rawact.indexOf(separator,tabpos));
-                else ldata = rawact.substring(tabpos);
-              if(ldata.length>0)labeldata.push(ldata);
-              tabpos = rawact.indexOf(separator,tabpos);
-              if(tabpos>=0)tabpos++;
-            }
-          }else{
-            //label sind da, also sind es daten:
-            var tabpos =0;
-            if(numdata[datasetnr]!=null && numdata[datasetnr].length>0)datasetnr++;
-            if(numdata[datasetnr]==null)numdata[datasetnr]=new Array();
-            while(tabpos>=0){
-              if(rawact.indexOf(separator,tabpos)>=0)
-              numdata[datasetnr].push(rawact.substring(tabpos,rawact.indexOf(separator,tabpos)));
-              else numdata[datasetnr].push(rawact.substring(tabpos));
-              tabpos = rawact.indexOf(separator,tabpos);
-              if(tabpos>=0)tabpos++;
-            }
-            //check ob erstes feld keine nummer ist, dann nämlich ist es ein datenlabel:
-            //if(typeof numdata[datasetnr][0] =="string"){
-            if(isNaN(numdata[datasetnr][0])){
-              datasetlabel[datasetnr] = numdata[datasetnr].shift();
-            }
-
-
-          }
-
-        }
-      	if(rawact.substring(0,3)=="###"){
-      		datasetlabel.push(rawact.substring(3));
-          if(numdata[datasetnr]!=null)datasetnr++;
-      	}else if(rawact.substring(0,2)=="##"){
-      		if(xlabel==null)xlabel=rawact.substring(2);else if(ylabel==null)ylabel=rawact.substring(2);
-      	}else if(rawact.substring(0,1)=="#"){
-      		datatitle=rawact.substring(1);
-      	}
-      }
-      //daten wurden eingescannt
-      console.log("daten eingescannt:");
-      console.log(numdata); console.log(labeldata);
+      var metadata = this.parseMetadata(dataobject.raw);
+      var chartdata = this.parseData(dataobject.raw);
       console.log("headsubstring:"+dataobject.head.substring(9));
       var headsub = dataobject.head.substring(9);
       //charttype:
+      var charttype="line";
       if(headsub.indexOf("pie")>-1 || headsub.indexOf("Pie")>-1)charttype="pie";
       if(headsub.indexOf("bar")>-1 || headsub.indexOf("Bar")>-1)charttype="bar";
-      if(charttype==null)charttype="line"; //falls kein charttype gewählt wurde
 
+      console.log("data for chart scanned:");
+      console.log(metadata);console.log(chartdata);
       //data is ready - time to start the chart:
       var presentationdiv = datadivs[datax];
-      if(numdata.length>0){
+      if(chartdata){
         presentationdiv.innerHTML = "";
         presentationdiv.classList.add("chart");
         presentationdiv.classList.add("chart-"+charttype);
@@ -273,23 +287,10 @@ newtheme.styleThemeSpecials = function(){
       //TODO: find out dimension for graph
       presentationdiv.classList.add("ct-perfect-fourth");
 
-      //FIX STRING TO NUMBERS IN NUMDATA:
-      console.log(numdata);
-      var series = new Array();
-      for(var numx=0;numx<numdata[0].length;numx++)series.push(parseInt(numdata[0][numx],10));
-      for(var numx=0;numx<numdata.length;numx++){
-        for(var numy=0;numy<numdata[numx].length;numy++){
-          numdata[numx][numy]=parseInt(numdata[numx][numy],10);
-        }
-      }
-      console.log("series/numdatacheck:");console.log(series); console.log(numdata);
-      var chartdata = {
-        labels: labeldata,
-        series: numdata
-      };
+
       var chartoptions = this.getChartOptions({
         dataobject:dataobject, headsub:headsub,
-        charttype:charttype, chartdata:chartdata});
+        charttype:charttype, chartdata:chartdata, metadata:metadata});
       console.log("chartdata:");console.log(chartdata);
       //responsiveOptions: can be called aditionaly
       var responsiveOptions = this.getResponsiveOptions({headsub:headsub,charttype:charttype});
@@ -305,6 +306,8 @@ newtheme.styleThemeSpecials = function(){
       }else if(charttype="pie"){
         var sum = function(a, b) { return a + b };
         var pielabels = new Array();
+        var labeldata = chartdata.labels;
+        var series = chartdata.series[0];
         if(labeldata.length>0){
           for(var lx=0;lx<labeldata.length;lx++)pielabels[lx]=labeldata[lx];
         }else{
@@ -339,6 +342,9 @@ newtheme.styleThemeSpecials = function(){
       //console.log("chsvg:");console.log(chsvg);console.log(chsvg.svg);
       //console.log(presentationdiv.children);
       //adding labels to x and y axis:
+      var xlabel = metadata[this.syntaxContainer.xaxis];
+      var ylabel = metadata[this.syntaxContainer.yaxis];
+      var datasetlabel = metadata[this.syntaxContainer.datasetlabel];
       if(xlabel && charttype!="pie"){
         console.log("x-axis-label:"+xlabel);
         var xlabeldiv = document.createElement("div");
@@ -356,7 +362,7 @@ newtheme.styleThemeSpecials = function(){
       }
       console.log("chart:presentationdiv-height nach appending childs"+presentationdiv.clientHeight);
 
-      if(datasetlabel.length>0){
+      if(datasetlabel && datasetlabel.length>0){
         var dsetlabeldiv = document.createElement("div");
         dsetlabeldiv.classList.add("chart-datasetlabel-container");
 
@@ -507,62 +513,6 @@ newtheme.getChartOptions = function(data){
   }
   console.log("optionsobject:");console.log(options);
   return options;
-}
-
-newtheme.chartOptionsoverview = function(){
-  var linechartoptions = {
-    axisY:{
-      onlyInteger: true,
-      offset:20,
-      showLabel: true,
-      showGrid: true
-    },
-    high:3, //maximum value
-    low:-3, //minimum value
-    fullWidth:true, //last point at end of chart
-    showArea:true, //fill space of line
-    showLine:true, //show line or only area?
-    showPoint:true, //show points or not?
-    //seriesBarDistance: 15 //x-axis-spacebetween
-  } //end of linechartoptions
-
-  var barchartoptions = {
-
-    axisX: {
-      // On the x-axis start means top and end means bottom
-      position: 'end',
-      //bipolarmode:
-      labelInterpolationFnc: function(value, index) {
-        return index % 2 === 0 ? value : null;
-      }
-    },
-
-    axisY: {
-       offset: 80,
-       //adding currency to label on y-axis:
-       labelInterpolationFnc: function(value) {
-         return value + ' CHF'
-       },
-       scaleMinSpace: 15
-    },
-    stackBars: false, //stacks bars on top of each other
-    horizontalBars: true, //horizontalBar
-    reverseData: true, //horizontalBar - check what it does
-
-    high:10,
-    low:-10,
-
-    seriesBarDistance: 15 //x-axis-spacebetween
-  }//end of barchartoptions
-
-  var piechartoptions = {
-    labelInterpolationFnc: function(value) {
-      console.log("value of label:");console.log(value);
-      return Math.round(value / series.reduce(sum) * 100) + '%';
-    } //percentage of values on pie
-
-  }//end of piechartoptions
-  return null;
 }
 
 newtheme.getResponsiveOptions = function(data){
