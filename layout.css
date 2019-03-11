@@ -416,6 +416,17 @@ button:hover{
 #insertarea img{
 	height:1em;
 }
+
+.insertmenu-extra div#standardinsertmenu {
+    display: none;
+}
+.insertmenu-extra #extrainsertmenu{
+	display:block;
+}
+#extrainsertmenu{
+	display:none;
+}
+
 #cursorlinesymbol{
 	position:absolute;
 	right:-4px;

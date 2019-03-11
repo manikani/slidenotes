@@ -35,6 +35,9 @@ newtheme.insertMenuArea = function(dataobject){
   var type = "line"; // line is standard-type:
   if(dataobject.head.indexOf("pie")>-1)type="pie";
   if(dataobject.head.indexOf("bar")>-1)type="bar";
+  var subtype = dataobject.head.substring(9);
+  if(subtype.length<2)subtype="line";
+  console.log("subtype:"+subtype);
 
   var result = document.createElement("div");
   result.classList.add("chartistinsertmenu")
@@ -49,7 +52,7 @@ newtheme.insertMenuArea = function(dataobject){
     button.addEventListener("click",function(){
       slidenote.presentation.getThemeByName("chartist").changeChartType(this.charttype);
     });
-    if(type===ctype)button.classList.add("active");
+    if(subtype===ctype)button.classList.add("active");
     var buttonimg = new Image();
     buttonimg.src="themes/chartist/"+ctype+"button.png";
     button.appendChild(buttonimg);
@@ -62,18 +65,23 @@ newtheme.insertMenuArea = function(dataobject){
   var buttonarea = document.createElement("div");
   if(type!="pie"){
     var xaxisbutton = document.createElement("button");
-    xaxisbutton.innerText = "X-Axis-Label";
+    xaxisbutton.innerText = "Label X-Axis";
+    xaxisbutton.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("xaxislabel")});
     buttonarea.appendChild(xaxisbutton);
+
     var yaxisbutton = document.createElement("button");
-    yaxisbutton.innerText = "Y-Axis-Label";
+    yaxisbutton.innerText = "Label Y-Axis";
+    yaxisbutton.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("yaxislabel")});
     buttonarea.appendChild(yaxisbutton);
     var datasetlabel = document.createElement("button");
-    datasetlabel.innerText = "Datasetlabel";
+    datasetlabel.innerText = "Label Dataset";
+    datasetlabel.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("datasetlabel")});
     buttonarea.appendChild(datasetlabel);
   }
 
   var example = document.createElement("button");
   example.innerText = "Insert Example";
+  example.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("example")});
   buttonarea.appendChild(example);
 
   result.appendChild(buttonarea);
@@ -110,7 +118,27 @@ newtheme.updatecharts = function(){
   }
 }
 
-newtheme.insertMenu = function(){
+newtheme.insert = function(selection){
+  var posibleinjections =  {
+    xaxislabel:"##",
+    yaxislabel:"##",
+    datasetlabel:"###",
+    example:"## xaxislabel \n##yaxislabel \n### dataset1 \n### dataset2 \n\njan:1:2\nfeb:2:3\nmar:3:4\napr:4:5"
+    //add new buttons like this
+  }
+  var injection = posibleinjections[selection];
+  var selectionstart = slidenote.textarea.selectionStart;
+  var selectionend = slidenote.textarea.selectionEnd;
+
+    var charbeforeinsert = slidenote.textarea.value.substring(selectionstart-1,selectionstart);
+    if(charbeforeinsert!="\n")injection = "\n"+injection;
+    slidenote.textarea.value = slidenote.textarea.value.substring(0,selectionstart)+injection+slidenote.textarea.value.substring(selectionstart);
+  var diff= injection.length;
+  slidenote.textarea.focus();
+  slidenote.textarea.selectionStart = selectionstart + diff;
+  slidenote.textarea.selectionEnd = selectionend + diff;
+  console.log("parseneu forced by insert of chartmenu");
+  slidenote.parseneu();
 
 }
 

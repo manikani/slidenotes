@@ -2769,7 +2769,7 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 						slidenote.presentation.themes[themenr].editorbuttons[x].insertfunction;
 				}
 
-				document.getElementById("insertarea").appendChild(newhtmlbutton);
+				document.getElementById("standardinsertmenu").appendChild(newhtmlbutton);
 			}
 		}else{
 			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
@@ -2847,6 +2847,28 @@ pagegenerator.prototype.showInsertMenu = function(){
 		slidenote.textarea.addEventListener("scroll",closeMenu);
 		for(var x=0;x<slidenote.presentation.themes.length;x++){
 			if(slidenote.presentation.themes[x].active)slidenote.presentation.themes[x].styleThemeMDCodeEditor("insertAreaVisible"); //Hook-Funktion
+		}
+
+		//check if we are on an object:
+		var onObject = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
+
+		if(onObject && onObject.dataobject){
+			console.log("insertmenu: dataobject found");
+			//get theme:
+			var theme = slidenote.datatypes.elementOfType(onObject.dataobject.type).theme;
+			console.log(theme);
+			if(theme.hasInsertMenu){
+				console.log("theme found");
+				insertmenu.classList.add("insertmenu-extra");
+				var extrainsertmenu = document.getElementById("extrainsertmenu");
+				extrainsertmenu.innerHTML = "";
+				extrainsertmenu.appendChild(theme.insertMenuArea(onObject.dataobject));
+				document.getElementById("insertmenulabel").innerText = onObject.dataobject.type;
+			}
+		}else{
+			insertmenu.classList.remove("insertmenu-extra");
+			document.getElementById("insertmenulabel").innerText = "INSERT";
+			document.getElementById("extrainsertmenu").innerHTML = "";
 		}
 
 }

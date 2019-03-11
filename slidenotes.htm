@@ -211,9 +211,13 @@ function parsetesting(){
 			<div id="sidebar"></div>
 			<div id="nicesidebarsymbol"><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="images/buttons/droptilde.png"></a><img src="images/buttons/cursorline.png"></div>
 			<div id="insertarea">
-				<span> <label>INSERT   <img src="images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="images/buttons/cursorline.png"></span>
-				<button onclick="insertbutton('---')" >new Page</button>
+				<span> <label><span id="insertmenulabel">INSERT</span>   <img src="images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="images/buttons/cursorline.png"></span>
 
+				<div id="standardinsertmenu">
+					<button onclick="insertbutton('---')" >new Page</button>
+				</div>
+				<div id="extrainsertmenu">
+				</div>
 			</div>
 			<!--<div style="">123456789012345</div>-->
 
