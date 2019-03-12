@@ -120,20 +120,34 @@ newtheme.updatecharts = function(){
 
 newtheme.insert = function(selection){
   var posibleinjections =  {
-    xaxislabel:"##",
-    yaxislabel:"##",
-    datasetlabel:"###",
-    example:"## xaxislabel \n##yaxislabel \n### dataset1 \n### dataset2 \n\njan:1:2\nfeb:2:3\nmar:3:4\napr:4:5"
+    xaxislabel:this.syntaxContainer.xaxis+this.syntaxContainer.metadataseparator+" ",
+    yaxislabel:this.syntaxContainer.yaxis+this.syntaxContainer.metadataseparator+" ",
+    datasetlabel:this.syntaxContainer.datasetidentifier+this.syntaxContainer.metadataseparator+" ",
+    example:this.syntaxContainer.xaxis+this.syntaxContainer.metadataseparator+" xaxislabel \n"+this.syntaxContainer.yaxis+this.syntaxContainer.metadataseparator+"yaxislabel \n"+this.syntaxContainer.datasetidentifier+"1"+this.syntaxContainer.metadataseparator+" dataset1 \n"+this.syntaxContainer.datasetidentifier+"2"+this.syntaxContainer.metadataseparator+" dataset2 \n\n"+this.syntaxContainer.headseparator+"\njan:1:2\nfeb:2:3\nmar:3:4\napr:4:5"
     //add new buttons like this
   }
   var injection = posibleinjections[selection];
   var selectionstart = slidenote.textarea.selectionStart;
   var selectionend = slidenote.textarea.selectionEnd;
-
+  var diff=0;
     var charbeforeinsert = slidenote.textarea.value.substring(selectionstart-1,selectionstart);
     if(charbeforeinsert!="\n")injection = "\n"+injection;
-    slidenote.textarea.value = slidenote.textarea.value.substring(0,selectionstart)+injection+slidenote.textarea.value.substring(selectionstart);
-  var diff= injection.length;
+    var posofchartbegin = slidenote.textarea.value.lastIndexOf("```chart",selectionstart);
+    var posofchartend = slidenote.textarea.value.indexOf("\n```",selectionend);
+    var posofheadseparator = slidenote.textarea.value.lastIndexOf(this.syntaxContainer.headseparator,selectionstart);
+    if(posofheadseparator<posofchartbegin ||posofheadseparator===-1)posofheadseparator=slidenote.textarea.value.indexOf(this.syntaxContainer.headseparator,selectionend);
+    if((posofheadseparator>posofchartend||posofheadseparator===-1)&&selection!="example"){
+      //no headseparator: just add one:
+      injection+="\n"+this.syntaxContainer.headseparator;
+      diff-=this.syntaxContainer.headseparator.length+1;
+    }else if(posofheadseparator<selectionend&&selection!="example"){
+      //headseparator found before selection: move to headseparator
+      selectionstart = posofheadseparator-1;
+      selectionend = posofheadseparator-1;
+      injection = "\n"+injection;
+    }
+  slidenote.textarea.value = slidenote.textarea.value.substring(0,selectionstart)+injection+slidenote.textarea.value.substring(selectionstart);
+  diff+= injection.length;
   slidenote.textarea.focus();
   slidenote.textarea.selectionStart = selectionstart + diff;
   slidenote.textarea.selectionEnd = selectionend + diff;
@@ -468,6 +482,10 @@ newtheme.getChartOptions = function(data){
   		onlyInteger:true,
   		//offset:20
   	}
+    if(data.chartdata.series.length===1){
+      //options.distributeSeries= true;
+      //data.chartdata.series = data.chartdata.series[0];
+    }
   	if(head.indexOf("horizontal")>-1){
       //options.axisY = undefined;
       console.log("horizontalbar");
