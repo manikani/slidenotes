@@ -66,18 +66,26 @@ newtheme.insertMenuArea = function(dataobject){
   if(type!="pie"){
     var xaxisbutton = document.createElement("button");
     xaxisbutton.innerText = "Label X-Axis";
+    xaxisbutton.title = "A Label shown under the X-Axis of the Graph";
     xaxisbutton.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("xaxislabel")});
     buttonarea.appendChild(xaxisbutton);
 
     var yaxisbutton = document.createElement("button");
     yaxisbutton.innerText = "Label Y-Axis";
+    yaxisbutton.title = "A Label shown at the Side of the Y-Axis of the Graph";
     yaxisbutton.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("yaxislabel")});
     buttonarea.appendChild(yaxisbutton);
     var datasetlabel = document.createElement("button");
     datasetlabel.innerText = "Label Dataset";
+    datasetlabel.title = "A Label shown above the Graph shown which color uses which Data";
     datasetlabel.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("datasetlabel")});
     buttonarea.appendChild(datasetlabel);
   }
+  var summary = document.createElement("button");
+  summary.innerText="Summary";
+  summary.title = "A Summary of your graph for Screenreaders"
+  summary.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("summary")});
+  buttonarea.appendChild(summary);
 
   var example = document.createElement("button");
   example.innerText = "Insert Example";
@@ -123,6 +131,7 @@ newtheme.insert = function(selection){
     xaxislabel:this.syntaxContainer.xaxis+this.syntaxContainer.metadataseparator+" ",
     yaxislabel:this.syntaxContainer.yaxis+this.syntaxContainer.metadataseparator+" ",
     datasetlabel:this.syntaxContainer.datasetidentifier+this.syntaxContainer.metadataseparator+" ",
+    summary:this.syntaxContainer.summary+this.syntaxContainer.metadataseparator+" ",
     example:this.syntaxContainer.xaxis+this.syntaxContainer.metadataseparator+" xaxislabel \n"+this.syntaxContainer.yaxis+this.syntaxContainer.metadataseparator+"yaxislabel \n"+this.syntaxContainer.datasetidentifier+"1"+this.syntaxContainer.metadataseparator+" dataset1 \n"+this.syntaxContainer.datasetidentifier+"2"+this.syntaxContainer.metadataseparator+" dataset2 \n\n"+this.syntaxContainer.headseparator+"\njan:1:2\nfeb:2:3\nmar:3:4\napr:4:5"
     //add new buttons like this
   }
@@ -140,11 +149,31 @@ newtheme.insert = function(selection){
       //no headseparator: just add one:
       injection+="\n"+this.syntaxContainer.headseparator;
       diff-=this.syntaxContainer.headseparator.length+1;
-    }else if(posofheadseparator<selectionend&&selection!="example"){
-      //headseparator found before selection: move to headseparator
-      selectionstart = posofheadseparator-1;
-      selectionend = posofheadseparator-1;
-      injection = "\n"+injection;
+    }else{
+      if(posofheadseparator<selectionend&&selection!="example"){
+        //headseparator found before selection: move to headseparator
+        selectionstart = posofheadseparator-1;
+        selectionend = posofheadseparator-1;
+        injection = "\n"+injection;
+      }
+      //check for datalabels:
+      if(selection==="datasetlabel"){
+        var posoflastdatalabel = slidenote.textarea.value.lastIndexOf("\n"+this.syntaxContainer.datasetidentifier,selectionstart);
+        if(posoflastdatalabel>-1 && posoflastdatalabel>posofchartbegin){
+          var datasetnr = slidenote.textarea.value.substring(posoflastdatalabel+this.syntaxContainer.datasetidentifier.length+1,slidenote.textarea.value.indexOf(this.syntaxContainer.metadataseparator,posoflastdatalabel));
+          if(!isNaN(datasetnr))datasetnr++;
+          console.log("datasetnr:"+datasetnr);
+          injection = "\n"+this.syntaxContainer.datasetidentifier+datasetnr+this.syntaxContainer.metadataseparator+" ";
+          var nextlinepos = slidenote.textarea.value.indexOf("\n",posoflastdatalabel+1);
+          if(nextlinepos>-1){
+            selectionstart = nextlinepos;
+            selectionend = nextlinepos;
+          }
+        }else{
+          injection="\n"+this.syntaxContainer.datasetidentifier+"1"+this.syntaxContainer.metadataseparator+" ";
+        }
+      }
+
     }
   slidenote.textarea.value = slidenote.textarea.value.substring(0,selectionstart)+injection+slidenote.textarea.value.substring(selectionstart);
   diff+= injection.length;
@@ -165,7 +194,7 @@ newtheme.syntaxContainer = {
   xaxis:"xaxis", //xaxis-label
   yaxis:"yaxis", //yaxis-label
   datasetidentifier:"dataset", //datasetidentifier
-  //description:"description", //for screenreaders, not implemented yet
+  summary:"summary", //for screenreaders, not implemented yet
   //source:"source", //source of data, not implemented yet
 
 }
@@ -358,7 +387,9 @@ newtheme.styleThemeSpecials = function(){
       //adding labels to x and y axis:
       var xlabel = metadata[this.syntaxContainer.xaxis];
       var ylabel = metadata[this.syntaxContainer.yaxis];
-      var datasetlabel = metadata[this.syntaxContainer.datasetlabel];
+      var datasetlabel = metadata.datasetlabel;
+      //console.log("datasetlabel:"+metadata[this.syntaxContainer.])
+      //console.log(datasetlabel);
       if(xlabel && charttype!="pie"){
         console.log("x-axis-label:"+xlabel);
         var xlabeldiv = document.createElement("div");
@@ -407,6 +438,8 @@ newtheme.getChartOptions = function(data){
   var charttype = data.charttype;
   var chartcontainer = data.container;
   var head = data.headsub;
+  var summary = data.metadata[this.syntaxContainer.summary];
+  if(summary==undefined)summary="A graphical Chart";
   var options = {  plugins: [
       	Chartist.plugins.ctAccessibility({
       	 // caption: 'Chart',
@@ -417,7 +450,8 @@ newtheme.getChartOptions = function(data){
       	 // },
       	  // ONLY USE THIS IF YOU WANT TO MAKE YOUR ACCESSIBILITY TABLE ALSO VISIBLE!
       	  //visuallyHiddenStyles: 'position: absolute; top: 100%; width: 100%; font-size: 11px; overflow-x: auto; background-color: rgba(0, 0, 0, 0.1); padding: 10px'
-      	})
+          summary:summary
+        })
   	]
   };
   if(charttype == "line"){
@@ -483,8 +517,8 @@ newtheme.getChartOptions = function(data){
   		//offset:20
   	}
     if(data.chartdata.series.length===1){
-      //options.distributeSeries= true;
-      //data.chartdata.series = data.chartdata.series[0];
+      options.distributeSeries= true;
+      data.chartdata.series = data.chartdata.series[0];
     }
   	if(head.indexOf("horizontal")>-1){
       //options.axisY = undefined;

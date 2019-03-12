@@ -112,8 +112,8 @@
             .elem('tbody');
 
           var firstRow = tBody.elem('tr');
-
-          if (chart instanceof Chartist.Pie) {
+			console.log(chart);
+          if (chart instanceof Chartist.Pie || (chart instanceof Chartist.Bar && chart.options.distributeSeries) ) {
             // For pie charts we have only column headers and one series
             var dataArray = Chartist.getDataArray(chart.data, chart.optionsProvider.getCurrentOptions().reverseData);
 
