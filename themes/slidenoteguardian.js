@@ -46,11 +46,13 @@ function slidenoteGuardian(slidenote){
   //this.lastTimeActive = new Date().getTime(); //last time user was active - needed for Timeout before saving
 
   //add FileSaver.js to meet Dependencie:
+  this.slidenote.appendFile("script","filesaver/FileSaver.js");
+  /*
   var jsfile = document.createElement('script');
   jsfile.setAttribute("type","text/javascript");
   jsfile.setAttribute("src", "themes/filesaver/FileSaver.js");
   document.getElementsByTagName("head")[0].appendChild(jsfile);
-
+  */
   //can we start the init here? why not?
   this.init();
 }

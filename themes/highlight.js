@@ -22,11 +22,12 @@ newtheme.cssarray = styles;
 newtheme.addDesignOption("select", "theme of hljs:", styles, styles, 0);
 
 newtheme.changeDesignOption = function(optionnr, value){
-	var cssfile = document.createElement("link");
+	/*var cssfile = document.createElement("link");
 	cssfile.setAttribute("rel", "stylesheet");
 	cssfile.setAttribute("type", "text/css");
 	cssfile.setAttribute("href", "themes/highlight/styles/"+value+".css");
-	document.getElementsByTagName("head")[0].appendChild(cssfile);
+	document.getElementsByTagName("head")[0].appendChild(cssfile);*/
+	slidenote.appendFile("css","highlight/styles/"+value+".css");
 	//console.log("changedesignoption:"+optionnr+":"+value);
 	var seldesign = 0;
 	for(var selx=0;selx<this.designoptions[0].values.length;selx++){

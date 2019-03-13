@@ -1057,8 +1057,10 @@ emdparser.prototype.setDropDownMenu = function (){
  * usefull for many things in the md-Code-Editor
  * returns null if there is no element
 */
-emdparser.prototype.CarretOnElement = function(carretpos){
+emdparser.prototype.CarretOnElement = function(carrethardpos){
 	var element;
+	var carretpos = carrethardpos;
+	if(!carretpos)carretpos = slidenote.textarea.selectionEnd;
 	for(var x=0;x<this.map.insertedhtmlelements.length;x++){
 		var actel = this.map.insertedhtmlelements[x];
 		var actelstart = actel.posinall;
@@ -2325,11 +2327,11 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	//daher erneutes scannen wie oben nur mit lines:
 	this.init();
 	//Grundthemes laden:
-	this.loadTheme("extraoptions");
+	this.loadTheme("extraoptions", true);
 	this.loadTheme("hiddenobjects");
 	this.loadTheme("contextfield");
 	this.loadTheme("blocks");
-	this.loadTheme("stickytitles");
+	this.loadTheme("stickytitles", true);
 	this.loadTheme("procontra");
 	this.loadTheme("azul");
 	this.loadTheme("redalert");
@@ -2339,10 +2341,10 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	this.loadTheme("transition");
 	//this.loadTheme("chartjs");
 	this.loadTheme("chartist");
-	this.loadTheme("table");
+	this.loadTheme("table", true);
 	this.loadTheme("imgtourl");
-	this.loadTheme("klatex");
-	this.loadTheme("switchparseelements");
+	this.loadTheme("klatex", true);
+	this.loadTheme("switchparseelements", true);
 	this.loadTheme("sections");
 
 }
@@ -2567,9 +2569,10 @@ pagegenerator.prototype.showPage = function(page){
  * Nach dem Aufruf ist das Theme noch nicht im pagegenerator, sondern es werden NUR die .css und .js dateien des themes in die Seite geladen
 */
 themeobjekts = "";
-pagegenerator.prototype.loadTheme = function(themename){
+pagegenerator.prototype.loadTheme = function(themename, nocss){
 	if(this.slidenote.themeobjekts.indexOf(themename)==-1){
 		console.log("load Theme "+themename);
+		/*
 		var jsfile = document.createElement('script');
   	jsfile.setAttribute("type","text/javascript");
 		jsfile.setAttribute("src", this.jsfilepath + themename +".js");
@@ -2579,6 +2582,9 @@ pagegenerator.prototype.loadTheme = function(themename){
   	cssfile.setAttribute("href", this.cssfilepath + themename + ".css");
 		document.getElementsByTagName("head")[0].appendChild(jsfile);
 		document.getElementsByTagName("head")[0].appendChild(cssfile);
+		*/
+		this.slidenote.appendFile('script',themename+".js");
+		if(!nocss)this.slidenote.appendFile('css',themename+".css");
 		this.slidenote.themeobjekts+=themename;
 	}
 	console.log(this.slidenote.themeobjekts);
@@ -3627,6 +3633,25 @@ slidenotes.prototype.addTheme = function(theme){
 	//welches auch den parser beeinflusst o.ä.
 }
 
+/*Helper Function to load js/css-files:*/
+slidenotes.prototype.appendFile = function(type, path){
+	var basepath = this.basepath;
+	if(!basepath)basepath="themes/";
+	if(type==="script"){
+		var jsfile = document.createElement('script');
+		jsfile.setAttribute("type","text/javascript");
+		jsfile.setAttribute("src", basepath+path);
+		document.getElementsByTagName("head")[0].appendChild(jsfile);
+		return jsfile;
+	}else if(type==="css"){
+		var cssfile = document.createElement("link");
+		cssfile.setAttribute("rel", "stylesheet");
+		cssfile.setAttribute("type", "text/css");
+		cssfile.setAttribute("href", basepath+path);
+		document.getElementsByTagName("head")[0].appendChild(cssfile);
+		return cssfile;
+	}
+}
 
 //webkit-hacks:
 var webkit = false;

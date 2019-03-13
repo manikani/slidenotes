@@ -230,32 +230,27 @@ newtheme.buildgrid = function(gridcontainer){
   //gridcontainer.style.gridTemplateRows = "repeat("+gridarray.length+", 1fr )";
   gridcontainer.classList.add("gridx"+colums);
   for(var x=0;x<gridelemente.length;x++)gridelemente[x].classList.add("griditem");
+  //helper function - checks if chart is in line
   function chartinline(line){
     var result=false;
-    for(var cil=0;cil<line.length;cil++)if(line[cil].classList.contains("chart"))result=true;
-    //gridarray[x][0].classList.contains("chart")
+    for(var cil=0;cil<line.length;cil++)
+          if(line[cil].classList.contains("chart"))result=true;
     return result;
   }
-
-  //add grid-row-heights if contains left or right sections:
-  if(hasleftorrightsection){
-    var rowheights = "";
-    var rows = gridarea.length-1;
-    if(footerline)rows--;
-    for(var x=0;x<rows;x++){
-      if(chartinline(gridarray[x]))rowheights+="2fr ";else rowheights+="auto ";
-    }
-    rowheights+="1fr ";
-    if(footerline)rowheights+="auto";
-    gridcontainer.style.gridTemplateRows=rowheights;
-  }else{
-    var rowheights = "";
-    for(var x=0;x<gridarray.length;x++){
-      if(chartinline(gridarray[x]))rowheights+="1fr ";else rowheights+="auto ";
-    }
-    console.log("grid-rowheights:"+rowheights);
-    gridcontainer.style.gridTemplateRows=rowheights;
+  //build gridTemplateRows:
+  var rowheights = "";
+  var rows = gridarea.length-1;
+  if(footerline)rows--;
+  if(hasleftorrightsection)rows--;
+  for(var x=0;x<=rows;x++){
+  	if(chartinline(gridarray[x]))
+  		rowheights+="10fr ";
+  		else rowheights+="auto ";
   }
+  if(hasleftorrightsection)rowheights+="1fr ";
+  if(footerline)rowheights+="auto ";
+  console.log("gridTemplateRows:"+rowheights);
+  gridcontainer.style.gridTemplateRows=rowheights;
 }
 
 newtheme.clientHeight = function(element, width){
