@@ -412,6 +412,9 @@ button:hover{
 	margin-right:1px;
 	display:inline-block;
 }
+#insertarea #extrainsertmenu label{
+	top:unset;
+}
 
 #insertarea img{
 	height:1em;
