@@ -3150,7 +3150,10 @@ Theme.prototype.loadConfigString = function(data){
 /*neuer aufbau für die steuerung und ablauf usw. des programms:
 */
 
-function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentationdiv){
+function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentationdiv, bpath){
+	this.basepath = bpath;
+	if(bpath===null)this.basepath="";
+	this.imagespath = this.basepath+"images/";
 	//grundlegender zugriff auf alle wichtigen html-elemente:
 	this.textarea = texteditor;
 	this.texteditorerrorlayer = texteditorerrorlayer;
@@ -3689,8 +3692,10 @@ slidenotes.prototype.addTheme = function(theme){
 
 /*Helper Function to load js/css-files:*/
 slidenotes.prototype.appendFile = function(type, path){
-	var basepath = this.basepath;
-	if(!basepath)basepath="themes/";
+	var basepath = this.basepath+"themes/";
+	//if(basepath.length>0)basepath+"themes/";
+	if(!basepath)basepath="themes/"; //basepath should be real basepath, not themes...
+	console.log(basepath);
 	if(type==="script"){
 		var jsfile = document.createElement('script');
 		jsfile.setAttribute("type","text/javascript");
