@@ -13,14 +13,15 @@
 }
 
 #texteditorerrorlayer, #quelltext, #wysiwygarea {
-    font-family: monospace;
+  font-family: monospace;
 	font-size: 1em;
 	position:absolute;
 	border: 1px solid;
-    margin: 1px;
-    padding: 1px;
-	width: 550px;
+  margin: 1px;
+  padding: 1px;
+	width: 70vw;/*550px;*/
 	height:75vh;
+	line-height:1.5em;
 }
 #quelltext{
 	z-Index:2;
@@ -92,6 +93,11 @@
 	display:inline-block;
 	width: 100%;
 	background:yellow;
+}
+.backgroundline.layout{
+	display:inline-block;
+	width:100%;
+	background: rgba(238, 199, 85, 0.54);
 }
 .backgroundline .imagetag{
 	color:blue;
@@ -244,10 +250,10 @@ h1{
     position: initial;
     width: 100%;
 		display:grid;
-		grid-template-areas: ". header header optionarea"
-													"buttonarea sidearealeft editorarea sidearearight"
-													"footer footer footer footer";
-		grid-template-columns: 1fr 2fr auto 2fr;
+		grid-template-areas: ". . header optionarea optionarea"
+													"buttonarea sidearealeft editorarea sidearearight sidearearight"
+													"footer footer footer footer footer";
+		grid-template-columns: 2em 2fr auto 2fr 2em;
 		grid-gap: 10px 2px;
 		grid-template-rows:1fr 1fr 20fr 1fr;
 }
@@ -324,6 +330,7 @@ div#sidebarcontainer {
 	font-family:monospace;
 	padding:3px;
 	color:gray;
+	line-height:1.5em;
 }
 #sidebar span.multilinemiddle {
     color:unset;
