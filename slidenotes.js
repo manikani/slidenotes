@@ -2804,6 +2804,44 @@ pagegenerator.prototype.changeGlobalOption = function(themenr,optionnr, value){
 
 pagegenerator.prototype.showInsertMenu = function(){
 	var insertmenu = document.getElementById("insertarea");
+	//check if we are on an object:
+	var onObject = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
+
+	if(onObject && onObject.dataobject){
+		console.log("insertmenu: dataobject found");
+		//get theme:
+		var theme = slidenote.datatypes.elementOfType(onObject.dataobject.type).theme;
+		var extrainsertmenuarea=null;
+		if(theme.hasInsertMenu)extrainsertmenuarea=theme.insertMenuArea(onObject.dataobject);
+
+		console.log(theme);
+		if(theme.hasInsertMenu && extrainsertmenuarea!=null){
+
+				console.log("theme found");
+				insertmenu.classList.add("insertmenu-extra");
+				var extrainsertmenu = document.getElementById("extrainsertmenu");
+				extrainsertmenu.innerHTML = "";
+				extrainsertmenu.appendChild(extrainsertmenuarea);
+				document.getElementById("insertmenulabel").innerText = onObject.dataobject.type.toUpperCase();
+		}else{
+			insertmenu.classList.remove("insertmenu-extra");
+			document.getElementById("insertmenulabel").innerText = "INSERT";
+			document.getElementById("extrainsertmenu").innerHTML = "nothing";
+		}
+	}else if(onObject && onObject.typ ==="image"){
+		//insertmenu of image:
+		insertmenu.classList.add("insertmenu-extra");
+		var extrainsertmenu = document.getElementById("extrainsertmenu");
+		extrainsertmenu.innerHTML = "";
+		extrainsertmenu.appendChild(slidenote.presentation.getThemeByName("imgtourl").insertMenu(onObject));
+		document.getElementById("insertmenulabel").innerText = "IMAGE";
+
+	}else{
+		insertmenu.classList.remove("insertmenu-extra");
+		document.getElementById("insertmenulabel").innerText = "INSERT";
+		document.getElementById("extrainsertmenu").innerHTML = "nothing";
+	}
+
 	console.log("show insertMenu");
 	insertmenu.style.visibility = "visible";
 	insertmenu.tabIndex = 0;
@@ -2863,27 +2901,6 @@ pagegenerator.prototype.showInsertMenu = function(){
 			if(slidenote.presentation.themes[x].active)slidenote.presentation.themes[x].styleThemeMDCodeEditor("insertAreaVisible"); //Hook-Funktion
 		}
 
-		//check if we are on an object:
-		var onObject = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
-
-		if(onObject && onObject.dataobject){
-			console.log("insertmenu: dataobject found");
-			//get theme:
-			var theme = slidenote.datatypes.elementOfType(onObject.dataobject.type).theme;
-			console.log(theme);
-			if(theme.hasInsertMenu){
-				console.log("theme found");
-				insertmenu.classList.add("insertmenu-extra");
-				var extrainsertmenu = document.getElementById("extrainsertmenu");
-				extrainsertmenu.innerHTML = "";
-				extrainsertmenu.appendChild(theme.insertMenuArea(onObject.dataobject));
-				document.getElementById("insertmenulabel").innerText = onObject.dataobject.type;
-			}
-		}else{
-			insertmenu.classList.remove("insertmenu-extra");
-			document.getElementById("insertmenulabel").innerText = "INSERT";
-			document.getElementById("extrainsertmenu").innerHTML = "";
-		}
 
 }
 
@@ -3065,6 +3082,9 @@ Theme.prototype.afterStyle = function(){
 Theme.prototype.styleThemeMDCodeEditor = function(){
 	//Hook-Funktion, gedacht zum überschreiben in .js-Datei des Themes
 	//Wird ausgelöst wenn MDCodeEditor ausgewählt ist
+}
+Theme.prototype.insertMenuArea = function(){
+	//Hook-Function, returns null or html for insertmenuarea:
 }
 
 Theme.prototype.addDesignOption = function(type, description, labels, values, selected){
@@ -3573,7 +3593,14 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 		emdstart=startemdl[emdnr];
 		emdend=endemdl[emdnr];
 	}
-
+  if("```%nrlist%list%quote".indexOf(emdzeichen)>-1){
+		if(textarea.value.substring(textarea.selectionStart-1,textarea.selectionStart)!="\n"){
+			emdstart = "\n"+emdstart;
+		}
+		if(textarea.value.substring(textarea.selectionEnd,textarea.selectionEnd+1)==="\n"){
+			emdend = emdend.substring(0,emdend.length-1);
+		}
+	}
 	var selectionend = textarea.selectionEnd;
 	if(!multilineselection){
 	var newText = textarea.value.substring (0, textarea.selectionStart) +
