@@ -666,8 +666,14 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 		var lineclass="backgroundline";
 		var imgtemptext ="";
 		var emptyline = "";
-		if(this.lineswithhtml[x]==="data" && (lines[x].length==0 || lines[x]==='<span id="carret"></span>'))emptyline="&nbsp;";
-		lineclass += " "+slidenote.parser.lineswithhtml[x];
+		//if(this.lineswithhtml[x]==="data" && (lines[x].length==0 || lines[x]==='<span id="carret"></span>'))emptyline="&nbsp;";
+		if(lines[x].length==0 || lines[x]==='<span id="carret"></span>')emptyline="&nbsp;";
+		if(slidenote.parser.lineswithhtml[x]){
+			lineclass += " "+slidenote.parser.lineswithhtml[x];
+		}else if(this.map.lineswithmdcodeinsidedatablock){
+			lineclass +=" "+this.map.lineswithmdcodeinsidedatablock[x];
+			//if(lines[x].length==0||lines[x]==='<span id="carret"></span>')emptyline="&nbsp;";
+		}
 		temptext += imgtemptext +'<span class="linenr">'+x+
 								'</span><span class="'+lineclass+'">'+lines[x]+
 								emptyline+
@@ -1757,8 +1763,10 @@ emdparser.prototype.parseMap = function(){
 										if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){
 			              	for(var lwh=x;lwh<=dataende;lwh++)this.lineswithhtml[lwh]="data"; //fill lineswithhtml with data
 										}else{
-											this.lineswithhtml[x]="data";
-											this.lineswithhtml[dataende]="data";
+											this.lineswithhtml[x]="layout";
+											this.lineswithhtml[dataende]="layout";
+											if(!this.map.lineswithmdcodeinsidedatablock)this.map.lineswithmdcodeinsidedatablock = new Array();
+											for(var lwh=x;lwh<=dataende;lwh++)this.map.lineswithmdcodeinsidedatablock[lwh]="layout";
 										}
 			              var mapstartel = {line:x,pos:0,html:"<section>",mdcode:lines[x],typ:"start"};
 			    					var mapendel = {line:dataende,pos:0,html:"</section>",mdcode:lines[dataende],typ:"end", brotherelement: mapstartel};
