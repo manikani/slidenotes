@@ -830,25 +830,44 @@ emdparser.prototype.generateSidebar = function(startend){
 	var sidebarlines = new Array(bglines.length);
 	//get pixel-height of one line:
 	console.log("check for error standardlineheight: "+slidenote.standardlineheight+" offsetheight:"+sidebar.offsetHeight +"scrollheight:"+slidenote.texteditorerrorlayer.scrollHeight)
-	if(slidenote.standardlineheight===undefined || (sidebar.offsetHeight - slidenote.texteditorerrorlayer.scrollHeight>100)){
-		var testline = document.createElement("span");
+	if(slidenote.standardlineheight===undefined || (sidebar.offsetHeight - slidenote.texteditorerrorlayer.scrollHeight>100) || slidenote.standardlineheight===0){
+		/*var testline = document.createElement("span");
 		testline.classList.add("backgroundline");
 		testline.innerText="Test";
 		bglines[0].parentNode.appendChild(testline);
-		slidenote.standardlineheight = testline.offsetHeight;
+		slidenote.standardlineheight = testline.clientHeight;//offsetHeight;
 		testline.remove();
-		console.log("standard-height:"+slidenote.standardlineheight);
+		console.log("standard-height:"+slidenote.standardlineheight);*/
+		var minh=bglines[0].clientHeight;
+		var minoh=bglines[0].offsetHeight;
+		for(var x=0;x<bglines.length;x++){
+			if(bglines[x].clientHeight<minh&&bglines[x].clientHeight>0)minh=bglines[x].clientHeight;
+			if(bglines[x].offsetHeight<minoh&&bglines[x].offsetHeight>0)minoh=bglines[x].offsetHeight;
+		}
+		console.log("standardlineheight:"+minh+"vs"+minoh);
+		slidenote.standardlineheight = minh;
+		slidenote.standardlineoheight = minoh;
 	}
 	var standardlineheight = slidenote.standardlineheight;
+	var oheight=false;
+	if(standardlineheight==0){
+		standardlineheight=slidenote.standardlineoheight;
+		oheight=true;
+		console.log("standardlineheight:offsetheight"+standardlineheight);
+	}
 	var testtime = new Date();
 	//for(var x=0;x<bglines.length;x++){
 	for(var x=startline;x<endline;x++){
 		var newline = document.createElement("div");
-		var h = bglines[x].offsetHeight;
+		var h = bglines[x].clientHeight;//offsetHeight;
+		if(oheight)h=bglines[x].offsetHeight;
 		//if(h<10)h=16;
-		if(h>standardlineheight){
+		//console.log("bglines.clientHeight vs standardheight:"+h+"vs"+standardlineheight);
+		if(h!=0 && standardlineheight !=0 && h>standardlineheight*2){
 			newline.ismultiline=true;
-			newline.multilines = h/standardlineheight;
+			//newline.multilines = Math.floor(h/standardlineheight);
+			newline.multilines = ((h-standardlineheight)/(Math.round(standardlineheight*1.25)))+1;
+			//console.log("multilines:"+newline.multilines);
 			//console.log("multiline - lines:"+newline.multilines+" px:"+h);
 		}//newline.style.height = h+"px";
 
@@ -859,7 +878,7 @@ emdparser.prototype.generateSidebar = function(startend){
 	}
 	var addinglinetime = new Date();
 	var gimmetime = addinglinetime - testtime;
-	console.log("sidebar add lines:"+gimmetime+"Ms");
+	console.log("timecheck: sidebar add lines:"+gimmetime+"Ms");
 	var carretsymbol = document.createElement("a");
 	carretsymbol.classList.add("carretline");
 	carretsymbol.href="javascript:slidenote.presentation.showInsertMenu()";
