@@ -1,5 +1,6 @@
 var newtheme = new Theme("klatex");
 newtheme.description = "Latex-Support with Katex";
+/*
 //loading js-library:
 var jsfile = document.createElement('script');
 jsfile.setAttribute("type","text/javascript");
@@ -11,7 +12,9 @@ cssfile.setAttribute("rel", "stylesheet");
 cssfile.setAttribute("type", "text/css");
 cssfile.setAttribute("href", "themes/katex/katex.min.css");
 document.getElementsByTagName("head")[0].appendChild(cssfile);
-
+*/
+slidenote.appendFile("script","katex/katex.min.js");
+slidenote.appendFile("css","katex/katex.min.css");
 newtheme.addEditorbutton('Latex',"```latex","```"); //TODO: add function to body?
 slidenote.datatypes.push({type:"latex",mdcode:false,theme:newtheme});
 

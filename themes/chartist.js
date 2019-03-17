@@ -1,10 +1,14 @@
 var newtheme = new Theme("chartist");
 newtheme.description = "Charts with Chartist - takes ```chart:(line|bar|pie)";
-
+newtheme.helpText = function(dataobject){
+  var result = "Insert Your Data to create nice graphs on the fly."+
+    "<br>Copy and Paste your Data from your Excell-Sheet or CSV and put some flavour with a nice configured head into it";
+    return result;
+}
 
 //Plugins:
 var loadChartistPlugins = function(){
-jsfile2 = document.createElement('script');
+/*jsfile2 = document.createElement('script');
 jsfile2.setAttribute("type","text/javascript");
 jsfile2.setAttribute("src", "themes/chartist/chartist-plugin-accessibility.js");
 document.getElementsByTagName("head")[0].appendChild(jsfile2);
@@ -15,13 +19,18 @@ document.getElementsByTagName("head")[0].appendChild(jsfile3);
 var jsfile4 = document.createElement('script');
 jsfile4.setAttribute("type","text/javascript");
 jsfile4.setAttribute("src", "themes/chartist/chartist-plugin-pointlabels.js");
-document.getElementsByTagName("head")[0].appendChild(jsfile4);
+document.getElementsByTagName("head")[0].appendChild(jsfile4);*/
+slidenote.appendFile("script","chartist/chartist-plugin-accessibility.js");
+slidenote.appendFile("script","chartist/chartist-plugin-zoom.js");
+slidenote.appendFile("script","chartist/chartist-plugin-pointlabels.js");
 }
+/*
 var jsfile = document.createElement('script');
 jsfile.setAttribute("type","text/javascript");
 jsfile.setAttribute("src", "themes/chartist/chartist.js");
 jsfile.onload = loadChartistPlugins;
-document.getElementsByTagName("head")[0].appendChild(jsfile);
+document.getElementsByTagName("head")[0].appendChild(jsfile);*/
+slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins;
 
 newtheme.addEditorbutton('Chart','```chart'); //only for comparison right now
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme}); //TODO: change chartsvg to chart
@@ -374,6 +383,7 @@ newtheme.styleThemeSpecials = function(){
         var w = data.svg._node.clientWidth;
         var h = data.svg._node.clientHeight;
         console.log("chartw/h:"+w+"/"+h);
+        if(w>0&&h>0)
         data.svg.attr({
           viewBox:"0 0 "+w+" "+h,
           preserveAspectRatio:"xMinYMax meet"

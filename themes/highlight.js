@@ -50,7 +50,7 @@ newtheme.loadConfigString = function(data){
 	this.changeGlobalOption(0,this.highlightintexteditor);
 }
 
-/*dateien nachladen:*/
+/*dateien nachladen:
 var jsfile = document.createElement('script');
 jsfile.setAttribute("type","text/javascript");
 jsfile.setAttribute("src", "themes/highlight/highlight.pack.js");
@@ -60,6 +60,10 @@ cssfile.setAttribute("type", "text/css");
 cssfile.setAttribute("href", "themes/highlight/styles/default.css");
 document.getElementsByTagName("head")[0].appendChild(jsfile);
 document.getElementsByTagName("head")[0].appendChild(cssfile);
+*/
+slidenote.appendFile("script","highlight/highlight.pack.js");
+slidenote.appendFile("css","highlight/styles/default.css");
+
 
 newtheme.description = "Automagicaly highlightning Codes in Codeblock using hljs. For more Information "+
 												"see http://highlightjs.org";
