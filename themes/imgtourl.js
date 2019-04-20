@@ -16,8 +16,8 @@ slidenote.base64images = {
   preselectedname: null,
   quality: 0.8,
   imagetype: "image/jpeg",
-  maxwidth: 1280, //1920,
-  maxheight: 720, //1080,
+  maxwidth: 1920,//1280, //1920,
+  maxheight: 1080,//720, //1080,
   imageByName : function(imagename){  //returns fitting base64-image
     for(var x=0;x<this.base64images.length;x++){
         if(this.base64images[x].name===imagename){
