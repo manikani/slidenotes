@@ -1,12 +1,97 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"/>
-<title>Slidenote-Editor</title>
-<link rel="stylesheet" href="layout.css">
-<link rel="stylesheet" href="themes/slidenoteguardian.css">
-<script language="javascript" src="slidenotes.js"></script>
-<script language="javascript" src="themes/slidenoteguardian.js"></script>
+<?php
+
+/**
+ * @file
+ * Default theme implementation to display a node.
+ *
+ * Available variables:
+ * - $title: the (sanitized) title of the node.
+ * - $content: An array of node items. Use render($content) to print them all,
+ *   or print a subset such as render($content['field_example']). Use
+ *   hide($content['field_example']) to temporarily suppress the printing of a
+ *   given element.
+ * - $user_picture: The node author's picture from user-picture.tpl.php.
+ * - $date: Formatted creation date. Preprocess functions can reformat it by
+ *   calling format_date() with the desired parameters on the $created variable.
+ * - $name: Themed username of node author output from theme_username().
+ * - $node_url: Direct url of the current node.
+ * - $display_submitted: Whether submission information should be displayed.
+ * - $submitted: Submission information created from $name and $date during
+ *   template_preprocess_node().
+ * - $classes: String of classes that can be used to style contextually through
+ *   CSS. It can be manipulated through the variable $classes_array from
+ *   preprocess functions. The default values can be one or more of the
+ *   following:
+ *   - node: The current template type, i.e., "theming hook".
+ *   - node-[type]: The current node type. For example, if the node is a
+ *     "Blog entry" it would result in "node-blog". Note that the machine
+ *     name will often be in a short form of the human readable label.
+ *   - node-teaser: Nodes in teaser form.
+ *   - node-preview: Nodes in preview mode.
+ *   The following are controlled through the node publishing options.
+ *   - node-promoted: Nodes promoted to the front page.
+ *   - node-sticky: Nodes ordered above other non-sticky nodes in teaser
+ *     listings.
+ *   - node-unpublished: Unpublished nodes visible only to administrators.
+ * - $title_prefix (array): An array containing additional output populated by
+ *   modules, intended to be displayed in front of the main title tag that
+ *   appears in the template.
+ * - $title_suffix (array): An array containing additional output populated by
+ *   modules, intended to be displayed after the main title tag that appears in
+ *   the template.
+ *
+ * Other variables:
+ * - $node: Full node object. Contains data that may not be safe.
+ * - $type: Node type, i.e. story, page, blog, etc.
+ * - $comment_count: Number of comments attached to the node.
+ * - $uid: User ID of the node author.
+ * - $created: Time the node was published formatted in Unix timestamp.
+ * - $classes_array: Array of html class attribute values. It is flattened
+ *   into a string within the variable $classes.
+ * - $zebra: Outputs either "even" or "odd". Useful for zebra striping in
+ *   teaser listings.
+ * - $id: Position of the node. Increments each time it's output.
+ *
+ * Node status variables:
+ * - $view_mode: View mode, e.g. 'full', 'teaser'...
+ * - $teaser: Flag for the teaser state (shortcut for $view_mode == 'teaser').
+ * - $page: Flag for the full page state.
+ * - $promote: Flag for front page promotion state.
+ * - $sticky: Flags for sticky post setting.
+ * - $status: Flag for published status.
+ * - $comment: State of comment settings for the node.
+ * - $readmore: Flags true if the teaser content of the node cannot hold the
+ *   main body content.
+ * - $is_front: Flags true when presented in the front page.
+ * - $logged_in: Flags true when the current user is a logged-in member.
+ * - $is_admin: Flags true when the current user is an administrator.
+ *
+ * Field variables: for each field instance attached to the node a corresponding
+ * variable is defined, e.g. $node->body becomes $body. When needing to access
+ * a field's raw values, developers/themers are strongly encouraged to use these
+ * variables. Otherwise they will have to explicitly specify the desired field
+ * language, e.g. $node->body['en'], thus overriding any language negotiation
+ * rule that was previously applied.
+ *
+ * @see template_preprocess()
+ * @see template_preprocess_node()
+ * @see template_process()
+ */
+?>
+<div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?> clearfix"<?php print $attributes; ?>>
+<script language="javascript">
+var initial_note = {
+title: '<?php print $title;?>',
+nid: <?php print $node->nid;?>,
+encnote:'<?php if(isset($field_encryptednote[0]))print($field_encryptednote[0]['value']);?>',
+encimg:'<?php if(isset($field_encimages[0]))print($field_encimages[0]['value']);?>',
+notehash:'<?php if(isset($field_notehash[0]))print($field_notehash[0]['value']);?>',
+imagehash:'<?php if(isset($field_imageshash[0]))print($field_imageshash[0]['value']);?>'
+}
+</script>
+
+<script language="javascript" src="/sites/all/libraries/slidenotes/slidenotes.js"></script>
+<script language="javascript" src="/sites/all/libraries/slidenotes/themes/slidenoteguardian.js"></script>
 <script language="javascript"><!--
 var slidenote;
 var slidenoteguardian;
@@ -26,7 +111,11 @@ function initeditor(){
 			console.log("etwas fehlt noch")
 			setTimeout("initeditor()",500); //gib ihm noch Zeit
 		} else{
-			slidenote = new slidenotes(texted, texterr, errordet, slideshow );
+			var basepath = basepath="/sites/all/libraries/slidenotes/";			
+			slidenote = new slidenotes(texted, texterr, errordet, slideshow, basepath );
+			slidenote.basepath="/sites/all/libraries/slidenotes/";
+			slidenote.imagespath="/sites/all/libraries/slidenotes/images/";			
+			
 			presentation = slidenote.presentation;
 			//texted.onresize = slidenote.parseneu;
 			texted.onresize= function(){slidenote.parseneu();};
@@ -46,7 +135,6 @@ function initeditor(){
 				var menu=document.getElementById("exportoptions");
 				if(menu.classList.contains("active"))menu.classList.remove("active");else menu.classList.add("active");
 			});
-			document.getElementById("exportoptions").addEventListener("click", function(){this.classList.remove("active")});
 			document.getElementById("editoroptionbuttonbutton").addEventListener("click",function(e){
 				var optionmenu = document.getElementById("optionmenu");
 				if(optionmenu.classList.contains("active")){
@@ -107,7 +195,7 @@ function initeditor(){
 			});
 
 			//texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
-			//slidenote.parseneu();
+			slidenote.parseneu();
 			console.log("slidenotes geladen");
 			console.log(slidenote);
 
@@ -172,12 +260,12 @@ function parsetesting(){
 <div id="slidenotediv">
 	<div id="editorblock">
 		<div id="editorheader">
-			<button><img src="images/buttons/home.png">HOME</button>
-			<button id="importbutton"><img src="images/buttons/import.png">IMPORT<input type="file" id="importfile"></button>
-			<img id="encstatus" src="images/schloss-grau.png" alt="initial state">
-			<span id="notetitle">my awesome slidenote</span>
-			<button id="exportbutton">EXPORT<img src="images/buttons/export.png"></button>
-			<button id="savebutton">SAVE<img id="savestatus" src="images/buttons/cloudsaved.png"></button>
+			<button><a href="/user"><img src="/sites/all/libraries/slidenotes/images/buttons/home.png">HOME</a></button>
+			<button id="importbutton"><img src="/sites/all/libraries/slidenotes/images/buttons/import.png">IMPORT<input type="file" id="importfile"></button>
+			<img id="encstatus" src="/sites/all/libraries/slidenotes/images/schloss-grau.png" alt="initial state">
+			<span id="notetitle"><?php print $title ?></span>
+			<button id="exportbutton">EXPORT<img src="/sites/all/libraries/slidenotes/images/buttons/export.png"></button>
+			<button id="savebutton">SAVE<img id="savestatus" src="/sites/all/libraries/slidenotes/images/buttons/cloudsaved.png"></button>
 		</div>
 		<div id="exportoptions">
 			<ul>
@@ -185,34 +273,34 @@ function parsetesting(){
 				<li><button onclick="slidenoteguardian.saveNote('filesystem')">encrypted .slidenote</button></li>
 				<li><button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md textfile</button></li>
 				<li>PUBLISH PRESENTATION:</li>
-				<li>Publish to slidenote.io</li>
-				<li><button onclick="slidenoteguardian.exportPresentationLocal(true);">Save as encrypted .html</button></li>
-				<li><button onclick="slidenoteguardian.exportPresentationLocal(false);">Save as unencrypted .html</button></li>
+				<li><button onclick="slidenoteguardian.exportPresentationToCMS()">Publish to slidenote.io</button></li>
+				<li>Save as encrypted .html</li>
+				<li>Save as unencrypted .html</li>
 			</ul>
 		</div>
-		<div id="editoroptionbutton"><button id="editoroptionbuttonbutton">Options <img src="images/buttons/optioni.png"></button></div>
+		<div id="editoroptionbutton"><button id="editoroptionbuttonbutton">Options <img src="/sites/all/libraries/slidenotes/images/buttons/optioni.png"></button></div>
 		<div id="texteditorbuttons">
 			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
-			<button onclick="insertbutton('---')" title="new slide">---</button>
-			<button onclick="insertbutton('%head1')" title="Title"><img src="images/buttons/h1.png"></button>
-			<button onclick="insertbutton('%head2')" title="2nd Title"><img src="images/buttons/h2.png"></button>
-			<button onclick="insertbutton('%head3')" title="3rd Title"><img src="images/buttons/h3.png"></button>
-			<button onclick="insertbutton('%list')" title="unordered List"><img src="images/buttons/ul.png"></button>
-			<button onclick="insertbutton('%nrlist')" title="ordered list"><img src="images/buttons/ol.png"></button>
-			<button onclick="insertbutton('%quote')" title="quote"><img src="images/buttons/quote.png"></button>
-			<button onclick="insertbutton('%comment')" title="comment"><img src="images/buttons/comment.png"></button>
-			<button onclick="insertbutton('**')" title="bold"><img src="images/buttons/bold.png"></button>
-			<button onclick="insertbutton('*')" title="italic"><img src="images/buttons/italic.png"></button>
-			<button onclick="insertbutton('~~')" title="crossed"><img src="images/buttons/stroke.png"></button>
-			<button onclick="insertbutton('%code')" title="code"><img src="images/buttons/code.png"></button>
-			<button onclick="insertbutton('%link')" title="hyperlink"><img src="images/buttons/link.png"></button>
+			<!--<button onclick="insertbutton('---')" >new Page</button>-->
+			<button onclick="insertbutton('%head1')" ><img src="/sites/all/libraries/slidenotes/images/buttons/h1.png"></button>
+			<button onclick="insertbutton('%head2')" ><img src="/sites/all/libraries/slidenotes/images/buttons/h2.png"></button>
+			<button onclick="insertbutton('%head3')" ><img src="/sites/all/libraries/slidenotes/images/buttons/h3.png"></button>
+			<button onclick="insertbutton('%list')" ><img src="/sites/all/libraries/slidenotes/images/buttons/ul.png"></button>
+			<button onclick="insertbutton('%nrlist')" ><img src="/sites/all/libraries/slidenotes/images/buttons/ol.png"></button>
+			<button onclick="insertbutton('%quote')" ><img src="/sites/all/libraries/slidenotes/images/buttons/quote.png"></button>
+			<button onclick="insertbutton('%comment')" ><img src="/sites/all/libraries/slidenotes/images/buttons/comment.png"></button>
+			<button onclick="insertbutton('**')" ><img src="/sites/all/libraries/slidenotes/images/buttons/bold.png"></button>
+			<button onclick="insertbutton('*')" ><img src="/sites/all/libraries/slidenotes/images/buttons/italic.png"></button>
+			<button onclick="insertbutton('~~')" ><img src="/sites/all/libraries/slidenotes/images/buttons/stroke.png"></button>
+			<button onclick="insertbutton('%code')" ><img src="/sites/all/libraries/slidenotes/images/buttons/code.png"></button>
+			<button onclick="insertbutton('%link')" ><img src="/sites/all/libraries/slidenotes/images/buttons/link.png"></button>
 			<!--<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>-->
 		</div>
 		<div id="sidebarcontainer">
 			<div id="sidebar"></div>
-			<div id="nicesidebarsymbol"><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="images/buttons/droptilde.png"></a><img src="images/buttons/cursorline.png"></div>
+			<div id="nicesidebarsymbol"><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="/sites/all/libraries/slidenotes/images/buttons/droptilde.png"></a><img src="/sites/all/libraries/slidenotes/images/buttons/cursorline.png"></div>
 			<div id="insertarea">
-				<span> <label><span id="insertmenulabel">INSERT</span>   <img src="images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="images/buttons/cursorline.png"></span>
+				<span> <label><span id="insertmenulabel">INSERT</span>   <img src="/sites/all/libraries/slidenotes/images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="/sites/all/libraries/slidenotes/images/buttons/cursorline.png"></span>
 
 				<div id="standardinsertmenu">
 					<button class="newpagebutton" onclick="insertbutton('---')" >new Page</button>
@@ -269,7 +357,7 @@ function parsetesting(){
 			<div>(c) slidenotes.io</div>
 		</div>
 		<div id="footer">
-			<button onclick="slidenote.presentation.showpresentation()"><img src="images/buttons/presentationtoggle.png"> PRESENTATION</button>
+			<button onclick="slidenote.presentation.showpresentation()"><img src="/sites/all/libraries/slidenotes/images/buttons/presentationtoggle.png"> PRESENTATION</button>
 		</div>
 		<div id="imagesblock">
 				<h1>Image Upload <button onclick="Javascript:document.getElementById('imagesblock').classList.remove('visible');">close</button></h1>
@@ -329,23 +417,6 @@ function parsetesting(){
 
 </div>
 </div>
-<div id="slidenoteLoadingScreen">
-	<h1>Please wait while your presentation is generated...</h1>
-	<img src="images/wait-charlie-chaplin.gif" height="80%">
+
 </div>
-<div id="hiddencmsarea"><h1>Later Hidden Content: CMS-Area <span>ℹ</span></h1>
-	<button onclick="slidenoteguardian.saveNote('cms')">save to cms</button>
-	<button onclick="slidenoteguardian.loadNote('cms')">load from cms</button>
-	<button onclick="slidenoteguardian.saveNote('local')">save local</button>
-	<button onclick="slidenoteguardian.loadNote('local')">load local</button>
-	<button onclick="slidenoteguardian.saveNote('filesystem')">export as encrypted .slidenote</button>
-	<button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">export as unencrypted .md textfile</button>
-	<input type="text" id="cmstitle">
-	<input type="text" id="cmsslidenotehash">
-	<textarea id="cmsarea"></textarea>
-	<input type="text" id="cmsimageshash">
-	<textarea id="cmsimages" spellcheck="false" autocomplete="false"></textarea>
-	<textarea id="cmsconfig"></textarea>
-</div>
-</body>
-</html>
+

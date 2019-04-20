@@ -24,14 +24,24 @@ function slidenoteGuardian(slidenote){
   this.cmsNoteSave;
   this.cmsImagesSave;
 
+  //this.exportedPresentations = new Array();
   this.restObject={};
+  this.hascmsconnection=false;
   if("initial_note" in window){
+    this.hascmsconnection=true;
     this.restObject = initial_note;
     this.restObject.drupal7 = {
       nid:initial_note.nid,
       author:initial_note.author
     }
+    this.getRestToken("init");
+    this.getAllPlugins();
+  }else{
+    console.log("get all css from static webserver");
+    this.getCSSFromStaticWebserver();
+    this.getJSFromStaticWebserver();
   }
+  if(this.restObject.exportedPresentations===undefined)this.restObject.exportedPresentations = new Array();
   this.restObject.combine = function(uploadobj){
     for(var key in uploadobj){
       if(uploadobj.hasOwnProperty(key)){
@@ -71,6 +81,11 @@ function slidenoteGuardian(slidenote){
   jsfile.setAttribute("src", "themes/filesaver/FileSaver.js");
   document.getElementsByTagName("head")[0].appendChild(jsfile);
   */
+  if(!this.hascmsconnection){
+    var savestatus = document.getElementById("savestatus");
+    savestatus.src = slidenote.imagespath+"buttons/clouderror.png";
+    savestatus.title = "no connection with the cloud";
+  }
   //can we start the init here? why not?
   this.init();
 }
@@ -79,14 +94,21 @@ slidenoteGuardian.prototype.init = function(){
   //init will be called once the slidenote has been loaded from cms
   //this.getCMSFields();
   notetitle = this.restObject.title;
+  this.notetitle = this.restObject.title;
+  notehash = this.restObject.notehash;
   if(this.localstorage.getItem("title") && this.localstorage.getItem("title").length>0){//===this.notetitle){
     let loadtext = "We found a Slidenote in your Browsers Cache of the loaded Slidenote. Use Version of Browser-Cache?";
     if(this.localstorage.getItem("title")!=notetitle)loadtext="We found a Slidenote with title \""+this.localstorage.getItem("title")+"\" in your local Storage but loaded Title is \""+this.notetitle+"\". Do you want to load the cached version instead?";
-    if(confirm(loadtext)){
+    if(this.localstorage.getItem("slidenotehash")!=notehash && confirm(loadtext)){
       this.notetitle=this.localstorage.getItem("title");
       setTimeout("slidenoteguardian.loadNote('local')",100);
     } else {
-      this.loadNote("cms");
+      if(this.hascmsconnection && this.restObject.encnote.length>1){
+        setTimeout("slidenoteguardian.loadNote('cms')",1);
+      }else if(this.hascmsconnection){
+
+      }
+      //this.loadNote("cms");
       //this.loadConfig("cms");
     }
   }
@@ -199,6 +221,107 @@ slidenoteGuardian.prototype.loadedFromRest = function(jsonstring){
   console.log(loadedObject);
 }
 
+slidenoteGuardian.prototype.getAllPlugins = function(){
+  var oReq = new XMLHttpRequest();
+  oReq.addEventListener("load", function(){
+    console.log(this);
+    if(this.status===200 || this.statusText==="ok")
+    slidenoteguardian.importPlugins(JSON.parse(this.response));
+  });
+  oReq.open("GET","/node.json?type=slidenote_plugin");
+  oReq.send();
+}
+
+//get all Css-Blocks from static webserver:
+slidenoteGuardian.prototype.getCSSFromStaticWebserver = function(){
+  console.log("load css from themes:"+slidenote.presentation.themes.length);
+  console.log("theme-string:"+this.slidenote.themeobjekts);
+
+  this.cssBlocksPerPlugin = new Array();
+  var basicl = new XMLHttpRequest();
+  basicl.addEventListener("load",function(){
+    if(this.status===200)slidenoteguardian.cssBlocksPerPlugin.push({plugin:"basic", css:this.response});
+  })
+  basicl.open("GET", "layout.css");
+  basicl.send();
+  var basepath = "themes/"
+  var themes = slidenote.themeobjekts.split(";");//slidenote.presentation.themes;
+  themes.pop(); //remove last empty entry
+  themes.push("slidenoteguardian");
+  themes.push("slidenoteplayermini");
+  var oReqs = new Array();
+  for(var x=0;x<themes.length;x++){
+    var filename = basepath + themes[x]+".css";//themes[x].classname + ".css";
+    oReqs[x] = new XMLHttpRequest();
+    oReqs[x].addEventListener("load",function(){
+      console.log("css-file loaded from webserver as textfile:")
+      console.log(this);
+      var pluginname = this.responseURL.substring(this.responseURL.lastIndexOf("/")+1,this.responseURL.lastIndexOf("."));
+      if(this.status ===200)slidenoteguardian.cssBlocksPerPlugin.push({plugin:pluginname, css:this.response});
+    });
+    oReqs[x].open("GET", filename);
+    oReqs[x].send();
+  }
+
+}
+slidenoteGuardian.prototype.getJSFromStaticWebserver = function(){
+  this.jsfilesForExport = new Array();
+
+  var jsfilenames = ["slidenoteplayermini.js", "slidenoteguardianmini.js"];
+  for(var x=0;x<jsfilenames.length;x++){
+    var filename = slidenote.basepath + jsfilenames[x];
+    var req = new XMLHttpRequest();
+    req.addEventListener("load",function(){
+      console.log("js-file loaded from webserver as textfile");
+      console.log(this);
+      slidenoteguardian.jsfilesForExport.push({name: this.responseURL.substring(this.responseURL.lastIndexOf("/")+1),jscode: this.response});
+    });
+    req.open("GET",filename);
+    req.send();
+  }
+}
+slidenoteGuardian.prototype.importPlugins = function(resolve){
+  console.log(resolve);
+  this.restObject.plugincollector = {};
+  this.restObject.plugincollector.pluginlist = resolve.list;
+  for(var x=0;x<resolve.list.length;x++){
+    var actplugin = resolve.list[x];
+    var css = actplugin.field_plugincss;
+    this.restObject.plugincollector[actplugin.title] = {
+      css:css, nr:x, body:actplugin.body
+    }
+  }
+  console.log("imported plugins");
+}
+
+slidenoteGuardian.prototype.createCssBlock = function(){
+  var cssblock = "";
+  if(this.restObject.plugincollector == undefined && this.hascmsconnection){
+    this.getAllPlugins();
+  } else if(!this.hascmsconnection && this.cssBlocksPerPlugin){
+    for(var x=0;x<this.cssBlocksPerPlugin.length;x++){
+      var cssb = this.cssBlocksPerPlugin[x];
+      var ltheme = slidenote.presentation.getThemeByName(cssb.plugin);
+      if(ltheme && ltheme.active || cssb.plugin==="basic" ||
+      cssb.plugin==="slidenoteguardian" || cssb.plugin==="slidenoteplayermini"){
+        cssblock+="\n"+cssb.css+"\n</style><style>";
+      }else{
+        console.log("plugin "+cssb.plugin +"war nicht aktiv");
+      }
+    }
+    return cssblock;
+  } else if(!this.hascmsconnection) return "/*connection to cloud not working*/";
+
+  for(var x=0;x<slidenote.presentation.themes.length;x++){
+    var acttheme = slidenote.presentation.themes[x];
+    if(acttheme.active && this.restObject.plugincollector[acttheme.classname]!=undefined){
+      cssblock+=this.restObject.plugincollector[acttheme.classname].css;
+    }
+  }
+  //cssblock+="\n</style>\n";
+  return cssblock;
+}
+
 slidenoteGuardian.prototype.getRestToken = async function(afterwards){
   var tokenquest = new XMLHttpRequest();
   console.log("asking for Token...");
@@ -213,7 +336,7 @@ slidenoteGuardian.prototype.getRestToken = async function(afterwards){
   //should return promise to let saveToRest await
 }
 //@param: payloadobject
-slidenoteGuardian.prototype.saveToRest= function(path, payload){
+slidenoteGuardian.prototype.saveToRest= async function(path, payload){
   console.log("start saveToRest:"+path);
   if(!this.restToken){
     console.log("Rest-Token not set yet... getting Token and try again...");
@@ -250,7 +373,82 @@ slidenoteGuardian.prototype.savedToRest = function(resolve){
   }
 }
 
-slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode, payload){
+slidenoteGuardian.prototype.exportPresentationToRest = function(payload){
+  console.log("start exportToRest");
+  if(!this.restToken){
+    console.log("Rest-Token not set yet... getting Token and try again...");
+    this.getRestToken("save"); //has to be with await
+    return; //return and wait for next save till we can await
+  }
+  //var payload = JSON.stringify(payloadobject);
+  var postReq= new XMLHttpRequest();
+  postReq.addEventListener("load",function(){
+    //slidenoteguardian.resolve=this;
+    console.log("new export-resolve");
+    console.log(this);
+    slidenoteguardian.exportedPresentationToRest(this);
+  });
+  postReq.open("POST","/node/");
+  postReq.setRequestHeader("CONTENT-TYPE","application/json");
+  postReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
+
+  //putReq.withCredentials = true;
+  postReq.send(payload);
+  console.log("sending payload");
+  console.log(postReq);
+}
+
+slidenoteGuardian.prototype.exportedPresentationToRest = function(resolve){
+  if(resolve.statusText==="Created"){
+    var respobj = JSON.parse(resolve.response);
+    var cdate = new Date();
+    this.restObject.exportedPresentations.push({
+      id:respobj.id,
+      uri:respobj.uri,
+      date: cdate
+    });
+    console.log("uploaded to Rest");
+    console.log(respobj);
+    //update slidenote-node:
+    var update = this.prepareDrupal7Rest("presentationEntityUpdate");
+    this.saveToRest(update.path,update.payload);
+    //get public url of presentation:
+    var urlquest = new XMLHttpRequest();
+    urlquest.addEventListener("load", function(){
+      var exp = slidenoteguardian.restObject.exportedPresentations[slidenoteguardian.restObject.exportedPresentations.length-1];
+      var resolve = JSON.parse(this.response);
+      exp.publicURL = resolve.url;
+      if(confirm("new Presentation ready with url "+resolve.url+"\n Go there now?")){
+        console.log("jump to presentationnode");
+      }
+    });
+    urlquest.open("GET",respobj.uri+".json");
+    urlquest.setRequestHeader("CONTENT-TYPE","application/json");
+    urlquest.setRequestHeader('X-CSRF-TOKEN', this.restToken);
+    urlquest.send();
+  }
+}
+
+slidenoteGuardian.prototype.exportPresentation = async function(destination, presentationdiv){
+  var password = await this.passwordPrompt("Choose a Password for the Presentation", "exportCMS", true);
+  if(destination==="filesystem")this.preparePresentationForFilesystem(presentationdiv);
+  var presentationstring = '<div class="'+presentationdiv.classList.toString()+'">'+
+                            presentationdiv.innerHTML + "</div>";
+  var encResult = await this.encryptForExport(presentationstring, password);
+  var encString = this.encBufferToString(encResult);
+  this.uploadRestObject.encpresentation = encString;
+  if(destination==="cms"){
+    this.uploadRestObject.title = encResult.filename;
+    console.log("prepare to upload and uploading to cms...");
+    var payloadobj = this.prepareDrupal7Rest("presentation");
+    console.log(payloadobj);
+    this.exportPresentationToRest(payloadobj.payload);
+  }else if(destination==="filesystem"){
+    this.exportPresentationToFilesystem(encString, true);
+  }
+}
+
+slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
   var path = "/node/"+this.restObject.drupal7.nid;
   var payloadobj = {
     nid:this.restObject.drupal7.nid
@@ -258,20 +456,142 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode, payload){
   if(mode=="text"){
     payloadobj.field_encryptednote = this.uploadRestObject.encnote;
     payloadobj.field_notehash=this.uploadRestObject.notehash;
-  }else if(mode)
-  if(mode==="image"){
+  }else if(mode==="image"){
     payloadobj.field_encimages= this.uploadRestObject.encimg;
     payloadobj.field_imageshash=this.uploadRestObject.imagehash;
   }
+  else if(mode==="presentation"){
+    path = "/node/";
+    let cssblock = this.createCssBlock();
+    payloadobj = {
+      type:"presentation",
+      title: this.uploadRestObject.title,
+      field_encpresentation: this.uploadRestObject.encpresentation,
+    //  field_description:"PIPPO",
+      field_slidenotenode: this.restObject.drupal7.nid,
+      field_cssblock: cssblock
+    }
+    payloadobj.author = this.restObject.author;
+
+  } else if(mode==="presentationUpdate"){
+    payloadobj.field_encpresentation = "TEST";//this.uploadRestObject.encpresentation;
+  } else if(mode==="presentationEntityUpdate"){
+    payloadobj.field_presentations = new Array();
+    for(var px=0;px<this.restObject.exportedPresentations.length;px++){
+      if(this.restObject.exportedPresentations[px].id!="")
+      payloadobj.field_presentations.push({id:this.restObject.exportedPresentations[px].id});
+    }
+  }
+  console.log("Json-stringify payload object:");
+  console.log(payloadobj);
   var payload = JSON.stringify(payloadobj);
   return{path:path,payload:payload};
 }
 
+slidenoteGuardian.prototype.exportIsReady = function(presdiv){
+  console.log("export is ready to:"+this.exportPresentationDestination);
+  if(this.exportPresentationDestination==="unencrypted"){
+    this.preparePresentationForFilesystem(presdiv);
+    this.exportPresentationToFilesystem(presdiv.innerHTML, false);
+  }else{
+    this.exportPresentation(this.exportPresentationDestination, presdiv);
+  }
+  this.exportPresentationDestination = undefined;
+  slidenote.presentation.showpresentation();//hide exported-Presentation and return into editormode
+}
+
+slidenoteGuardian.prototype.exportPresentationToCMS = function(){
+  this.exportPresentationDestination ="cms";
+  console.log("start exporting to cms");
+  slidenote.presentation.showpresentation(true);
+}
+slidenoteGuardian.prototype.exportPresentationLocal = function(encrypted){
+  if(encrypted)this.exportPresentationDestination = "filesystem";
+  if(!encrypted)this.exportPresentationDestination = "unencrypted";
+  console.log("start exporting to filesystem");
+  slidenote.presentation.showpresentation(true);
+}
+
+slidenoteGuardian.prototype.preparePresentationForFilesystem = function(presentationdiv){
+  var pages = presentationdiv.getElementsByClassName("ppage");
+  for(var x=0;x<pages.length;x++){
+    var page = pages[x];
+    var id = "slide"+x;
+    var nav = document.createElement("div");
+    //nav.style.position = "fixed";
+    //nav.style.bottom = 0;
+    //nav.style.width = "100vw";
+    nav.classList.add("controlarea");
+    var backlink = document.createElement("a");
+    if(x>0)backlink.href="#slide"+(x-1);
+    backlink.innerText="last slide";
+    var forwlink = document.createElement("a");
+    backlink.classList.add("controlbutton");
+    if(x<pages.length-1)forwlink.href="#slide"+(x+1);
+    forwlink.innerText = "next slide";
+    forwlink.classList.add("controlbutton");
+    nav.appendChild(backlink);
+    nav.appendChild(forwlink);
+    page.appendChild(nav);
+    page.id=id;
+    page.classList.remove("active");
+  }//for-to
+}
+
+slidenoteGuardian.prototype.exportPresentationToFilesystem = function(presstring, encrypted){
+  //get css-codes from all active themes:
+  /*
+  var allactivethemes = ""; //holds names of all active themes
+  for(var x=0;x<slidenote.presentation.themes.length;x++){
+    var acttheme=slidenote.presentation.themes[x];
+    if(acttheme.active)allactivethemes+=acttheme.classname+";";
+  }*/
+  var cssblock = this.createCssBlock();
+  cssblock+= "\ndiv.ppage{visibility:hidden;}"+
+            " \ndiv.ppage:target{visibility:visible;}"+
+            "\n.blocks div.ppage.active{visibility:hidden;}"+
+            "\n#slide0{visibility:visible;z-Index:1} .ppage{z-index:2}";
+  var headerhtml = "<html><head><title>a slidenote presentation</title></head>";
+  if(encrypted)headerhtml+='<body onload="slidenoteguardian.decryptPresentation()">'; else headerhtml+="<body>";
+  var bodyhtmlbefore = '<div id="slidenotediv" class="'+slidenote.presentation.presentation.classList.toString()+'"><div id="slidenotepresentation">';
+  var bodypresentation = "";
+  if(!encrypted)bodypresentation = presstring;
+  var bodyhtmlafter = '</div></div>';
+  var bodyend ='</body></html>';
+  var jsblock = "";
+  if(encrypted){
+    jsblock = "encslidenote = {encBufferString:'"+presstring +
+                "', ivlength:"+this.ivlength+
+                "}\n";
+
+    for(var jsx = 0;jsx<this.jsfilesForExport.length;jsx++)jsblock += this.jsfilesForExport[jsx].jscode;
+  }else{
+    for(var jsx = 0;jsx<this.jsfilesForExport.length;jsx++)if(this.jsfilesForExport[jsx].name==="slidenoteplayermini.js")jsblock += this.jsfilesForExport[jsx].jscode;
+  }
+  var passwordprompt =  "";
+  if(encrypted)passwordprompt = document.getElementById("slidenoteGuardianPasswordPromptStore").innerHTML;
+
+  var result = headerhtml+
+              "<style>"+ cssblock + "</style>"+
+              bodyhtmlbefore+
+              bodypresentation +
+              bodyhtmlafter+
+              "<script>"+jsblock+"</script>"+
+              '<div id="slidenoteGuardianPasswordPromptStore">'+passwordprompt+'</div>'+
+              bodyend;
+
+  this.exportToFilesystem(result, this.title+".html");
+}
+
+slidenoteGuardian.prototype.loadCssFromRest = function(){
+
+}
 
 slidenoteGuardian.prototype.loadNote = async function(destination){
     //loads Note from cmsArea or from local destination
     //destination is "cms" or "local"
     if(destination==="cms"){
+      if(!this.hascmsconnection)return;
       //first thing to do is get the fields right:
       //this.getCMSFields();
       if(this.cmsArea)this.encBufferString = this.cmsArea.value;
@@ -295,13 +615,13 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
         this.decText = await this.decrypt(buffer.buffer, this.iv); //decrypt ArrayBuffer anew
     }
     if(this.decText === "decryption has failed")return; //password wrong, abort the load
-
+    console.log("decryption ended succesfully:"+this.decText.substring(0,20));
     this.slidenote.textarea.value = this.decText; //putting result into textarea
     //loading images:
     let imgstring;
     if(destination==="cms"){
       if(this.cmsImages)imgstring = this.cmsImages.value;
-      if(initial_note)imgstring = initial_note.encimg;
+      else if(initial_note)imgstring = initial_note.encimg;
     }
     if(destination==="local")imgstring = this.localstorage.getItem('cryptimagestring');
     if(imgstring != undefined && imgstring.length>0){
@@ -317,6 +637,8 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
 }
 
 slidenoteGuardian.prototype.saveNote = async function(destination){
+  if(destination==="cms"&&!this.hascmsconnection)return;
+  if(slidenote ===undefined || this.slidenote.base64images ===undefined)return;
   var starttime = new Date().getTime();
   console.log("starting save note to destination "+destination);
   //saves Note to cmsArea -> CMS or to local destination
@@ -332,6 +654,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   }else{
     encResult = await this.encrypt(slidenote.textarea.value);
   }
+ /*
   let encTextBuffer = encResult.encbuffer;
   let iv = encResult.iv;
   //getting only displayable chars without control-chars:
@@ -345,6 +668,8 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   let ivstring="";
   for(let i=0; i<iv.length;i++)ivstring+=String.fromCharCode(iv[i]+255);
   let result = ivstring+utf8string;//save iv in front of code
+  */
+  let result = this.encBufferToString(encResult);
   //save Images:
   let encimgstring="";
   var imghash = null;
@@ -385,6 +710,10 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     this.uploadRestObject = {};
     this.uploadRestObject.notehash = await this.hash(slidenotetext); //putting into rest-object
     this.uploadRestObject.encnote = result;
+    var savestatus = document.getElementById("savestatus")
+    savestatus.src=slidenote.imagespath+"buttons/cloudupload.gif";
+    savestatus.title="saving note into cloud";
+
     //TODO: images?
     if(encimgstring!=""){
       var starttimecopy = new Date().getTime();
@@ -596,22 +925,29 @@ slidenoteGuardian.prototype.decrypt = async function(buffer, iv){
   this.password = await this.passwordPrompt(pwtext, "decrypt");
   let keyguardian = await this.createKey(iv);
   console.log("decoding starts");
+  let encstatus = document.getElementById("encstatus");
   try{
     this.plainTextBuffer = await this.crypto.subtle.decrypt(keyguardian.alg, keyguardian.key, buffer);
   } catch(e){
     console.log(e);
     console.log("decryption has failed!");
     this.password = null; //reset password as it has no meaning
+    encstatus.src=slidenote.imagespath+"schloss-rot.png";
+    encstatus.title = "failed to decrypt note - wrong password";
     return "decryption has failed";
   }
+  encstatus.src=slidenote.imagespath+"schloss-gruen.png";
+  encstatus.title = "encryption works as expected - your data is secure";
   console.log("decoding has ended");
+
   return new TextDecoder().decode(this.plainTextBuffer); //TODO: error-handling
 }
 
-slidenoteGuardian.prototype.encryptForExport = async function(plaintext){
+slidenoteGuardian.prototype.encryptForExport = async function(plaintext, password){
   console.log("encrypt plaintext:"+plaintext.substring(0,20));
     let plainTextUtf8 = new TextEncoder().encode(plaintext); //changing into UTF-8-Array
-    let pw = await this.passwordPrompt("please type in password for export", "export");
+    let pw =  password;
+    if(pw===null || pw===undefined)pw = await this.passwordPrompt("please type in password for export", "export", true);
     let filename = document.getElementById("username").value;
     let keyguardian = await this.createKey(null,pw); //create new key with no iv
     if(keyguardian==null)return {encbuffer:null, iv:null};
@@ -621,7 +957,7 @@ slidenoteGuardian.prototype.encryptForExport = async function(plaintext){
     /*the job of encryptForExport is done - rest of code should be in saveNote*/
 }
 slidenoteGuardian.prototype.decryptImport = async function(buffer, iv){
-  let pw = await this.passwordPrompt("please type in password of import", "decrypt");
+  let pw = await this.passwordPrompt("please type in password of import", "decrypt",true);
   let keyguardian = await this.createKey(iv, pw);
   console.log("decoding starts");
   try{
@@ -670,6 +1006,21 @@ slidenoteGuardian.prototype.importFromEncryptedFile = async function(encBufferSt
 
 
 //helper functions - for internal use only:
+slidenoteGuardian.prototype.encBufferToString = function(encResult){
+  let encTextBuffer = encResult.encbuffer;
+  let iv = encResult.iv;
+  //getting only displayable chars without control-chars:
+  let utf8array = new Uint8Array(encTextBuffer); //changing into utf8-Array
+  //console.log(utf8array);
+  let utf8string = ""; //starting new string for utf8
+  for(let i =0; i<utf8array.length;i++){
+    utf8string+=String.fromCharCode(utf8array[i]+255); //fill string with save values
+  }
+  //converting iv to string with same method:
+  let ivstring="";
+  for(let i=0; i<iv.length;i++)ivstring+=String.fromCharCode(iv[i]+255);
+  return ivstring+utf8string;//save iv in front of code
+}
 
 slidenoteGuardian.prototype.insertImport = async function(mdcode, imagestring){
   if(slidenote.textarea.value.length<=1){
@@ -713,7 +1064,7 @@ slidenoteGuardian.prototype.hash = async function(text){
 }
 
 slidenoteGuardian.prototype.createKey = async function(iv, passw){
-  console.log("creating Key");
+  console.log("creating Key with iv"+iv);
   let password = passw;
   if(this.password == null && passw==null){
     //this.password = prompt("please type in your personal password");
@@ -811,12 +1162,35 @@ slidenoteGuardian.prototype.autoSaveToCMS = async function(){
   setTimeout("slidenoteguardian.autoSaveToCMS()",autosavetime);
 }
 
-slidenoteGuardian.prototype.passwordPrompt = function (text, method){
+slidenoteGuardian.prototype.checkCloudStatus = async function(){
+  console.log("checking cloud status");
+  var timestrt = new Date();
+  let acthash = await this.hash(this.slidenote.textarea.value);
+  let oldhash = this.restObject.notehash;
+  var savestatus = document.getElementById("savestatus");
+  if(acthash != oldhash){
+    savestatus.src=slidenote.imagespath+"buttons/cloud.png";
+    savestatus.title="not in sync with cloud";
+  }else{
+    savestatus.src=slidenote.imagespath+"buttons/cloudsaved.png";
+    savestatus.title="in sync with cloud";
+  }
+  console.log("checking cloud status. in sync:"+(acthash!=oldhash));
+  var timeneeded = new Date() - timestrt;
+  console.log("Timecheck: checking needs "+timeneeded+"MS")
+}
+
+slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword){
   /*creates a password-prompt*/
   if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null){
     console.log("second password-prompt");
     return null;
   }
+  if(this.password!=null && method==="decrypt" && !newpassword){
+    console.log("password allready set");
+    return this.password;
+  }
+
 	var pwprompt = document.createElement("div"); //the prompt-container
 	pwprompt.id= "slidenoteGuardianPasswortPrompt"; //id for css
   var pwpromptbox = document.getElementById("slidenoteGuardianPasswordPromptTemplate");
@@ -890,6 +1264,13 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method){
   }else if(method==="export") {
     pwokbutton.innerText="ENCRYPT";
     usernamefield.value=this.notetitle+".slidenote";
+    usernamefield.classList.remove("hidden");
+    usernamelabel.classList.remove("hidden");
+    pwchecklabel.style.display="block";
+    pwcheck.style.display="block";
+  }else if(method==="exportCMS"){
+    pwokbutton.innerText="ENCRYPT";
+    usernamefield.value=this.notetitle;
     usernamefield.classList.remove("hidden");
     usernamelabel.classList.remove("hidden");
     pwchecklabel.style.display="block";

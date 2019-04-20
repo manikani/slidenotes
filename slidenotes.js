@@ -2954,13 +2954,25 @@ pagegenerator.prototype.showInsertMenu = function(){
  * 2. springen und scrollen an die Stelle der zuletzt in der Präsentation dargestellten Seite
 */
 var fullscreen = false;
-pagegenerator.prototype.showpresentation = function(){
+pagegenerator.prototype.showpresentation = function(forExport){
+	if(forExport)this.forExport = true; else this.forExport = false;
 	var praesesrahmen = document.getElementById("praesentationrahmen");
 	var quelle = document.getElementById("quelltext");
+	var loadingscreen = document.getElementById("slidenoteLoadingScreen");
+	this.calculationtimestart = new Date();
+	if(loadingscreen ===undefined || loadingscreen ===null){
+		loadingscreen = document.createElement("div");
+		loadingscreen.id="slidenoteLoadingScreen";
+		loadingscreen.innerText="Please wait while Presentation is generated";
+		document.getElementsByTagName("body")[0].appendChild(loadingscreen);
+	}
+
+
 	var cursorpos = slidenote.textarea.selectionEnd;
 	//this.cursorposBeforePresentation = cursorpos;
 	if(!fullscreen){
 		//this.init();
+		loadingscreen.classList.add("active");
 		fullscreen=true;
 		slidenote.parser.renderMapToPresentation();
 		document.getElementById("praesentation").innerHMTL = "";
@@ -3171,7 +3183,7 @@ Theme.prototype.loadConfigString = function(data){
 
 function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentationdiv, bpath){
 	this.basepath = bpath;
-	if(bpath===null)this.basepath="";
+	if(bpath===null||bpath===undefined)this.basepath="";
 	this.imagespath = this.basepath+"images/";
 	//grundlegender zugriff auf alle wichtigen html-elemente:
 	this.textarea = texteditor;
@@ -3331,6 +3343,13 @@ slidenotes.prototype.parseneu = function(){
 							"MS\n scroll:"+scrllzt+" rahmensetzen:"+rahmenzeit +"\n"+
 							"styleMDZeit:"+styleMDzeit);
 	if(slidenoteguardian)slidenoteguardian.autoSaveToLocal(new Date().getTime());
+	if(slidenoteguardian && slidenoteguardian.hascmsconnection){
+		var beforecheckcloud = new Date();
+		slidenoteguardian.checkCloudStatus();
+		var aftercheckcloud = new Date();
+		var calccheckcloud = aftercheckcloud - beforecheckcloud;
+		console.log("Timecheck: checkcloudstatus"+calccheckcloud+"Ms");
+	}
 };
 
 
@@ -3713,7 +3732,7 @@ slidenotes.prototype.addTheme = function(theme){
 slidenotes.prototype.appendFile = function(type, path){
 	var basepath = this.basepath+"themes/";
 	//if(basepath.length>0)basepath+"themes/";
-	if(!basepath)basepath="themes/"; //basepath should be real basepath, not themes...
+	if(this.basepath===undefined)basepath="themes/"; //basepath should be real basepath, not themes...
 	console.log(basepath);
 	if(type==="script"){
 		var jsfile = document.createElement('script');
