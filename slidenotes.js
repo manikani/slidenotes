@@ -2630,7 +2630,7 @@ pagegenerator.prototype.loadTheme = function(themename, nocss){
 		*/
 		this.slidenote.appendFile('script',themename+".js");
 		if(!nocss)this.slidenote.appendFile('css',themename+".css");
-		this.slidenote.themeobjekts+=themename;
+		this.slidenote.themeobjekts+=themename+";";
 	}
 	console.log(this.slidenote.themeobjekts);
 }
