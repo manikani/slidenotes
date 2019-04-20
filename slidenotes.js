@@ -2556,13 +2556,30 @@ pagegenerator.prototype.stylePages = function(){
 	this.presentationhtml = this.presentation.innerHTML;
 	//console.log("final output\n"+this.presentationhtml);
 
-}
 
+}
+/*  afterStyle is the last function to call after pages are styled
+ *
+*/
 pagegenerator.prototype.afterStyle = function(){
 	//blocks are generated and everything is on its place. call hook-function of theme:
 	for(var x=0;x<this.themes.length;x++){
 		if(this.themes[x].active)this.themes[x].afterStyle();
 	}
+	var loadingscreen = document.getElementById("slidenoteLoadingScreen");
+	this.calculationtimeend = new Date();
+	var calctime = this.calculationtimeend - this.calculationtimestart;
+	console.log("Timecheck: Presentation generated in "+calctime+"Ms");
+	if(calctime<2000){
+		setTimeout(function(){
+		var loadingscreen = document.getElementById("slidenoteLoadingScreen");
+			loadingscreen.classList.remove("active");
+		},2000-calctime);
+	}else{
+		loadingscreen.classList.remove("active");
+	}
+	if(this.forExport)slidenoteguardian.exportIsReady(this.presentation);
+
 }
 
 //nextPage: "blättert um" zur nächsten Seite der Präsentation durch Anhängen der ".active" CSS-Klasse an das nächste Element

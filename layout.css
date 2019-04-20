@@ -171,6 +171,23 @@
 	bottom:0;
 	z-index: 1001;
 }
+
+#slidenoteLoadingScreen{
+	position:fixed;
+	top:0;
+	left:0;
+	width:100vw;
+	height:100vh;
+	background:blue;
+	color:white;
+	visibility:hidden;
+	z-index: -1;
+}
+#slidenoteLoadingScreen.active{
+	visibility:visible;
+	z-index: 9999;
+}
+
 h1{
 	text-align: center;
 }
@@ -239,7 +256,7 @@ h1{
 }
 */
 /*getting rid of slidenotebuttons till killed out of code:*/
-#slidenotebuttons{
+#slidenotebuttons, #hiddencmsarea{
 	display:none;
 }
 
