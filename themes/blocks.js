@@ -382,7 +382,7 @@ newtheme.styleThemeSpecials = function(){
       slidenote.presentation.getThemeByName("blocks").styleGrid();
       this.parentNode.removeChild(this);
     }
-    tmpimage.src = slidenote.basepath+"../images/lapa.jpg";
+    tmpimage.src = slidenote.imagespath+"lapa.jpg";
     document.getElementsByClassName("presentation")[0].appendChild(tmpimage);
   }
 }
