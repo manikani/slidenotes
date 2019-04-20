@@ -15,7 +15,7 @@ document.getElementsByTagName("head")[0].appendChild(cssfile);
 */
 slidenote.appendFile("script","katex/katex.min.js");
 slidenote.appendFile("css","katex/katex.min.css");
-newtheme.addEditorbutton('Latex',"```latex","```"); //TODO: add function to body?
+newtheme.addEditorbutton('<span title="LaTeX">&pi;</span>',"```latex","```"); //TODO: add function to body?
 slidenote.datatypes.push({type:"latex",mdcode:false,theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){

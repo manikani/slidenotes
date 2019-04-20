@@ -46,6 +46,7 @@ function initeditor(){
 				var menu=document.getElementById("exportoptions");
 				if(menu.classList.contains("active"))menu.classList.remove("active");else menu.classList.add("active");
 			});
+			document.getElementById("exportoptions").addEventListener("click", function(){this.classList.remove("active")});
 			document.getElementById("editoroptionbuttonbutton").addEventListener("click",function(e){
 				var optionmenu = document.getElementById("optionmenu");
 				if(optionmenu.classList.contains("active")){
@@ -173,10 +174,10 @@ function parsetesting(){
 		<div id="editorheader">
 			<button><img src="images/buttons/home.png">HOME</button>
 			<button id="importbutton"><img src="images/buttons/import.png">IMPORT<input type="file" id="importfile"></button>
-			<img id="savestatus" src="images/schloss-grau.png" alt="initial state">
+			<img id="encstatus" src="images/schloss-grau.png" alt="initial state">
 			<span id="notetitle">my awesome slidenote</span>
 			<button id="exportbutton">EXPORT<img src="images/buttons/export.png"></button>
-			<button>SAVE<img src="images/buttons/cloudsaved.png"></button>
+			<button id="savebutton">SAVE<img id="savestatus" src="images/buttons/cloudsaved.png"></button>
 		</div>
 		<div id="exportoptions">
 			<ul>
@@ -185,26 +186,26 @@ function parsetesting(){
 				<li><button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md textfile</button></li>
 				<li>PUBLISH PRESENTATION:</li>
 				<li>Publish to slidenote.io</li>
-				<li>Save as encrypted .html</li>
-				<li>Save as unencrypted .html</li>
+				<li><button onclick="slidenoteguardian.exportPresentationLocal(true);">Save as encrypted .html</button></li>
+				<li><button onclick="slidenoteguardian.exportPresentationLocal(false);">Save as unencrypted .html</button></li>
 			</ul>
 		</div>
 		<div id="editoroptionbutton"><button id="editoroptionbuttonbutton">Options <img src="images/buttons/optioni.png"></button></div>
 		<div id="texteditorbuttons">
 			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
-			<!--<button onclick="insertbutton('---')" >new Page</button>-->
-			<button onclick="insertbutton('%head1')" ><img src="images/buttons/h1.png"></button>
-			<button onclick="insertbutton('%head2')" ><img src="images/buttons/h2.png"></button>
-			<button onclick="insertbutton('%head3')" ><img src="images/buttons/h3.png"></button>
-			<button onclick="insertbutton('%list')" ><img src="images/buttons/ul.png"></button>
-			<button onclick="insertbutton('%nrlist')" ><img src="images/buttons/ol.png"></button>
-			<button onclick="insertbutton('%quote')" ><img src="images/buttons/quote.png"></button>
-			<button onclick="insertbutton('%comment')" ><img src="images/buttons/comment.png"></button>
-			<button onclick="insertbutton('**')" ><img src="images/buttons/bold.png"></button>
-			<button onclick="insertbutton('*')" ><img src="images/buttons/italic.png"></button>
-			<button onclick="insertbutton('~~')" ><img src="images/buttons/stroke.png"></button>
-			<button onclick="insertbutton('%code')" ><img src="images/buttons/code.png"></button>
-			<button onclick="insertbutton('%link')" ><img src="images/buttons/link.png"></button>
+			<button onclick="insertbutton('---')" title="new slide">---</button>
+			<button onclick="insertbutton('%head1')" title="Title"><img src="images/buttons/h1.png"></button>
+			<button onclick="insertbutton('%head2')" title="2nd Title"><img src="images/buttons/h2.png"></button>
+			<button onclick="insertbutton('%head3')" title="3rd Title"><img src="images/buttons/h3.png"></button>
+			<button onclick="insertbutton('%list')" title="unordered List"><img src="images/buttons/ul.png"></button>
+			<button onclick="insertbutton('%nrlist')" title="ordered list"><img src="images/buttons/ol.png"></button>
+			<button onclick="insertbutton('%quote')" title="quote"><img src="images/buttons/quote.png"></button>
+			<button onclick="insertbutton('%comment')" title="comment"><img src="images/buttons/comment.png"></button>
+			<button onclick="insertbutton('**')" title="bold"><img src="images/buttons/bold.png"></button>
+			<button onclick="insertbutton('*')" title="italic"><img src="images/buttons/italic.png"></button>
+			<button onclick="insertbutton('~~')" title="crossed"><img src="images/buttons/stroke.png"></button>
+			<button onclick="insertbutton('%code')" title="code"><img src="images/buttons/code.png"></button>
+			<button onclick="insertbutton('%link')" title="hyperlink"><img src="images/buttons/link.png"></button>
 			<!--<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>-->
 		</div>
 		<div id="sidebarcontainer">
@@ -214,7 +215,7 @@ function parsetesting(){
 				<span> <label><span id="insertmenulabel">INSERT</span>   <img src="images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="images/buttons/cursorline.png"></span>
 
 				<div id="standardinsertmenu">
-					<button onclick="insertbutton('---')" >new Page</button>
+					<button class="newpagebutton" onclick="insertbutton('---')" >new Page</button>
 				</div>
 				<div id="extrainsertmenu">
 				</div>
@@ -328,7 +329,11 @@ function parsetesting(){
 
 </div>
 </div>
-<div><h1>Later Hidden Content: CMS-Area <span>ℹ</span></h1>
+<div id="slidenoteLoadingScreen">
+	<h1>Please wait while your presentation is generated...</h1>
+	<img src="images/wait-charlie-chaplin.gif" height="80%">
+</div>
+<div id="hiddencmsarea"><h1>Later Hidden Content: CMS-Area <span>ℹ</span></h1>
 	<button onclick="slidenoteguardian.saveNote('cms')">save to cms</button>
 	<button onclick="slidenoteguardian.loadNote('cms')">load from cms</button>
 	<button onclick="slidenoteguardian.saveNote('local')">save local</button>

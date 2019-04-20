@@ -32,7 +32,7 @@ jsfile.onload = loadChartistPlugins;
 document.getElementsByTagName("head")[0].appendChild(jsfile);*/
 slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins;
 
-newtheme.addEditorbutton('Chart','```chart'); //only for comparison right now
+newtheme.addEditorbutton('<img src="'+slidenote.basepath+'themes/chartist/chartbutton.png" title="Chart">','```chart'); //only for comparison right now
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme}); //TODO: change chartsvg to chart
 
 
@@ -63,7 +63,7 @@ newtheme.insertMenuArea = function(dataobject){
     });
     if(subtype===ctype)button.classList.add("active");
     var buttonimg = new Image();
-    buttonimg.src="themes/chartist/"+ctype+"button.png";
+    buttonimg.src=slidenote.basepath+"themes/chartist/"+ctype+"button.png";
     button.appendChild(buttonimg);
     chartbarea.appendChild(button);
   }

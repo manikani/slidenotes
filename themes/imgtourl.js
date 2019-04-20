@@ -194,7 +194,8 @@ newtheme.init = function(){
   var texteditorbuttons = document.getElementById("texteditorbuttons");
   var button = document.createElement("BUTTON");
   var buttontext = new Image();
-  buttontext.src=slidenote.basepath+"images/buttons/image.png";
+  buttontext.src=slidenote.imagespath+"buttons/image.png";
+  buttontext.title = "Image";
   //var buttontext = document.createTextNode("Image");
   var fileInput = document.getElementById('fileInput');
   var fileDisplayArea = document.getElementById('filePreview');
@@ -320,5 +321,35 @@ newtheme.init = function(){
     if(key==="undefined")key=getKeyOfKeyCode(event.keyCode);
     if(key==="Escape")this.classList.remove("visible");
   });
+}
+
+newtheme.insertMenu = function(element){
+  var b64img = slidenote.base64images.imageByName(element.src);
+  var result = document.createElement("div");
+  var previewimage = new Image();
+  previewimage.classList.add("insertmenu-preview-image");
+  if(b64img){
+    previewimage.src = b64img.base64url;
+  }else{
+    previewimage.src = slidenote.imagespath+"/imageupload.png";
+  }
+  result.appendChild(previewimage);
+
+  var uploadlink = document.createElement("a");
+  uploadlink.href="#";
+  uploadlink.name = element.src;
+  uploadlink.title = "open library";
+  uploadlink.onclick=function(){
+    slidenote.base64images.preselectedname = this.name;
+    document.getElementById("imagesblock").classList.add("visible");
+  };
+  //uploadlink.innerHTML = "Upload an Image to the slidenote";
+  var uploadlinkimg = new Image();
+  uploadlinkimg.classList.add("uploadlink");
+  uploadlinkimg.src=slidenote.imagespath+"/buttons/image.png";
+  uploadlink.appendChild(uploadlinkimg);
+  result.appendChild(uploadlink);
+
+  return result;
 }
 slidenote.addTheme(newtheme);

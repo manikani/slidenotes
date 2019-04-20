@@ -11,7 +11,64 @@ newtheme.helpText = function(dataobject){
   return result;
 }
 
-newtheme.addEditorbutton('Layout',"```layout","```");
+newtheme.hasInsertMenu = true;
+newtheme.insertMenuArea = function(dataobject){
+  var selectionline = slidenote.parser.lineAtPosition(slidenote.textarea.selectionEnd);
+  //old: only render menu if we are in top-line:
+  //if(selectionline!=dataobject.startline && selectionline!=dataobject.endline)return null;
+  var result = document.createElement("div");
+  var leftbutton = document.createElement("button");
+  var rightbutton = document.createElement("button");
+  var topbutton = document.createElement("button");
+  leftbutton.innerText="<- Left";
+  rightbutton.innerText="Right ->";
+  topbutton.innerText="Head";
+  leftbutton.name="left";
+  rightbutton.name="right"
+  topbutton.name="head";
+  var buttonfunc = function(){
+    slidenote.presentation.getThemeByName("sections").changeSectionType(this.name);
+  };
+  leftbutton.addEventListener("click", buttonfunc);
+  rightbutton.addEventListener("click",buttonfunc);
+  topbutton.addEventListener("click",buttonfunc);
+  result.appendChild(leftbutton);
+  result.appendChild(rightbutton);
+  result.appendChild(topbutton);
+
+  var insertlabel = document.createElement("label");
+  insertlabel.innerText="INSERT";
+  result.appendChild(insertlabel);
+
+  var insertmenu = document.getElementById("standardinsertmenu").cloneNode(true);
+  insertmenu.id="";
+  var oldsectionbutton = insertmenu.getElementsByClassName("sectionsbutton")[0];
+  oldsectionbutton.parentNode.removeChild(oldsectionbutton.parentNode.firstElementChild);
+  oldsectionbutton.parentNode.removeChild(oldsectionbutton);
+  var oldbuttons = insertmenu.getElementsByTagName("button");
+  for(var bx=0;bx<oldbuttons.length;bx++)oldbuttons[bx].addEventListener("click",function(){slidenote.insertbutton(this.value)});
+  result.appendChild(insertmenu);
+  return result;
+}
+
+newtheme.changeSectionType = function(type){
+  var selectionstart = slidenote.textarea.selectionStart;
+  var selectionend = slidenote.textarea.selectionEnd;
+  var actelement = slidenote.parser.CarretOnElement();
+  var start = actelement.posinall; //```layout
+  console.log("change sectiontype to:"+type);
+  var end=slidenote.textarea.value.indexOf("\n",start);
+  slidenote.textarea.value = slidenote.textarea.value.substring(0,start)+
+                            "```layout:"+type+
+                            slidenote.textarea.value.substring(end);
+  var diff=type.length+9-(end-start);
+  slidenote.textarea.selectionEnd = selectionend+diff;
+  slidenote.textarea.selectionStart = selectionstart+diff;
+  slidenote.parseneu(); console.log("parseneu after changing sectiontype");
+  slidenote.textarea.focus();
+}
+
+newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/layout.png" title="layout/section">',"```layout","```");
 
 slidenote.datatypes.push({type:"layout", mdcode:true, theme:newtheme});
 slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:newtheme};

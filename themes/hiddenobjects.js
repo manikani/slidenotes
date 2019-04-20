@@ -14,7 +14,7 @@ newtheme.helpText = function(dataobject){
   return result;
 }
 
-newtheme.addEditorbutton("Hidden", "```hidden","```");
+newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/hidden.png" title="Hidden Element">', "```hidden","```");
 slidenote.datatypes.push({type:"hidden", mdcode:true, theme:newtheme});
 
 

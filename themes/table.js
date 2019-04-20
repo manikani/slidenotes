@@ -10,7 +10,7 @@ newtheme.helpText = function(head){
   return result;
 }
 
-newtheme.addEditorbutton('Table',"```table","```");
+newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/table.png" title="Table">',"```table","```");
 slidenote.datatypes.push({type:"table",mdcode:false,theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){

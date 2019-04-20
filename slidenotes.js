@@ -2819,7 +2819,8 @@ pagegenerator.prototype.changeThemeStatus = function(themenr, status){
 						slidenote.presentation.themes[themenr].editorbuttons[x].insertfunction;
 				}
 
-				document.getElementById("standardinsertmenu").appendChild(newhtmlbutton);
+				//document.getElementById("standardinsertmenu").appendChild(newhtmlbutton);
+				document.getElementById("texteditorbuttons").appendChild(newhtmlbutton);
 			}
 		}else{
 			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
