@@ -382,6 +382,10 @@ newtheme.styleThemeSpecials = function(){
         console.log(data);
         var w = data.svg._node.clientWidth;
         var h = data.svg._node.clientHeight;
+        if(w==0||h==0){
+          w = data.svg._node.parentNode.clientWidth;
+          h = data.svg._node.parentNode.clientHeight;
+        }
         console.log("chartw/h:"+w+"/"+h);
         if(w>0&&h>0)
         data.svg.attr({
