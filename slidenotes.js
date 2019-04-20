@@ -3322,7 +3322,8 @@ slidenotes.prototype.parseneu = function(){
 		//this.texteditorrahmensetzen();
 		rahmensetzenzeit = new Date();
 		for(var x=0;x<this.presentation.themes.length;x++){
-			if(this.presentation.themes[x].active)this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
+			if(this.presentation.themes[x].active)
+				this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
 		}
 	}
 
@@ -3661,6 +3662,7 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 			emdend = emdend.substring(0,emdend.length-1);
 		}
 	}
+	var scrolltop = textarea.scrollTop; //merk dir scroll-position um ruckeln zu vermeiden
 	var selectionend = textarea.selectionEnd;
 	if(!multilineselection){
 	var newText = textarea.value.substring (0, textarea.selectionStart) +
@@ -3668,7 +3670,6 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
                         textarea.value.substring (textarea.selectionEnd);
     textarea.value = newText;
 	}
-	var scrolltop = textarea.scrollTop; //merk dir scroll-position um ruckeln zu vermeiden
 	//textarea.focus();
 	//var textarbody = textarea.value;
 	//textarea.value = textarbody.substring(0,selectionend);
