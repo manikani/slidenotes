@@ -51,7 +51,7 @@ __Doppelter Unterstrich mit *einfachem Stern* gemischt__, **Doppelstern mit ~~du
 Eine Zeile mit `inline-code **asdf** bis hier` 
 Nach dem `**inlinecode**` sollte aber *noch was stehen*
 
-```
+```code
 #Ein Codeblock
 <a href="irgendwo">blablub</a>
 ```
@@ -75,46 +75,45 @@ Ein weiterer Text mit mehreren A			Tabs				B
 Ein weiterer Text mit mehreren A					Tabs						B
 -----
 #Ein Datenblock: Chart Pie
-```chart pie
-#titel
-##untertitel 1
-##untertitel 2
+```chart:pie
 option a:10
 option b:20
 option c: 30
 ```
 -----
 #nächster datenblock: Chart Bar
-```chart bar
-#titel
-##untertitel 1
-##untertitel 2
-option a:10
-option b:20
+```chart:bar
+xaxis: X-Achsentitel
+yaxis: Y-Achsentitel
+---
+option a: 10
+option b: 20
 option c: 30
 ```
 -----
 #noch ein datenblock: Chart Line
-```chart line
-#titel
-##untertitel 1
-##untertitel 2
-option a:10
-option b:20
+```chart:line
+title: titel für screenreader
+xaxis: X-Achsentitel 
+yaxis: Y-Achsentitel
+---
+option a: 10
+option b: 20
 option c: 30
 ```
 ---
 #Noch ein Datenblock: Chart Line mit anderer Datastructure:
-```chart pie
-#My Pie
+```chart:pie
 first label, second label, third label
 1, 2, 3
 ```
 ---
-```chart line
 #neue LineChart mit mehreren Werten
-###2009
-###2010
+
+```chart:line
+datasetlabel1: 2009
+datasetlabel2: 2010
+---
 Januar, Februar, März, April, Mai, Juni, Juli, August
 1, 20, 3, 40, 5, 60, 7, 80
 11,22,33,44,55,66,77,88
