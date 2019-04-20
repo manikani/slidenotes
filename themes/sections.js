@@ -135,7 +135,7 @@ newtheme.styleThemeSpecials = function(){
 
       if(checkforgridbuild(sectiondata)){
         var blocktheme = slidenote.presentation.getThemeByName("blocks");
-        if(blocktheme){
+        if(blocktheme && blocktheme.active){
           blocktheme.buildgrid(sectiondata);
         }
       }
@@ -146,6 +146,8 @@ newtheme.styleThemeSpecials = function(){
       }else if(dataobject.head.indexOf("right")>-1){
         //we found a right
         sectiondata.classList.add("right");
+      }else if(dataobject.head.indexOf("head")>-1){
+          sectiondata.classList.add("head");
       }
 
 
