@@ -178,8 +178,12 @@ newtheme.insideFinalizeHtml = function(template){
   var imgtags =  template.content.querySelectorAll("img");//slidenote.presentationdiv.getElementsByTagName("img");
   for(var x=0;x<imgtags.length;x++){
     var imgtagname =  decodeURIComponent(imgtags[x].src);//imgtags[x].src.substring(imgtags[x].src.lastIndexOf("/")+1);
-    var baseurl = window.location.href.substring(0,window.location.href.lastIndexOf("/")+1);
+    var baseurl;
+    baseurl = window.location.origin+window.location.pathname;
     if(imgtagname.substring(0,baseurl.length)===baseurl)imgtagname=imgtagname.substring(baseurl.length);
+    baseurl = window.location.href.substring(0,window.location.href.lastIndexOf("/")+1);
+    if(imgtagname.substring(0,baseurl.length)===baseurl)imgtagname=imgtagname.substring(baseurl.length);
+
     console.log("image mit src "+imgtagname+" gefunden");
     var b64image = slidenote.base64images.imageByName(imgtagname);
     if(b64image!=null){
