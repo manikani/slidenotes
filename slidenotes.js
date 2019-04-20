@@ -2354,6 +2354,7 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	//daher erneutes scannen wie oben nur mit lines:
 	this.init();
 	//Grundthemes laden:
+	this.loadTheme("history");
 	this.loadTheme("extraoptions", true);
 	this.loadTheme("hiddenobjects");
 	this.loadTheme("contextfield");
