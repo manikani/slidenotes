@@ -11,6 +11,7 @@ var slidechange = function(e){
 	}
 	console.log("goto page:"+actslidenr);
 	window.location.hash = "#slide"+actslidenr;
+	document.getElementById("slidenotediv").focus();
 }
 
 document.getElementById("slidenotediv").tabIndex=1;
