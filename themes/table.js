@@ -88,4 +88,4 @@ newtheme.styleThemeSpecials = function(){
   }
   console.log("alle tables durchlaufen");
 }
-slidenote.presentation.addTheme(newtheme);
+slidenote.addTheme(newtheme);

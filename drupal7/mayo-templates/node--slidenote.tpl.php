@@ -144,17 +144,15 @@ function initeditor(){
 					var themelist = document.getElementById("optionmenupresentationdesign");
 					themelist.innerHTML = "";
 					var themeul = document.createElement("ul");
-					var themes = slidenote.presentation.themes;
+					var themes = slidenote.extensions.themes;
 					var themedesctext = "";
 					for(var tx=0;tx<themes.length;tx++){
 						if(themes[tx].themetype ==="css"){
-							//var acttext = '<input type="radio" name="design" onchange="slidenote.presentation.changeThemeStatus('+tx+',this.checked)"';
 							var themeli = document.createElement("li");
 							var themeinput = document.createElement("input");
 							themeinput.type = "radio";
 							themeinput.name = "design";
 							themeinput.number = tx;
-							//themeinput.onchange = function(){slidenote.presentation.changeThemeStatus(this.number,this.checked)};
 							if(themes[tx].active)	themeinput.checked = true; else themeinput.checked=false;
 							var themelabel = document.createElement("label");
 							themelabel.innerText = themes[tx].classname;
@@ -164,7 +162,7 @@ function initeditor(){
 							if(themes[tx].active)themedesctext = themes[tx].description;
 							themeinput.description = themes[tx].description;
 							themeinput.onchange = function(){
-								slidenote.presentation.changeThemeStatus(this.number,this.checked);
+								slidenote.extensions.changeThemeStatus(this.number,this.checked);
 								if(this.checked)document.getElementById("themedescription").innerText=this.description;
 								slidenoteguardian.saveConfig("local");
 
@@ -329,7 +327,7 @@ function parsetesting(){
 			<div id="themedescription"></div>
 		</div>
 
-			<div><select onchange="slidenote.presentation.getThemeByName('highlight').changeDesignOption(0,this.value)">
+			<div><select onchange="slidenote.extensions.getThemeByName('highlight').changeDesignOption(0,this.value)">
 				<option value="" hidden selected disabled>CODE HIGHLIGHTING</option>
 				<option value="agate">agate</option>
 				<option value="androidstudio">androidstudio</option>
@@ -347,7 +345,7 @@ function parsetesting(){
 				</select>
 			</div>
 			<div>NIGHT MODE <a href="#" class="off" id="nightmodetoggle"><span>OFF</span>|<span>ON</span></a></div>
-			<div><a href="javascript:slidenote.presentation.showThemes()">Advanced Options ℹ</a></div>
+			<div><a href="javascript:slidenote.extensions.showThemes()">Advanced Options ℹ</a></div>
 			<div><ul>
 				<li><a href="#">documentation</a></li>
 				<li><a href="#">bug reports</a></li>
@@ -385,11 +383,11 @@ function parsetesting(){
 		</div>
 	</div>
 	<div id="options">
-		<h1>Options<button id="optionsclose" onclick="slidenote.presentation.hideThemes()" value="close">close</button></h1>
+		<h1>Options<button id="optionsclose" onclick="slidenote.extensions.hideThemes()" value="close">close</button></h1>
 		<div class="tabbar">
-			<h2><a href="javascript:slidenote.presentation.optionsTab(0)">Design Options</a></h2>
-			<h2><a href="javascript:slidenote.presentation.optionsTab(1)">Global Options</a></h2>
-			<h2><a href="javascript:slidenote.presentation.optionsTab(2)">Extensions</a></h2>
+			<h2><a href="javascript:slidenote.extensions.optionsTab(0)">Design Options</a></h2>
+			<h2><a href="javascript:slidenote.extensions.optionsTab(1)">Global Options</a></h2>
+			<h2><a href="javascript:slidenote.extensions.optionsTab(2)">Extensions</a></h2>
 		</div>
 		<div id="designoptionstab" class="optiontab"></div>
 		<div id="globaloptionstab" class="optiontab"></div>

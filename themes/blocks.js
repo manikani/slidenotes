@@ -2,7 +2,7 @@
 
 var newtheme = new Theme("blocks");
 newtheme.description = "Arranges Content as Horizontal or Vertical Blocks";
-
+newtheme.active = true; //as there is only one layout-theme - allways active
 
 newtheme.buildgrid = function(gridcontainer){
   var gridelemente = gridcontainer.children;
@@ -366,11 +366,11 @@ newtheme.styleThemeSpecials = function(){
       if(presimages[x].naturalWidth===0){
         this.imagestoload++;
         presimages[x].addEventListener("load", function(){
-          var theme = slidenote.presentation.getThemeByName("blocks");
+          var theme = slidenote.extensions.getThemeByName("blocks");
           theme.preLoad();
         });
         presimages[x].addEventListener("error", function(){
-          slidenote.presentation.getThemeByName("blocks").preLoad();
+          slidenote.extensions.getThemeByName("blocks").preLoad();
         });
       }
   }
@@ -379,7 +379,7 @@ newtheme.styleThemeSpecials = function(){
     //try with image:
     var tmpimage = new Image();
     tmpimage.onload = function(){
-      slidenote.presentation.getThemeByName("blocks").styleGrid();
+      slidenote.extensions.getThemeByName("blocks").styleGrid();
       this.parentNode.removeChild(this);
     }
     tmpimage.src = slidenote.imagespath+"lapa.jpg";

@@ -739,8 +739,8 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 	//console.log("backgroundline neu:"+codeofline);
 	//console.log(backgroundlines[cursorline]);
 	//console.log(slidenote.textarea.clientWidth + " : "+slidenote.texteditorerrorlayer.clientWidth)
-	for(var x=0;x<slidenote.presentation.themes.length;x++){
-		if(slidenote.presentation.themes[x].active)slidenote.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
+	for(var x=0;x<slidenote.extensions.themes.length;x++){
+		if(slidenote.extensions.themes[x].active)slidenote.extensions.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
 	}
 	this.setDropDownMenu();
 };
@@ -1069,6 +1069,7 @@ emdparser.prototype.setDropDownMenu = function (){
 	var sidebar = document.getElementById("sidebar");
 	//var newtop = carretsymbol.offsetTop + sidebar.offsetTop;
 	var carret = document.getElementById("carret");
+	if(!nicesymbol || !sidebar || !carret)return;
 	var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
 	//if(newtop<0)newtop=3;
 	nicesymbol.style.top = newtop +"px";
@@ -2353,30 +2354,10 @@ function pagegenerator(emdparsobjekt, ausgabediv, slidenote){
 	//pages enthält html inkl. \n's nach denen weiter gescannt werden kann, allerdings fehlen die hr-zeilen.
 	//daher erneutes scannen wie oben nur mit lines:
 	this.init();
-	//Grundthemes laden:
-	this.loadTheme("history");
-	this.loadTheme("extraoptions", true);
-	this.loadTheme("hiddenobjects");
-	this.loadTheme("contextfield");
-	this.loadTheme("blocks");
-	this.loadTheme("stickytitles", true);
-	this.loadTheme("procontra");
-	this.loadTheme("azul");
-	this.loadTheme("redalert");
-	this.loadTheme("tufte");
-	this.loadTheme("prototyp");
-	this.loadTheme("highlight");
-	this.loadTheme("transition");
-	//this.loadTheme("chartjs");
-	this.loadTheme("chartist");
-	this.loadTheme("table", true);
-	this.loadTheme("imgtourl");
-	this.loadTheme("klatex", true);
-	this.loadTheme("switchparseelements", true);
-	this.loadTheme("sections");
 
 }
 pagegenerator.prototype.init = function(emdparsobjekt, ausgabediv){
+	this.themes = this.slidenote.extensions.themes;
 	var pagec = 0;
 	//bestimmte werte neu einlesen:
 	if(emdparsobjekt!=null)this.emdparsobjekt = emdparsobjekt;
@@ -2609,237 +2590,6 @@ pagegenerator.prototype.showPage = function(page){
 	this.pagedivs[page].classList.add("active");
 }
 
-/* loadTheme: Lädt Theme-Dateien (css,js) in die aktuelle HTML-Seite
- * globale string-variable themeobjekts dient dabei dazu zu prüfen, ob es schon mal geladen wurde um doppeltes laden zu vermeiden
- * Nach dem Aufruf ist das Theme noch nicht im pagegenerator, sondern es werden NUR die .css und .js dateien des themes in die Seite geladen
-*/
-themeobjekts = "";
-pagegenerator.prototype.loadTheme = function(themename, nocss){
-	if(this.slidenote.themeobjekts.indexOf(themename)==-1){
-		console.log("load Theme "+themename);
-		/*
-		var jsfile = document.createElement('script');
-  	jsfile.setAttribute("type","text/javascript");
-		jsfile.setAttribute("src", this.jsfilepath + themename +".js");
-		var cssfile = document.createElement("link");
-		cssfile.setAttribute("rel", "stylesheet");
-		cssfile.setAttribute("type", "text/css");
-  	cssfile.setAttribute("href", this.cssfilepath + themename + ".css");
-		document.getElementsByTagName("head")[0].appendChild(jsfile);
-		document.getElementsByTagName("head")[0].appendChild(cssfile);
-		*/
-		this.slidenote.appendFile('script',themename+".js");
-		if(!nocss)this.slidenote.appendFile('css',themename+".css");
-		this.slidenote.themeobjekts+=themename+";";
-	}
-	console.log(this.slidenote.themeobjekts);
-}
-/* pagegenerator.addTheme(theme)
- * fügt ein Theme dem Pagegenerator hinzu
- * erwartet: Theme-objekt
- * Normalerweise wird in einer theme.js datei ein neues theme erstellt und mittels dieser Funktion dem Pagegenerator übergeben
-*/
-pagegenerator.prototype.addTheme = function (theme){
-	this.themes.push(theme);
-	//this.themes.sort(weight)
-	/*oder direkt sortiert einpflegen:
-
-	*/
-
-	console.log("neues Theme geladen: "+theme.classname);
-	//css-mixup vermeiden:
-	this.changeThemeStatus(this.themes.length-1, theme.active);
-	//this.stylePages();
-	theme.init();
-}
-
-/*getThemeByName returns the Theme found by name:
-*/
-pagegenerator.prototype.getThemeByName = function(name){
-	for(var x=0;x<this.themes.length;x++)if(this.themes[x].classname ===name)return this.themes[x];
-}
-	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
-	*/
-pagegenerator.prototype.showThemes = function(tabnr){
-	var breaktext = "<br>";
-	var themetabtext = '';
-	var designtabtext = '<h3>Basic Theme Selection</h3>';
-	var designoptions = '<hr><h3>Design Options</h3>';
-	var globaloptionstext = '';
-	var chosencssclass;
-	for(var x=0;x<this.themes.length;x++){
-		var acttheme = this.themes[x];
-		if(acttheme.themetype == "css"){
-			var acttext = '<input type="radio" name="design" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
-			if(acttheme.active)acttext +=' checked>'; else acttext+='>';
-			if(acttheme.active)chosencssclass=acttheme.classname;
-			acttext += '<label>';
-			acttext += acttheme.classname + ": ";
-			acttext+= acttheme.description;
-			acttext +='</label>';
-			designtabtext += acttext + breaktext;
-		}else{
-			var acttext = '<input type="checkbox" onchange="slidenote.presentation.changeThemeStatus('+x+',this.checked)"';
-			if(acttheme.active)acttext +=' checked>'; else acttext+='>';
-			acttext += '<label>';
-			if(acttheme.description==null)acttext += acttheme.classname; else acttext+= acttheme.description;
-			acttext +='</label>';
-			themetabtext += acttext + breaktext;
-		}
-		if(acttheme.designoptions!=null && acttheme.active){
-			//designoptions:
-			designoptions +='<div class="designoptions">';
-			designoptions +='<h3>'+acttheme.classname+'</h3>';
-			for(var deso=0;deso<acttheme.designoptions.length;deso++){
-				actoption = acttheme.designoptions[deso];
-				designoptions+='<div class="designoption">';
-				console.log(actoption);
-				if(actoption.type=="select"){
-					designoptions+="<label>"+actoption.description+"</label>";
-					designoptions+='<select onchange="slidenote.presentation.changeDesignOption('+x+','+deso+',this.value)">';
-					for(var selopt = 0;selopt < actoption.labels.length;selopt++){
-						designoptions+='<option value="'+actoption.values[selopt]+'"';
-						if(actoption.selected==selopt)designoptions+=' selected="selected"';
-						designoptions+='>';
-						designoptions+=actoption.labels[selopt];
-						designoptions+='</option>';
-					}
-
-					designoptions+='</select>';
-				}
-			}
-			designoptions +='</div>';
-		}
-		if(acttheme.globaloptions!=null && acttheme.active){
-			globaloptionstext+='<h3>'+acttheme.classname+'</h3>';
-			for(var glop=0;glop<acttheme.globaloptions.length;glop++){
-				actoption=acttheme.globaloptions[glop];
-				globaloptionstext+='<div class="globaloption">';
-				if(actoption.type=="checkbox"){
-					var acttext = '<input type="checkbox" onchange="slidenote.presentation.changeGlobalOption('+x+','+glop+',this.checked)"';
-					console.log(actoption);
-					if(actoption.values)acttext +=' checked>'; else acttext+='>';
-					acttext += '<label>';
-					if(actoption.description==null)acttext += actoption.classname; else acttext+= actoption.description;
-					acttext +='</label>';
-					globaloptionstext+=acttext;
-
-				}
-				globaloptionstext+='</div>';
-			}
-		}
-	}
-	//themeauswahlvoschau:
-	var vorschau='<div id="designvorschau">' +
-					'<h1>title</h1><h2>second title</h2><ol start="1"><li>nummeric</li><li>list</li></ol>'+
-					'<p>some Text</p><ul><li>unordered list</li><li>unordered list</li></ul><p><b>some </b> '+
-					'<i>text</i> <strike>to see</strike> <b><i>it all</i></b><br></p>'+
-					'</div>';
-
-	var seltab = document.getElementById("themeselectiontab");
-	var destab = document.getElementById("designoptionstab");
-	var gloptab= document.getElementById("globaloptionstab");
-	var options = document.getElementById("options");
-	seltab.innerHTML = themetabtext;
-	destab.innerHTML = vorschau+designtabtext+designoptions;
-	gloptab.innerHTML = globaloptionstext;
-	options.classList.add("visible");
-	var optiontabbar = options.getElementsByClassName("tabbar")[0].getElementsByTagName("h2");
-	var tabbs = options.getElementsByClassName("optiontab");
-	console.log(optiontabbar);
-	for(var otb=0;otb<optiontabbar.length;otb++){
-		optiontabbar[otb].classList.remove("active");
-		tabbs[otb].classList.remove("active");
-	}
-	var tabbnr = tabnr;
-	if(tabbnr==null)tabbnr=0;
-	optiontabbar[tabbnr].classList.add("active");
-	tabbs[tabbnr].classList.add("active");
-	if(tabbnr==0){
-		document.getElementById("designvorschau").classList.add(chosencssclass);
-	}
-
-
-}
-
-//optionsTab zeigt den jeweiligen Tab an:
-pagegenerator.prototype.optionsTab = function(tabnr){
-	/*var options = document.getElementById("options");
- 	var optiontabbar = options.getElementsByClassName("tabbar")[0].getElementsByTagName("h2");
-	var optiontabs = document.getElementsByClassName("optiontab");
-	for(var x=0;x<optiontabbar.length;x++){
-		optiontabbar[x].classList.remove("active");
-		optiontabs[x].classList.remove("active");
-	}
-	optiontabbar[tabnr].classList.add("active");
-	optiontabs[tabnr].classList.add("active");
-	*/
-	this.showThemes(tabnr);
-}
-
-//hideThemes versteckt die Theme-auswahl bei klick auf close
-pagegenerator.prototype.hideThemes = function(){
-	document.getElementById("options").classList.remove("visible");
-	slidenote.textarea.focus();
-	console.log("parseneu forced after optionsclose");
-	slidenote.parseneu();
-}
-//changeThemeStatus erwartet eine themenr und ändert das entsprechende theme
-pagegenerator.prototype.changeThemeStatus = function(themenr, status){
-	if(this.themes[themenr].themetype=="css" && status){
-		//es darf nur ein css ausgewählt werden?
-		var vorschau = document.getElementById("designvorschau");
-
-		for(var x=0;x<this.themes.length;x++)if(this.themes[x].themetype=="css"){
-			this.themes[x].active=false;
-			if(vorschau!=null)vorschau.classList.remove(this.themes[x].classname);
-		}
-		if(vorschau!=null)vorschau.classList.add(this.themes[themenr].classname);
-
-	}
-	//this.themes[themenr].active = status;
-	this.themes[themenr].changeThemeStatus(status);
-	if(this.themes[themenr].editorbuttons!=null){
-		if(status){
-			for(var x=0;x<this.themes[themenr].editorbuttons.length;x++){
-				var actbutton = this.themes[themenr].editorbuttons[x];
-				var newhtmlbutton = document.createElement("button");
-				newhtmlbutton.type = "button";
-				newhtmlbutton.classList.add(this.themes[themenr].classname+"button");
-				newhtmlbutton.innerHTML = actbutton.innerhtml;
-				//var actbuttonfunction = "insertbutton('null','"+actbutton.mdstartcode+"','"+actbutton.mdendcode+"');";
-				newhtmlbutton.value = actbutton.mdstartcode;
-				//console.log("actbuttonfunction:"+actbuttonfunction);
-				//newhtmlbutton.setAttribute("onclick",""+actbuttonfunction);
-				if(this.themes[themenr].editorbuttons[x].insertfunction==undefined){
-					newhtmlbutton.onclick = function(){
-						slidenote.insertbutton(this.value);
-					}
-				}else {
-					newhtmlbutton.onclick =
-						slidenote.presentation.themes[themenr].editorbuttons[x].insertfunction;
-				}
-
-				//document.getElementById("standardinsertmenu").appendChild(newhtmlbutton);
-				document.getElementById("texteditorbuttons").appendChild(newhtmlbutton);
-			}
-		}else{
-			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
-			for(var x=oldbuttons.length-1;x>=0;x--)oldbuttons[x].parentNode.removeChild(oldbuttons[x]);
-		}
-	}
-	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
-}
-
-pagegenerator.prototype.changeDesignOption = function(themenr,optionnr, value){
-	this.themes[themenr].changeDesignOption(optionnr, value);
-	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
-}
-pagegenerator.prototype.changeGlobalOption = function(themenr,optionnr, value){
-	this.themes[themenr].changeGlobalOption(optionnr, value);
-	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+value);
-}
-
 pagegenerator.prototype.showInsertMenu = function(){
 	var insertmenu = document.getElementById("insertarea");
 	//check if we are on an object:
@@ -2871,7 +2621,7 @@ pagegenerator.prototype.showInsertMenu = function(){
 		insertmenu.classList.add("insertmenu-extra");
 		var extrainsertmenu = document.getElementById("extrainsertmenu");
 		extrainsertmenu.innerHTML = "";
-		extrainsertmenu.appendChild(slidenote.presentation.getThemeByName("imgtourl").insertMenu(onObject));
+		extrainsertmenu.appendChild(slidenote.extensions.getThemeByName("imgtourl").insertMenu(onObject));
 		document.getElementById("insertmenulabel").innerText = "IMAGE";
 
 	}else{
@@ -2935,8 +2685,8 @@ pagegenerator.prototype.showInsertMenu = function(){
 		slidenote.textarea.addEventListener("click", closeMenu);
 		slidenote.textarea.addEventListener("keyup",closeMenu);
 		slidenote.textarea.addEventListener("scroll",closeMenu);
-		for(var x=0;x<slidenote.presentation.themes.length;x++){
-			if(slidenote.presentation.themes[x].active)slidenote.presentation.themes[x].styleThemeMDCodeEditor("insertAreaVisible"); //Hook-Funktion
+		for(var x=0;x<slidenote.extensions.themes.length;x++){
+			if(slidenote.extensions.themes[x].active)slidenote.extensions.themes[x].styleThemeMDCodeEditor("insertAreaVisible"); //Hook-Funktion
 		}
 
 
@@ -2956,8 +2706,8 @@ pagegenerator.prototype.showInsertMenu = function(){
 var fullscreen = false;
 pagegenerator.prototype.showpresentation = function(forExport){
 	if(forExport)this.forExport = true; else this.forExport = false;
-	var praesesrahmen = document.getElementById("praesentationrahmen");
-	var quelle = document.getElementById("quelltext");
+	var praesesrahmen = slidenote.presentationdiv.parentElement;//document.getElementById("praesentationrahmen");
+	var quelle = slidenote.textarea;
 	var loadingscreen = document.getElementById("slidenoteLoadingScreen");
 	this.calculationtimestart = new Date();
 	if(loadingscreen ===undefined || loadingscreen ===null){
@@ -2975,8 +2725,9 @@ pagegenerator.prototype.showpresentation = function(forExport){
 		loadingscreen.classList.add("active");
 		fullscreen=true;
 		slidenote.parser.renderMapToPresentation();
-		document.getElementById("praesentation").innerHMTL = "";
-		this.init(slidenote.parser, document.getElementById("praesentation"));
+		//document.getElementById("praesentation").innerHMTL = "";
+		slidenote.presentationdiv.innerHTML = "";
+		this.init(slidenote.parser, slidenote.presentationdiv);
 		//var test2 = document.getElementsByTagName("code");
 		//if(test2!=null)console.log(test2.length+"codes");
 		this.stylePages();
@@ -3178,6 +2929,281 @@ Theme.prototype.loadConfigString = function(data){
 	//wird von slidenoteguardian benutzt um Configs zu laden
 }
 
+
+/* new extension manager: to separate code better as own object
+ * handles all extension-related stuff
+ */
+
+function ExtensionManager(slidenote, options){
+	this.slidenote = slidenote; //the active slidenote
+	this.options = options || {};  //options-object for future use
+	this.themes = new Array();
+	this.loadingThemes = new Array();
+	this.failedThemes = new Array();
+	this.allThemesLoaded = false;
+	this.themeObjektString = "";
+	this.loadBasicThemes();
+	this.hooksAllThemesLoaded = new Array();
+}
+
+ExtensionManager.prototype.loadBasicThemes = function(){
+	var themenamesToLoad = this.options.basicThemes;
+	if(themenamesToLoad===undefined){
+	this.loadTheme("history");
+	this.loadTheme("extraoptions", true);
+	this.loadTheme("hiddenobjects");
+	this.loadTheme("contextfield");
+	this.loadTheme("blocks");
+	this.loadTheme("stickytitles", true);
+	this.loadTheme("procontra");
+	this.loadTheme("azul");
+	this.loadTheme("redalert");
+	this.loadTheme("tufte");
+	this.loadTheme("prototyp");
+	this.loadTheme("highlight");
+	this.loadTheme("transition");
+	this.loadTheme("chartist");
+	this.loadTheme("table", true);
+	this.loadTheme("imgtourl");
+	this.loadTheme("klatex", true);
+	this.loadTheme("switchparseelements", true);
+	this.loadTheme("sections");
+	}else{
+		for(var x=0;x<themenamesToLoad.length;x++)this.loadTheme(themenamesToLoad[x].name, themenamesToLoad[x].css);
+	}
+}
+
+ExtensionManager.prototype.loadTheme = function(themename, nocss){
+	if(this.themeObjektString.indexOf(themename)==-1){
+		console.log("load Theme "+themename);
+		this.allThemesLoaded = false;
+		this.loadingThemes.push({name:themename});
+		var newtheme = this.slidenote.appendFile('script',themename+".js");
+		newtheme.id = "Theme"+themename;
+		newtheme.onerror = function(){slidenote.extensions.failTheme(this.id.substring(5));};
+		if(!nocss)this.slidenote.appendFile('css',themename+".css");
+		this.themeObjektString +=themename+";";
+	}
+	console.log(this.themeObjektString);
+}
+/* ExtensionManager.addTheme(theme)
+ * fügt ein Theme dem ExtensionManager hinzu
+ * erwartet: Theme-objekt
+ * Normalerweise wird in einer theme.js datei ein neues theme erstellt und mittels dieser Funktion dem ExtensionManager übergeben
+*/
+ExtensionManager.prototype.addTheme = function (theme){
+	this.themes.push(theme);
+	this.removeFromLoadingList(theme.classname);
+	console.log("neues Theme geladen: "+theme.classname);
+	//css-mixup vermeiden:
+	this.changeThemeStatus(this.themes.length-1, theme.active);
+	//this.stylePages();
+	theme.init();
+}
+
+ExtensionManager.prototype.failTheme = function(themename){
+	this.failedThemes.push({name:themename});
+	this.removeFromLoadingList(themename);
+}
+
+ExtensionManager.prototype.removeFromLoadingList = function(themename){
+	for(var x=0;x<this.loadingThemes.length;x++)if(this.loadingThemes[x].name===themename)this.loadingThemes.splice(x,1);
+	if(this.loadingThemes.length===0)this.afterLoadingThemes();
+}
+
+ExtensionManager.prototype.addAfterLoadingThemesHook = function(hookfunc){
+	if(this.allThemesLoaded)hookfunc(); else this.hooksAllThemesLoaded.push(hookfunc);
+}
+
+ExtensionManager.prototype.afterLoadingThemes = function(){
+	this.allThemesLoaded = true;
+	console.log("all themes loaded - ready to engage");
+	var failedthemes = "\n";
+	for(var x=0;x<this.failedThemes.length;x++)failedthemes+=this.failedThemes[x].name+"\n";
+	if(this.failedThemes.length>0)console.log("Failed to load "+this.failedThemes.length+" Themes:"+failedthemes);
+	//this.slidenote.parseneu();
+	for(var x=0;x<this.hooksAllThemesLoaded.length;x++)this.hooksAllThemesLoaded[x]();
+}
+
+/*getThemeByName returns the Theme found by name:
+*/
+ExtensionManager.prototype.getThemeByName = function(name){
+	for(var x=0;x<this.themes.length;x++)if(this.themes[x].classname ===name)return this.themes[x];
+}
+	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
+	*/
+ExtensionManager.prototype.showThemes = function(tabnr){
+	var breaktext = "<br>";
+	var themetabtext = '';
+	var designtabtext = '<h3>Basic Theme Selection</h3>';
+	var designoptions = '<hr><h3>Design Options</h3>';
+	var globaloptionstext = '';
+	var chosencssclass;
+	for(var x=0;x<this.themes.length;x++){
+		var acttheme = this.themes[x];
+		if(acttheme.themetype == "css"){
+			var acttext = '<input type="radio" name="design" onchange="slidenote.extensions.changeThemeStatus('+x+',this.checked)"';
+			if(acttheme.active)acttext +=' checked>'; else acttext+='>';
+			if(acttheme.active)chosencssclass=acttheme.classname;
+			acttext += '<label>';
+			acttext += acttheme.classname + ": ";
+			acttext+= acttheme.description;
+			acttext +='</label>';
+			designtabtext += acttext + breaktext;
+		}else{
+			var acttext = '<input type="checkbox" onchange="slidenote.extensions.changeThemeStatus('+x+',this.checked)"';
+			if(acttheme.active)acttext +=' checked>'; else acttext+='>';
+			acttext += '<label>';
+			if(acttheme.description==null)acttext += acttheme.classname; else acttext+= acttheme.description;
+			acttext +='</label>';
+			themetabtext += acttext + breaktext;
+		}
+		if(acttheme.designoptions!=null && acttheme.active){
+			//designoptions:
+			designoptions +='<div class="designoptions">';
+			designoptions +='<h3>'+acttheme.classname+'</h3>';
+			for(var deso=0;deso<acttheme.designoptions.length;deso++){
+				actoption = acttheme.designoptions[deso];
+				designoptions+='<div class="designoption">';
+				console.log(actoption);
+				if(actoption.type=="select"){
+					designoptions+="<label>"+actoption.description+"</label>";
+					designoptions+='<select onchange="slidenote.extensions.changeDesignOption('+x+','+deso+',this.value)">';
+					for(var selopt = 0;selopt < actoption.labels.length;selopt++){
+						designoptions+='<option value="'+actoption.values[selopt]+'"';
+						if(actoption.selected==selopt)designoptions+=' selected="selected"';
+						designoptions+='>';
+						designoptions+=actoption.labels[selopt];
+						designoptions+='</option>';
+					}
+
+					designoptions+='</select>';
+				}
+			}
+			designoptions +='</div>';
+		}
+		if(acttheme.globaloptions!=null && acttheme.active){
+			globaloptionstext+='<h3>'+acttheme.classname+'</h3>';
+			for(var glop=0;glop<acttheme.globaloptions.length;glop++){
+				actoption=acttheme.globaloptions[glop];
+				globaloptionstext+='<div class="globaloption">';
+				if(actoption.type=="checkbox"){
+					var acttext = '<input type="checkbox" onchange="slidenote.extensions.changeGlobalOption('+x+','+glop+',this.checked)"';
+					console.log(actoption);
+					if(actoption.values)acttext +=' checked>'; else acttext+='>';
+					acttext += '<label>';
+					if(actoption.description==null)acttext += actoption.classname; else acttext+= actoption.description;
+					acttext +='</label>';
+					globaloptionstext+=acttext;
+
+				}
+				globaloptionstext+='</div>';
+			}
+		}
+	}
+	//themeauswahlvoschau:
+	var vorschau='<div id="designvorschau">' +
+					'<h1>title</h1><h2>second title</h2><ol start="1"><li>nummeric</li><li>list</li></ol>'+
+					'<p>some Text</p><ul><li>unordered list</li><li>unordered list</li></ul><p><b>some </b> '+
+					'<i>text</i> <strike>to see</strike> <b><i>it all</i></b><br></p>'+
+					'</div>';
+
+	var seltab = document.getElementById("themeselectiontab");
+	var destab = document.getElementById("designoptionstab");
+	var gloptab= document.getElementById("globaloptionstab");
+	var options = document.getElementById("options");
+	seltab.innerHTML = themetabtext;
+	destab.innerHTML = vorschau+designtabtext+designoptions;
+	gloptab.innerHTML = globaloptionstext;
+	options.classList.add("visible");
+	var optiontabbar = options.getElementsByClassName("tabbar")[0].getElementsByTagName("h2");
+	var tabbs = options.getElementsByClassName("optiontab");
+	console.log(optiontabbar);
+	for(var otb=0;otb<optiontabbar.length;otb++){
+		optiontabbar[otb].classList.remove("active");
+		tabbs[otb].classList.remove("active");
+	}
+	var tabbnr = tabnr;
+	if(tabbnr==null)tabbnr=0;
+	optiontabbar[tabbnr].classList.add("active");
+	tabbs[tabbnr].classList.add("active");
+	if(tabbnr==0){
+		document.getElementById("designvorschau").classList.add(chosencssclass);
+	}
+
+
+}
+
+//optionsTab zeigt den jeweiligen Tab an:
+ExtensionManager.prototype.optionsTab = function(tabnr){
+	this.showThemes(tabnr);
+}
+
+//hideThemes versteckt die Theme-auswahl bei klick auf close
+ExtensionManager.prototype.hideThemes = function(){
+	document.getElementById("options").classList.remove("visible");
+	slidenote.textarea.focus();
+	console.log("parseneu forced after optionsclose");
+	slidenote.parseneu();
+}
+//changeThemeStatus erwartet eine themenr und ändert das entsprechende theme
+ExtensionManager.prototype.changeThemeStatus = function(themenr, status){
+	if(this.themes[themenr].themetype=="css" && status){
+		//es darf nur ein css ausgewählt werden?
+		var vorschau = document.getElementById("designvorschau");
+		var designchoice = document.getElementsByName("design");
+
+		for(var x=0;x<this.themes.length;x++)if(this.themes[x].themetype=="css"){
+			this.themes[x].active=false;
+			if(vorschau!=null)vorschau.classList.remove(this.themes[x].classname);
+		}
+		if(vorschau!=null)vorschau.classList.add(this.themes[themenr].classname);
+		for(var x=0;x<designchoice.length;x++)if(designchoice[x].number ===themenr)designchoice[x].checked = true;
+	}
+	//this.themes[themenr].active = status;
+	this.themes[themenr].changeThemeStatus(status);
+	if(this.themes[themenr].editorbuttons!=null){
+		if(status){
+			for(var x=0;x<this.themes[themenr].editorbuttons.length;x++){
+				var actbutton = this.themes[themenr].editorbuttons[x];
+				var newhtmlbutton = document.createElement("button");
+				newhtmlbutton.type = "button";
+				newhtmlbutton.classList.add(this.themes[themenr].classname+"button");
+				newhtmlbutton.innerHTML = actbutton.innerhtml;
+				//var actbuttonfunction = "insertbutton('null','"+actbutton.mdstartcode+"','"+actbutton.mdendcode+"');";
+				newhtmlbutton.value = actbutton.mdstartcode;
+				//console.log("actbuttonfunction:"+actbuttonfunction);
+				//newhtmlbutton.setAttribute("onclick",""+actbuttonfunction);
+				if(this.themes[themenr].editorbuttons[x].insertfunction==undefined){
+					newhtmlbutton.onclick = function(){
+						slidenote.insertbutton(this.value);
+					}
+				}else {
+					newhtmlbutton.onclick =
+						slidenote.extensions.themes[themenr].editorbuttons[x].insertfunction;
+				}
+
+				//document.getElementById("standardinsertmenu").appendChild(newhtmlbutton);
+				document.getElementById("texteditorbuttons").appendChild(newhtmlbutton);
+			}
+		}else{
+			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
+			for(var x=oldbuttons.length-1;x>=0;x--)oldbuttons[x].parentNode.removeChild(oldbuttons[x]);
+		}
+	}
+	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
+}
+
+ExtensionManager.prototype.changeDesignOption = function(themenr,optionnr, value){
+	this.themes[themenr].changeDesignOption(optionnr, value);
+	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+status);
+}
+ExtensionManager.prototype.changeGlobalOption = function(themenr,optionnr, value){
+	this.themes[themenr].changeGlobalOption(optionnr, value);
+	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+value);
+}
+
+
 /*neuer aufbau für die steuerung und ablauf usw. des programms:
 */
 
@@ -3192,6 +3218,7 @@ function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentatio
 	//this.htmlerrorpagerahmen = htmlerrorpage.parentNode;
 	this.presentationdiv = presentationdiv;
 	this.keydown = false; //hilfsboolean um nicht zu oft zu parsen
+	this.extensions = new ExtensionManager(this);
 
 	//das wichtigste: das parsingobjekt:
 	this.parser = new emdparser(this.textarea.value);
@@ -3235,7 +3262,7 @@ function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentatio
 	this.lastpressedkey = "";
 }
 
-slidenotes.prototype.choseEditor=function(editor){
+slidenotes.prototype.choseEditor = function(editor){
 	this.editormodus=editor;
 	 if(editor=="md-texteditor"){
 		this.texteditorerroractivated = true;
@@ -3275,6 +3302,8 @@ slidenotes.prototype.texteditorrahmensetzen = function(){
 };
 
 slidenotes.prototype.parseneu = function(){
+	//error-handling: dont parse if editor is not ready/still loading themes:
+	if(!this.extensions.allThemesLoaded)return;
 	var startzeit = new Date();
 	this.oldparser = this.parser;
 	this.parser = new emdparser(this.textarea.value);
@@ -3321,9 +3350,9 @@ slidenotes.prototype.parseneu = function(){
 		//warum musste ich an dieser stelle den rahmen neu setzen???
 		//this.texteditorrahmensetzen();
 		rahmensetzenzeit = new Date();
-		for(var x=0;x<this.presentation.themes.length;x++){
-			if(this.presentation.themes[x].active)
-				this.presentation.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
+		for(var x=0;x<this.extensions.themes.length;x++){
+			if(this.extensions.themes[x].active)
+				this.extensions.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
 		}
 	}
 
@@ -3724,7 +3753,7 @@ slidenotes.prototype.showErrorDetails = function(){
 /* Theme-Controll:
 */
 slidenotes.prototype.addTheme = function(theme){
-	this.presentation.addTheme(theme);
+	this.extensions.addTheme(theme);
 	//hier könnte auch noch unterschieden werden nach theme-art, also bspw. n plugin,
 	//welches auch den parser beeinflusst o.ä.
 }

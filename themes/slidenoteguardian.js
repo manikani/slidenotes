@@ -36,7 +36,7 @@ function slidenoteGuardian(slidenote){
     }
     this.getRestToken("init");
     this.getAllPlugins();
-  }else{
+  }else if(location.protocol!="file:"){
     console.log("get all css from static webserver");
     this.getCSSFromStaticWebserver();
     this.getJSFromStaticWebserver();
@@ -115,7 +115,9 @@ slidenoteGuardian.prototype.init = function(){
   if(this.localstorage.getItem("config")!=null){
     //i cant do it directly because its quite obvious that some themes are not added yet
     //for testing purpose i should just wait 2 seconds
-    setTimeout('slidenoteguardian.loadConfig("local")',2000);
+    //setTimeout('slidenoteguardian.loadConfig("local")',2000);
+    this.loadConfig("local"); //slidenoteguardian is loaded after editor is ready to use
+      //slidenote.extensions.addAfterLoadingThemesHook(function(){slidenoteguardian.loadConfig("local")});
   }
   document.getElementById("optionsclose").addEventListener("click",function(event){
       slidenoteguardian.saveConfig("local");
@@ -234,8 +236,8 @@ slidenoteGuardian.prototype.getAllPlugins = function(){
 
 //get all Css-Blocks from static webserver:
 slidenoteGuardian.prototype.getCSSFromStaticWebserver = function(){
-  console.log("load css from themes:"+slidenote.presentation.themes.length);
-  console.log("theme-string:"+this.slidenote.themeobjekts);
+  console.log("load css from themes:"+slidenote.extensions.themes.length);
+  console.log("theme-string:"+this.slidenote.extensions.themeObjektString);
 
   this.cssBlocksPerPlugin = new Array();
   var basicl = new XMLHttpRequest();
@@ -245,7 +247,7 @@ slidenoteGuardian.prototype.getCSSFromStaticWebserver = function(){
   basicl.open("GET", "layout.css");
   basicl.send();
   var basepath = "themes/"
-  var themes = slidenote.themeobjekts.split(";");//slidenote.presentation.themes;
+  var themes = slidenote.extensions.themeObjektString.split(";");//slidenote.extensions.themes;
   themes.pop(); //remove last empty entry
   themes.push("slidenoteguardian");
   themes.push("slidenoteplayermini");
@@ -301,7 +303,7 @@ slidenoteGuardian.prototype.createCssBlock = function(){
   } else if(!this.hascmsconnection && this.cssBlocksPerPlugin){
     for(var x=0;x<this.cssBlocksPerPlugin.length;x++){
       var cssb = this.cssBlocksPerPlugin[x];
-      var ltheme = slidenote.presentation.getThemeByName(cssb.plugin);
+      var ltheme = slidenote.extensions.getThemeByName(cssb.plugin);
       if(ltheme && ltheme.active || cssb.plugin==="basic" ||
       cssb.plugin==="slidenoteguardian" || cssb.plugin==="slidenoteplayermini"){
         cssblock+="\n"+cssb.css+"\n</style><style>";
@@ -312,8 +314,8 @@ slidenoteGuardian.prototype.createCssBlock = function(){
     return cssblock;
   } else if(!this.hascmsconnection) return "/*connection to cloud not working*/";
 
-  for(var x=0;x<slidenote.presentation.themes.length;x++){
-    var acttheme = slidenote.presentation.themes[x];
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+    var acttheme = slidenote.extensions.themes[x];
     if(acttheme.active && this.restObject.plugincollector[acttheme.classname]!=undefined){
       cssblock+=this.restObject.plugincollector[acttheme.classname].css;
     }
@@ -542,8 +544,8 @@ slidenoteGuardian.prototype.exportPresentationToFilesystem = function(presstring
   //get css-codes from all active themes:
   /*
   var allactivethemes = ""; //holds names of all active themes
-  for(var x=0;x<slidenote.presentation.themes.length;x++){
-    var acttheme=slidenote.presentation.themes[x];
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+    var acttheme=slidenote.extensions.themes[x];
     if(acttheme.active)allactivethemes+=acttheme.classname+";";
   }*/
   var cssblock = this.createCssBlock();
@@ -638,6 +640,7 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
 
 slidenoteGuardian.prototype.saveNote = async function(destination){
   if(destination==="cms"&&!this.hascmsconnection)return;
+  if(destination==="local" && !slidenote.extensions.allThemesLoaded)return;
   if(slidenote ===undefined || this.slidenote.base64images ===undefined)return;
   var starttime = new Date().getTime();
   console.log("starting save note to destination "+destination);
@@ -824,7 +827,7 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   //check if Theme allready loaded - if not, load anew:
   //check if Theme allready added to themes, if not await:
   var addedthemes="";
-  for(var x=0;x<slidenote.presentation.themes.length;x++)addedthemes+=slidenote.presentation.themes[x].classname;
+  for(var x=0;x<slidenote.extensions.themes.length;x++)addedthemes+=slidenote.extensions.themes[x].classname;
 
   for(var x=0;x<actthemenames.length;x++){
     if(slidenote.themeobjekts.indexOf(actthemenames[x])==-1){
@@ -836,13 +839,13 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
     }
   }
 
-  for(var x=0;x<slidenote.presentation.themes.length;x++){
-    var act = slidenote.presentation.themes[x];
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+    var act = slidenote.extensions.themes[x];
     if(actthemesstring.indexOf(act.classname)>=0){
-      if(!act.active)slidenote.presentation.changeThemeStatus(x,true);
+      if(!act.active)slidenote.extensions.changeThemeStatus(x,true);
       themes.push(act);
     }else{
-      slidenote.presentation.changeThemeStatus(x,false);
+      slidenote.extensions.changeThemeStatus(x,false);
     }
   }
   //Choose Editor:
@@ -878,15 +881,15 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   }
 }
 
-slidenoteGuardian.prototype.saveConfig = async function(destination){
+slidenoteGuardian.prototype.saveConfig = function(destination){
   //saves configs to local destination or to cmsarea -> CMS
   //destination is cms or local
   var themes = new Array(); //only active themes
   var stringToSave = "";
-  for(var x=0;x<slidenote.presentation.themes.length;x++){
-        if(slidenote.presentation.themes[x].active){
-          themes.push(slidenote.presentation.themes[x]); //collect active themes
-          stringToSave+=slidenote.presentation.themes[x].classname+";";
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+        if(slidenote.extensions.themes[x].active){
+          themes.push(slidenote.extensions.themes[x]); //collect active themes
+          stringToSave+=slidenote.extensions.themes[x].classname+";";
         }
   }
   stringToSave+="$$";
@@ -909,6 +912,8 @@ slidenoteGuardian.prototype.saveConfig = async function(destination){
     this.localstorage.setItem("config",stringToSave);
     console.log("saved to local:"+stringToSave);
   }
+  //return stringToSave;
+  return stringToSave;
 }
 slidenoteGuardian.prototype.encrypt = async function(plaintext){
   console.log("encrypt plaintext:"+plaintext.substring(0,20));
@@ -1126,8 +1131,12 @@ slidenoteGuardian.prototype.sendToCMS = function(target){
 
 slidenoteGuardian.prototype.autoSaveToLocal = function(time){
   //TODO: performance-check. if saving costs too much it should save less
-  this.saveNote("local");
-  console.log("saved to local:"+time);
+  if(slidenote.extensions.allThemesLoaded){
+    this.saveNote("local");
+    console.log("saved to local:"+time);
+  }else{
+    console.log("not saved - editor not ready yet");
+  }
 }
 
 slidenoteGuardian.prototype.autoSaveToCMS = async function(){

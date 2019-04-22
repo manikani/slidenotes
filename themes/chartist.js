@@ -607,4 +607,4 @@ newtheme.afterStyle = function(){
   this.updatecharts();
 }
 
-slidenote.presentation.addTheme(newtheme);
+slidenote.addTheme(newtheme);

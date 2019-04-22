@@ -99,4 +99,4 @@ newtheme.changeGlobalOption = function(optionnr, value){
 		}
 }
 
-presentation.addTheme(newtheme);
+slidenote.addTheme(newtheme);
