@@ -436,13 +436,20 @@ slidenoteGuardian.prototype.exportPresentation = async function(destination, pre
   if(destination==="filesystem")this.preparePresentationForFilesystem(presentationdiv);
   var presentationstring = '<div class="'+presentationdiv.classList.toString()+'">'+
                             presentationdiv.innerHTML + "</div>";
+  if(destination==="cms")presentationstring = slidenote.textarea.value;
   var encResult = await this.encryptForExport(presentationstring, password);
   var encString = this.encBufferToString(encResult);
   this.uploadRestObject.encpresentation = encString;
   if(destination==="cms"){
     this.uploadRestObject.title = encResult.filename;
-    console.log("prepare to upload and uploading to cms...");
     var payloadobj = this.prepareDrupal7Rest("presentation");
+    console.log("object prepared. uploading to cms:");
+    console.log(payloadobj);
+    this.exportPresentationToRest(payloadobj.payload);
+  }else if(destination==="cmsold"){
+    this.uploadRestObject.title = encResult.filename;
+    console.log("prepare to upload and uploading to cms...");
+    var payloadobj = this.prepareDrupal7Rest("presentationold");
     console.log(payloadobj);
     this.exportPresentationToRest(payloadobj.payload);
   }else if(destination==="filesystem"){
@@ -463,6 +470,18 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
     payloadobj.field_imageshash=this.uploadRestObject.imagehash;
   }
   else if(mode==="presentation"){
+    path = "/node/";
+    let options = this.saveConfig();
+    console.log(options);
+    payloadobj = {
+      type:"slidenotepresentation",
+      title: this.uploadRestObject.title,
+      field_encryptednote: this.uploadRestObject.encpresentation,
+      field_optionstring: options,
+      field_slidenotenode: this.restObject.drupal7.nid
+    }
+  }
+  else if(mode==="presentationold"){
     path = "/node/";
     let cssblock = this.createCssBlock();
     payloadobj = {
