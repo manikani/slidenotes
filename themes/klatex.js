@@ -13,7 +13,8 @@ cssfile.setAttribute("type", "text/css");
 cssfile.setAttribute("href", "themes/katex/katex.min.css");
 document.getElementsByTagName("head")[0].appendChild(cssfile);
 */
-slidenote.appendFile("script","katex/katex.min.js");
+newtheme.loadingFiles = new Array();
+newtheme.loadingFiles.push(slidenote.appendFile("script","katex/katex.min.js"));
 slidenote.appendFile("css","katex/katex.min.css");
 newtheme.addEditorbutton('<span title="LaTeX">&pi;</span>',"```latex","```"); //TODO: add function to body?
 slidenote.datatypes.push({type:"latex",mdcode:false,theme:newtheme});

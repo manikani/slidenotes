@@ -166,13 +166,33 @@ input#edit-preview, input#edit-submit {
 <script language="javascript" src="/sites/all/libraries/slidenotes/slidenotes.js"></script>
 <script language="javascript">
 var slidenoteguardian = {
-	encBufferString : "<?php print($field_encryptednote[0]['value']);?>",
+	actthemesstring: "extraoptions;hiddenobjects;blocks;stickytitles;azul;redalert;tufte;prototyp;highlight;transition;chartist;table;imgtourl;klatex;switchparseelements;sections;",	
 	ivlength: 12,
 	decText: null,
 	crypto: window.crypto,
 	iv:null,
 	options: "<?php print($field_optionstring[0]['value']);?>",
+	encBufferString : "<?php print($field_encryptednote[0]['value']);?>",
 				
+}
+slidenoteguardian.extensionoptions = {
+	basicThemes: [
+		{name:"hiddenobjects"},
+		{name:"blocks"},
+		{name:"stickytitles", css:true},
+		{name:"azul"},
+		{name:"redalert"},
+		{name:"tufte"},
+		{name:"prototyp"},
+		{name:"highlight"},
+		{name:"transition"},
+		{name:"chartist"},
+		{name:"table", css:true},
+		{name:"imgtourl"},
+		{name:"klatex", css:true},
+		{name:"switchparseelements", css:true},
+		{name:"sections"}
+	]
 }
 
 var slidenote;
@@ -187,14 +207,15 @@ slidenoteguardian.loadConfigString = function(){
 	slidenote.texteditorerroractivated=false;
 	//load Themes-Config:
   var savedConfigString = this.options;
+  var savedThemeString = savedConfigString.substring(0,savedConfigString.indexOf("$$"));
   var themes = new Array();
-  for(var x=0;x<slidenote.presentation.themes.length;x++){
-    var act = slidenote.presentation.themes[x];
-    if(actthemesstring.indexOf(act.classname)>=0){
-      if(!act.active)slidenote.presentation.changeThemeStatus(x,true);
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+    var act = slidenote.extensions.themes[x];
+    if(this.actthemesstring.indexOf(act.classname)>=0 && savedThemeString.indexOf(act.classname)>=0){
+      slidenote.extensions.changeThemeStatus(x,true);
       themes.push(act);
     }else{
-      slidenote.presentation.changeThemeStatus(x,false);
+      slidenote.extensions.changeThemeStatus(x,false);
     }
   }
 
@@ -239,8 +260,14 @@ slidenoteguardian.decryptPresentation = async function(){
 	var slideshow = document.getElementById("slidenotepresentation");
 	slidenote = new slidenotes(texted, textedlayer, textedlayer, slideshow, "/sites/all/libraries/slidenotes/");
 	//slidenote.basepath = "/sites/all/libraries/slidenotes/";
-	this.loadConfigString();
-	slidenote.parseneu();
+	//this.loadConfigString();
+	//slidenote.parseneu();
+	slidenote.extensions.addAfterLoadingThemesHook(function(){
+		slidenoteguardian.loadConfigString();
+		slidenote.parseneu();
+		slidenote.presentation.showpresentation();
+		slidenoteplayer.init();
+	});
 	//slidenote.presentation.showpresentation();
 	//setTimeout("slidenoteplayer.init()",100);
 	/*var cssfile = document.createElement("link");

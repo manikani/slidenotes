@@ -2948,6 +2948,8 @@ function ExtensionManager(slidenote, options){
 
 ExtensionManager.prototype.loadBasicThemes = function(){
 	var themenamesToLoad = this.options.basicThemes;
+	console.log("load basic themes:");
+	console.log(this.options);
 	if(themenamesToLoad===undefined){
 	this.loadTheme("history");
 	this.loadTheme("extraoptions", true);
@@ -2969,6 +2971,7 @@ ExtensionManager.prototype.loadBasicThemes = function(){
 	this.loadTheme("switchparseelements", true);
 	this.loadTheme("sections");
 	}else{
+		console.log("extraoptions found");
 		for(var x=0;x<themenamesToLoad.length;x++)this.loadTheme(themenamesToLoad[x].name, themenamesToLoad[x].css);
 	}
 }
@@ -2993,6 +2996,20 @@ ExtensionManager.prototype.loadTheme = function(themename, nocss){
 */
 ExtensionManager.prototype.addTheme = function (theme){
 	this.themes.push(theme);
+	if(theme.loadingFiles !=undefined){
+		console.log("extra files"+theme.classname+". load "+theme.loadingFiles.length+" extra scriptfiles");
+		for(var x=0;x<theme.loadingFiles.length;x++){
+			var file = theme.loadingFiles[x];
+			var filename = file.src.substring(file.src.lastIndexOf("/"))
+			file.id = "Theme"+filename;
+			this.loadingThemes.push({name:filename});
+			file.onerror = function(){slidenote.extensions.failTheme(this.id.substring(5));};
+			file.onload = function(){
+				slidenote.extensions.removeFromLoadingList(this.id.substring(5));
+				console.log("file "+file.id+" loaded");
+			};
+		}
+	}
 	this.removeFromLoadingList(theme.classname);
 	console.log("neues Theme geladen: "+theme.classname);
 	//css-mixup vermeiden:
@@ -3008,6 +3025,7 @@ ExtensionManager.prototype.failTheme = function(themename){
 
 ExtensionManager.prototype.removeFromLoadingList = function(themename){
 	for(var x=0;x<this.loadingThemes.length;x++)if(this.loadingThemes[x].name===themename)this.loadingThemes.splice(x,1);
+	console.log("removed file from loading list:"+themename);
 	if(this.loadingThemes.length===0)this.afterLoadingThemes();
 }
 
@@ -3218,7 +3236,11 @@ function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentatio
 	//this.htmlerrorpagerahmen = htmlerrorpage.parentNode;
 	this.presentationdiv = presentationdiv;
 	this.keydown = false; //hilfsboolean um nicht zu oft zu parsen
-	this.extensions = new ExtensionManager(this);
+	var extoptions;
+	//console.log("extensionoptions?"+(slidenoteguardian)+(slidenoteguardian.extensionoptions));
+	//console.log(slidenoteguardian.extensionoptions);
+	if(slidenoteguardian && slidenoteguardian.extensionoptions)extoptions=slidenoteguardian.extensionoptions;
+	this.extensions = new ExtensionManager(this, extoptions);
 
 	//das wichtigste: das parsingobjekt:
 	this.parser = new emdparser(this.textarea.value);
@@ -3763,7 +3785,7 @@ slidenotes.prototype.appendFile = function(type, path){
 	var basepath = this.basepath+"themes/";
 	//if(basepath.length>0)basepath+"themes/";
 	if(this.basepath===undefined)basepath="themes/"; //basepath should be real basepath, not themes...
-	console.log(basepath);
+	console.log("append File:"+basepath+path);
 	if(type==="script"){
 		var jsfile = document.createElement('script');
 		jsfile.setAttribute("type","text/javascript");

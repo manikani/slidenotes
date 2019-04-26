@@ -20,9 +20,23 @@ var jsfile4 = document.createElement('script');
 jsfile4.setAttribute("type","text/javascript");
 jsfile4.setAttribute("src", "themes/chartist/chartist-plugin-pointlabels.js");
 document.getElementsByTagName("head")[0].appendChild(jsfile4);*/
-slidenote.appendFile("script","chartist/chartist-plugin-accessibility.js");
-slidenote.appendFile("script","chartist/chartist-plugin-zoom.js");
-slidenote.appendFile("script","chartist/chartist-plugin-pointlabels.js");
+if(this.loadingFiles===undefined)this.loadingFiles = new Array();
+  this.loadingFiles.push(slidenote.appendFile("script","chartist/chartist-plugin-accessibility.js"));
+  this.loadingFiles.push(slidenote.appendFile("script","chartist/chartist-plugin-zoom.js"));
+  this.loadingFiles.push(slidenote.appendFile("script","chartist/chartist-plugin-pointlabels.js"));
+  for(var x=0;x<this.loadingFiles.length;x++){
+      var file = this.loadingFiles[x];
+      file.id="chartplugin"+x;
+      file.onload = function(){
+        console.log("file "+this.id+" loaded");
+        slidenote.extensions.removeFromLoadingList(this.id);
+        console.log(slidenote.extensions.loadingThemes.toString());
+      };
+      file.onerror = function(){slidenote.extensions.failTheme(this.id)};
+      slidenote.extensions.loadingThemes.push({name:file.id});
+  }
+  slidenote.extensions.removeFromLoadingList("chartist-placeholder");
+
 }
 /*
 var jsfile = document.createElement('script');
@@ -30,8 +44,9 @@ jsfile.setAttribute("type","text/javascript");
 jsfile.setAttribute("src", "themes/chartist/chartist.js");
 jsfile.onload = loadChartistPlugins;
 document.getElementsByTagName("head")[0].appendChild(jsfile);*/
-slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins;
-
+//newtheme.loadingFiles = new Array();
+slidenote.extensions.loadingThemes.push({name:"chartist-placeholder"});
+slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins
 newtheme.addEditorbutton('<img src="'+slidenote.basepath+'themes/chartist/chartbutton.png" title="Chart">','```chart'); //only for comparison right now
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme}); //TODO: change chartsvg to chart
 

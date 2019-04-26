@@ -35,8 +35,9 @@ function slidenoteGuardian(slidenote){
       author:initial_note.author
     }
     this.getRestToken("init");
-    this.getAllPlugins();
-  }else if(location.protocol!="file:"){
+    //this.getAllPlugins();
+  }
+  if(location.protocol!="file:"){
     console.log("get all css from static webserver");
     this.getCSSFromStaticWebserver();
     this.getJSFromStaticWebserver();
@@ -244,9 +245,9 @@ slidenoteGuardian.prototype.getCSSFromStaticWebserver = function(){
   basicl.addEventListener("load",function(){
     if(this.status===200)slidenoteguardian.cssBlocksPerPlugin.push({plugin:"basic", css:this.response});
   })
-  basicl.open("GET", "layout.css");
+  basicl.open("GET", slidenote.basepath+"layout.css");
   basicl.send();
-  var basepath = "themes/"
+  var basepath = slidenote.basepath+"themes/"
   var themes = slidenote.extensions.themeObjektString.split(";");//slidenote.extensions.themes;
   themes.pop(); //remove last empty entry
   themes.push("slidenoteguardian");
@@ -298,9 +299,10 @@ slidenoteGuardian.prototype.importPlugins = function(resolve){
 
 slidenoteGuardian.prototype.createCssBlock = function(){
   var cssblock = "";
-  if(this.restObject.plugincollector == undefined && this.hascmsconnection){
-    this.getAllPlugins();
-  } else if(!this.hascmsconnection && this.cssBlocksPerPlugin){
+  //if(this.restObject.plugincollector == undefined && this.hascmsconnection){
+    //this.getAllPlugins();
+  //} else
+  if(this.cssBlocksPerPlugin){
     for(var x=0;x<this.cssBlocksPerPlugin.length;x++){
       var cssb = this.cssBlocksPerPlugin[x];
       var ltheme = slidenote.extensions.getThemeByName(cssb.plugin);
@@ -478,7 +480,8 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
       title: this.uploadRestObject.title,
       field_encryptednote: this.uploadRestObject.encpresentation,
       field_optionstring: options,
-      field_slidenotenode: this.restObject.drupal7.nid
+      field_slidenotenode: this.restObject.drupal7.nid,
+      author: this.restObject.author
     }
   }
   else if(mode==="presentationold"){

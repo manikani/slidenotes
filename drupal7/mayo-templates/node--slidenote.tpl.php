@@ -86,7 +86,8 @@ nid: <?php print $node->nid;?>,
 encnote:'<?php if(isset($field_encryptednote[0]))print($field_encryptednote[0]['value']);?>',
 encimg:'<?php if(isset($field_encimages[0]))print($field_encimages[0]['value']);?>',
 notehash:'<?php if(isset($field_notehash[0]))print($field_notehash[0]['value']);?>',
-imagehash:'<?php if(isset($field_imageshash[0]))print($field_imageshash[0]['value']);?>'
+imagehash:'<?php if(isset($field_imageshash[0]))print($field_imageshash[0]['value']);?>',
+author: {id:<?php print($uid);?>} 
 }
 </script>
 
@@ -135,6 +136,7 @@ function initeditor(){
 				var menu=document.getElementById("exportoptions");
 				if(menu.classList.contains("active"))menu.classList.remove("active");else menu.classList.add("active");
 			});
+			document.getElementById("exportoptions").addEventListener("click", function(){this.classList.remove("active")});
 			document.getElementById("editoroptionbuttonbutton").addEventListener("click",function(e){
 				var optionmenu = document.getElementById("optionmenu");
 				if(optionmenu.classList.contains("active")){
@@ -272,8 +274,8 @@ function parsetesting(){
 				<li><button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md textfile</button></li>
 				<li>PUBLISH PRESENTATION:</li>
 				<li><button onclick="slidenoteguardian.exportPresentationToCMS()">Publish to slidenote.io</button></li>
-				<li>Save as encrypted .html</li>
-				<li>Save as unencrypted .html</li>
+				<li><button onclick="slidenoteguardian.exportPresentationLocal(true);">Save as encrypted .html</button></li>
+				<li><button onclick="slidenoteguardian.exportPresentationLocal(false);">Save as unencrypted .html</button></li>
 			</ul>
 		</div>
 		<div id="editoroptionbutton"><button id="editoroptionbuttonbutton">Options <img src="/sites/all/libraries/slidenotes/images/buttons/optioni.png"></button></div>

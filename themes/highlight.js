@@ -61,7 +61,8 @@ cssfile.setAttribute("href", "themes/highlight/styles/default.css");
 document.getElementsByTagName("head")[0].appendChild(jsfile);
 document.getElementsByTagName("head")[0].appendChild(cssfile);
 */
-slidenote.appendFile("script","highlight/highlight.pack.js");
+newtheme.loadingFiles = new Array();
+newtheme.loadingFiles.push(slidenote.appendFile("script","highlight/highlight.pack.js"));
 slidenote.appendFile("css","highlight/styles/default.css");
 
 
