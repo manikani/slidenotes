@@ -27,7 +27,7 @@ newtheme.insertMenuArea = function(dataobject){
   rightbutton.name="right"
   topbutton.name="head";
   var buttonfunc = function(){
-    slidenote.presentation.getThemeByName("sections").changeSectionType(this.name);
+    slidenote.extensions.getThemeByName("sections").changeSectionType(this.name);
   };
   leftbutton.addEventListener("click", buttonfunc);
   rightbutton.addEventListener("click",buttonfunc);
@@ -35,11 +35,11 @@ newtheme.insertMenuArea = function(dataobject){
   result.appendChild(leftbutton);
   result.appendChild(rightbutton);
   result.appendChild(topbutton);
-
+  return result;
+  //old stuff??
   var insertlabel = document.createElement("label");
   insertlabel.innerText="INSERT";
   result.appendChild(insertlabel);
-
   var insertmenu = document.getElementById("standardinsertmenu").cloneNode(true);
   insertmenu.id="";
   var oldsectionbutton = insertmenu.getElementsByClassName("sectionsbutton")[0];
@@ -76,7 +76,7 @@ slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:newtheme};
 newtheme.addGlobalOption("checkbox","Use Github-Default (``` is codeblock, not section)","githubcodeblock",false);
 
 newtheme.changeGlobalOption = function(optionnr, value){
-  if(slidenote.standarddatablocktype.type ==="layout"){
+  if(slidenote.standarddatablocktype && slidenote.standarddatablocktype.type ==="layout"){
     slidenote.standarddatablocktype=null;
   } else{
     slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:this};

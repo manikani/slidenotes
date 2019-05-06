@@ -74,7 +74,7 @@ newtheme.insertMenuArea = function(dataobject){
     //button.classList.add("chartistbutton")
     button.charttype = ctype;
     button.addEventListener("click",function(){
-      slidenote.presentation.getThemeByName("chartist").changeChartType(this.charttype);
+      slidenote.extensions.getThemeByName("chartist").changeChartType(this.charttype);
     });
     if(subtype===ctype)button.classList.add("active");
     var buttonimg = new Image();
@@ -91,29 +91,29 @@ newtheme.insertMenuArea = function(dataobject){
     var xaxisbutton = document.createElement("button");
     xaxisbutton.innerText = "Label X-Axis";
     xaxisbutton.title = "A Label shown under the X-Axis of the Graph";
-    xaxisbutton.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("xaxislabel")});
+    xaxisbutton.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("xaxislabel")});
     buttonarea.appendChild(xaxisbutton);
 
     var yaxisbutton = document.createElement("button");
     yaxisbutton.innerText = "Label Y-Axis";
     yaxisbutton.title = "A Label shown at the Side of the Y-Axis of the Graph";
-    yaxisbutton.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("yaxislabel")});
+    yaxisbutton.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("yaxislabel")});
     buttonarea.appendChild(yaxisbutton);
     var datasetlabel = document.createElement("button");
     datasetlabel.innerText = "Label Dataset";
     datasetlabel.title = "A Label shown above the Graph shown which color uses which Data";
-    datasetlabel.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("datasetlabel")});
+    datasetlabel.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("datasetlabel")});
     buttonarea.appendChild(datasetlabel);
   }
   var summary = document.createElement("button");
   summary.innerText="Summary";
   summary.title = "A Summary of your graph for Screenreaders"
-  summary.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("summary")});
+  summary.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("summary")});
   buttonarea.appendChild(summary);
 
   var example = document.createElement("button");
   example.innerText = "Insert Example";
-  example.addEventListener("click",function(){slidenote.presentation.getThemeByName("chartist").insert("example")});
+  example.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("example")});
   buttonarea.appendChild(example);
 
   result.appendChild(buttonarea);
