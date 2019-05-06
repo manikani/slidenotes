@@ -1098,7 +1098,7 @@ emdparser.prototype.CarretOnElement = function(carrethardpos){
 		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
 		if(actel.html ==="<section>"){actelstart--;actelend++;}
 
-		if(actelstart<carretpos && actelend > carretpos){
+		if(actelstart<=carretpos && actelend >= carretpos){
 			//element getroffen:
 			var allowed = "###***__~~"
 
@@ -1805,7 +1805,7 @@ emdparser.prototype.parseMap = function(){
 										}
 			    					this.dataobjects.push({
 											type:datatyp, head:datahead, raw:rawdata,
-											startline:x, endline:dataende
+											startline:x, endline:dataende, posinall: this.map.linestart[x]
 										});
 			    					mapstartel.dataobject = this.dataobjects[this.dataobjects.length-1];
 			    					this.map.addElement(mapstartel); //save parsing to map
@@ -2970,6 +2970,7 @@ ExtensionManager.prototype.loadBasicThemes = function(){
 	this.loadTheme("klatex", true);
 	this.loadTheme("switchparseelements", true);
 	this.loadTheme("sections");
+	this.loadTheme("outline");
 	}else{
 		console.log("extraoptions found");
 		for(var x=0;x<themenamesToLoad.length;x++)this.loadTheme(themenamesToLoad[x].name, themenamesToLoad[x].css);
