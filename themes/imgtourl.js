@@ -193,7 +193,10 @@ newtheme.insideFinalizeHtml = function(template){
   }
 };
 newtheme.init = function(){
-  if(!document.getElementById('fileinput'))return;//do nothing if no fileinput is present, therefore no editor
+  if(!document.getElementById('fileInput')){
+    console.log("imgtourl: no fileinput found");
+    return;//do nothing if no fileinput is present, therefore no editor
+  }
   console.log("imgtourl wird initialisiert");
   //add imagebutton to texteditorbuttons
   var texteditorbuttons = document.getElementById("texteditorbuttons");

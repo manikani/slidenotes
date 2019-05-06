@@ -32,3 +32,8 @@
 h1 img{
   max-height:75px;
 }
+
+#insertarea img.insertmenu-preview-image {
+    height: 6em;
+    display: block;
+}
