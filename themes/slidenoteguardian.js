@@ -194,7 +194,7 @@ slidenoteGuardian.prototype.init = function(){
               }
               reader.readAsText(file);
       } else {
-        //filetype not supported: Image here?
+        //filetype not supported: Image is handled in imgtourl
       }
   }, false); //end of drop-event
 
@@ -392,7 +392,7 @@ slidenoteGuardian.prototype.exportPresentationToRest = function(payload){
     console.log(this);
     slidenoteguardian.exportedPresentationToRest(this);
   });
-  postReq.open("POST","/node/");
+  postReq.open("POST","/node/2"); //node/2 needs to be of type presentation to work
   postReq.setRequestHeader("CONTENT-TYPE","application/json");
   postReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
 
@@ -575,7 +575,7 @@ slidenoteGuardian.prototype.exportPresentationToFilesystem = function(presstring
             " \ndiv.ppage:target{visibility:visible;}"+
             "\n.blocks div.ppage.active{visibility:hidden;}"+
             "\n#slide0{visibility:visible;z-Index:1} .ppage{z-index:2}";
-  var headerhtml = "<html><head><title>a slidenote presentation</title></head>";
+  var headerhtml = '<!DOCTYPE html><html><head><meta charset="utf-8"/><title>a slidenote presentation</title></head>';
   if(encrypted)headerhtml+='<body onload="slidenoteguardian.decryptPresentation()">'; else headerhtml+="<body>";
   var bodyhtmlbefore = '<div id="slidenotediv" class="'+slidenote.presentation.presentation.classList.toString()+'"><div id="slidenotepresentation">';
   var bodypresentation = "";
@@ -749,7 +749,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
       console.log("Timecheck: Copied imagestring with length "+encimgstring.length+" in "+usedtimecopy+"Ms");
       //this.sendToCMS("images"); //cant do that like this? because copy is async?
       var drupal7prepare = this.prepareDrupal7Rest("image");
-      this.saveToRest(drupal7prepare.path, drupal7prepare.payload);
+      await this.saveToRest(drupal7prepare.path, drupal7prepare.payload);
 
     }
     //TODO: sending result to CMS
