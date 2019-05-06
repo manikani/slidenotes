@@ -68,6 +68,8 @@
 }
 .backgroundline.code, .backgroundline code{
 	background:orange;
+	font-family:unset;
+	font-size:unset;
 }
 .backgroundline.code{
 	display:inline-block;
@@ -138,7 +140,7 @@
 /*presentation */
 .ppage{
 	/*display:none;*/
-	/*visibility: hidden;*/
+	visibility: hidden;
 	width:100%;
 	position:absolute;
 	top:0;
@@ -263,16 +265,16 @@ h1{
 #editorblock {
     clear: both;
     float: none;
-    height: 100vh;
+    height: 95vh;
     position: initial;
     width: 100%;
 		display:grid;
-		grid-template-areas: ". . header optionarea optionarea"
+		grid-template-areas: "outline outline header optionarea optionarea"
 													"buttonarea sidearealeft editorarea sidearearight sidearearight"
 													"footer footer footer footer footer";
 		grid-template-columns: 2em 2fr auto 2fr 2em;
-		grid-gap: 10px 2px;
-		grid-template-rows:1fr 1fr 20fr 1fr;
+		grid-gap: 1px 2px;
+		grid-template-rows: 1fr 20fr 1fr;
 }
 #editorblock::after{
 	clear:both;
