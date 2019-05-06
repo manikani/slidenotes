@@ -358,6 +358,50 @@ newtheme.insertMenu = function(element){
   uploadlink.appendChild(uploadlinkimg);
   result.appendChild(uploadlink);
 
+  var descriptionlink = document.createElement("button");
+  //descriptionlink.href = "#";
+  descriptionlink.title = "set Description";
+  descriptionlink.innerText = "set Description";
+  var descpos = element.posinall+2;
+  descriptionlink.name = descpos;
+  descriptionlink.onclick = function(){
+    slidenote.textarea.selectionEnd = this.name;
+    slidenote.textarea.selectionStart = this.name;
+    slidenote.textarea.focus();
+  }
+  result.appendChild(descriptionlink);
+
+  var setAsBackgroundLink = document.createElement("button");
+  setAsBackgroundLink.title="Set Image as Background of current Page or Layoutsection";
+  setAsBackgroundLink.innerText = "set as Background";
+  setAsBackgroundLink.onclick = function(){
+    var el = slidenote.parser.CarretOnElement();
+    var elpos = el.posinall;
+    var elpage = slidenote.parser.map.pageAtPosition(elpos);
+    var lastpagestart = slidenote.parser.map.pagestart[elpage].posinall;
+    var dobj = slidenote.parser.dataobjects;
+    var lastlayoutstart;
+    for(var x=0;x<dobj.length;x++){
+      var dob = dobj[x];
+      if(dob.type==="layout" && dob.startline<el.line && dob.endline>el.line){
+        lastlayoutstart = slidenote.parser.map.linestart[dob.startline+1];
+        break;
+      }
+    }
+    var inspos = lastpagestart;
+    if(lastlayoutstart)inspos = lastlayoutstart;
+    var newtext = slidenote.textarea.value.substring(0,inspos)+
+                  el.mdcode + "\n\n"+
+                  slidenote.textarea.value.substring(inspos,el.posinall)+
+                  slidenote.textarea.value.substring(el.posinall+el.mdcode.length);
+    slidenote.textarea.value = newtext;
+    slidenote.textarea.selectionEnd = inspos;
+    slidenote.textarea.selectionStart = inspos;
+    slidenote.textarea.focus();
+    slidenote.parseneu();
+  }
+  result.appendChild(setAsBackgroundLink);
+
   return result;
 }
 slidenote.addTheme(newtheme);
