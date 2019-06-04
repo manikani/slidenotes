@@ -79,9 +79,6 @@
  */
 ?>
 <style>
-<?php print($field_cssblock[0]['value']);?>
-</style>
-<style>
 .ppage{
   display:none;
 }
@@ -253,7 +250,10 @@ slidenoteguardian.decryptPresentation = async function(){
 		this.decText = await this.decrypt(buffer.buffer, this.iv); //decrypt ArrayBuffer
 	}
 	//document.getElementById("slidenotepresentation").innerHTML = this.decText;
-	var texted = {value:this.decText, selectionEnd:0, selectionStart:0, focus:function(){}}; //emulate textarea 
+	var imgblockpos = this.decText.indexOf("§§§€€€€€IMAGEBLOCK€€€€€§§§");
+	this.imageblockstring = this.decText.substring(imgblockpos+26);
+	this.decText = this.decText.substring(0,imgblockpos);
+	var texted = {value:this.decText, selectionEnd:0, selectionStart:0, focus:function(){}, imageblockstring:this.imageblockstring}; //emulate textarea 
 	var textedlayer = document.createElement("div");
 	textedlayer.id = "texteditorbuttons";
 	document.getElementsByTagName("body")[0].appendChild(textedlayer);
@@ -262,7 +262,9 @@ slidenoteguardian.decryptPresentation = async function(){
 	//slidenote.basepath = "/sites/all/libraries/slidenotes/";
 	//this.loadConfigString();
 	//slidenote.parseneu();
+	slidenote.appendFile("css","../layout.css");
 	slidenote.extensions.addAfterLoadingThemesHook(function(){
+		slidenote.base64images.loadImageString(slidenote.textarea.imageblockstring);
 		slidenoteguardian.loadConfigString();
 		slidenote.parseneu();
 		slidenote.presentation.showpresentation();
@@ -524,7 +526,7 @@ slidenoteguardian.passwordPrompt = function (text, method, newpassword){
 
 </script>
 <script language="javascript" src="/sites/all/libraries/slidenotes/slidenoteplayer.js"></script>
-
+<div id="slidenoteLoadingScreen"><h1>Please wait, loading missing libraries</h1><img src="/sites/all/libraries/slidenotes/images/wait-charlie-chaplin.gif"></div>
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?> clearfix"<?php print $attributes; ?>>
 
   <div class="content"<?php print $content_attributes; ?>>

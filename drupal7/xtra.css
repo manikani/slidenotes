@@ -1,0 +1,35 @@
+.page-node-add-slidenote .field-type-text-long, 
+.page-node-add-slidenote .field-type-text, 
+.page-node-add-slidenote .field-type-entityreference {
+    display: none;
+}
+
+
+.view-my-slidenotes img, .view-my-presentations img {
+    height: 4em;
+}
+
+
+.view-my-slidenotes .views-field-title, 
+.view-my-presentations .views-field-title {
+    float: left;
+    margin-right: 5px;
+    border-right: 1px solid;
+    padding: 10px;
+}
+.view-my-slidenotes .views-row,
+.view-my-presentations .views-row{
+    clear: both;
+	border:1px solid;
+	padding:10px;
+	border-radius:4px;
+	margin-bottom:4px;
+	min-height:8em;
+}
+
+.node-type-slidenote .tabs.clearfix, 
+.node-type-slidenote #page-title, 
+.node-type-slidenote #navigation, 
+.node-type-slidenote #header {
+    display: none;
+}

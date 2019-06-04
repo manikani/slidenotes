@@ -114,6 +114,8 @@ function initeditor(){
 		} else{
 			var basepath = basepath="/sites/all/libraries/slidenotes/";			
 			slidenote = new slidenotes(texted, texterr, errordet, slideshow, basepath );
+			slidenote.appendFile("css","../layout.css");
+			slidenote.appendFile("css","slidenoteguardian.css");
 			slidenote.basepath="/sites/all/libraries/slidenotes/";
 			slidenote.imagespath="/sites/all/libraries/slidenotes/images/";			
 			
