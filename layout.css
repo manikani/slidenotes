@@ -66,7 +66,8 @@
 .backgroundline b, .backgroundline i, .backgroundline strike{
 	border-bottom:1px solid lightgreen;
 }
-.backgroundline.code, .backgroundline code{
+.backgroundline.code, .backgroundline code,
+.backgroundline.codehead, .backgroundline.metadata.codehead{
 	background:orange;
 	font-family:unset;
 	font-size:unset;
@@ -81,6 +82,7 @@
 	display:inline-block;
 	width:100%;
 }
+
 #texteditorerrorlayer .pagenr {
     /*content: "»»» new page";*/
     color: white;
@@ -96,6 +98,14 @@
 	width: 100%;
 	background:yellow;
 }
+.backgroundline.metadataseparator {
+    background: darkgreen;
+}
+
+.backgroundline.metadata {
+    background: lightgreen;
+}
+
 .backgroundline.layout{
 	display:inline-block;
 	width:100%;

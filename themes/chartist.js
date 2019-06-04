@@ -622,4 +622,18 @@ newtheme.afterStyle = function(){
   this.updatecharts();
 }
 
+newtheme.styleThemeMDCodeEditor = function(){
+  var dataobjects = slidenote.parser.dataobjects;
+  var lines = slidenote.texteditorerrorlayer.getElementsByClassName("backgroundline");
+  for(var x=0;x<dataobjects.length;x++)if(dataobjects[x].type==="chart"){
+    var start = dataobjects[x].startline+1;
+    var olines = dataobjects[x].raw;
+    for(var ol=0;ol<olines.length;ol++)if(olines[ol]==="---"){
+      lines[start+ol].innerHTML = '--- &nbsp;&nbsp;&nbsp;&nbsp;<span class="pagenr">&uarr;options&uarr; &darr;data&darr;</span>'
+      lines[start+ol].classList.add("metadataseparator");
+      for(mdl=ol-1;mdl>=0;mdl--)lines[start+mdl].classList.add("metadata");
+    }
+  }
+}
+
 slidenote.addTheme(newtheme);
