@@ -21,6 +21,8 @@ function mapping (parser) {
 	 this.insertedhtmlelements = new Array();
 	 this.insertedhtmlinline = new Array();
 	 this.insertedimages = new Array();
+	 this.codeblocks = new Array();
+	 this.codeblocklines = new Array();
 	 this.lastline=0;
 	 //this.linepos = [0];
 	 this.linestart = [0];
@@ -1086,7 +1088,7 @@ emdparser.prototype.setDropDownMenu = function (){
 emdparser.prototype.CarretOnElement = function(carrethardpos){
 	var element;
 	var carretpos = carrethardpos;
-	if(!carretpos)carretpos = slidenote.textarea.selectionEnd;
+	if(carretpos===undefined || carretpos ===null)carretpos = slidenote.textarea.selectionEnd;
 	for(var x=0;x<this.map.insertedhtmlelements.length;x++){
 		var actel = this.map.insertedhtmlelements[x];
 		var actelstart = actel.posinall;
@@ -1111,6 +1113,12 @@ emdparser.prototype.CarretOnElement = function(carrethardpos){
 		var linetype = this.lineswithhtml[line];
 		if(linetype === "pagebreak" || linetype === "h1" && this.map.insertedhtmlinline[line].length ===1){
 			element = this.map.insertedhtmlinline[line][0];
+		}
+		if(linetype==="code"){
+			var sline = line;
+			while(sline>=0 && this.lineswithhtml[sline]==="code")sline--;
+			sline++;
+			element = this.map.insertedhtmlinline[sline][0];
 		}
 	}
 	return element;
@@ -1423,7 +1431,7 @@ emdparser.prototype.renderMapToPresentation = function(){
 		temptext +=lines[lx];
 		//if(lines[lx].indexOf(">",lines[lx].length-2)==-1 && lines[lx].substring(0,5)!="-----")temptext+="<br>";
 		if(this.lineswithhtml[lx]=="text" && lines[lx].indexOf("</p>")==-1 && lx<lines.length-1)temptext+="<br>";
-		if(this.lineswithhtml[lx]=="code"&& lx<lines.length-1)temptext+="<br>";
+		//if(this.lineswithhtml[lx]=="code"&& lx<lines.length-1)temptext+="<br>";
 		//if(this.lineswithhtml[x]=="text")alert(lines[x]+lines[x].indexOf("</div>"));
 		//alert(this.lineswithhtml[x]);
 		if(lx<lines.length-1)temptext +="\n";
@@ -1452,6 +1460,7 @@ emdparser.prototype.parseMap = function(){
 	//sourcecode  = sourcecode.replace(/([^\s_])([_])(\S)/g,"$1€$3");
 	//console.log("Timecheck: replace T_T needed:"+(new Date().getTime() - TimecheckStart));
   var lines = this.returnparsedlines(sourcecode);
+	var origlines = lines.slice(0);
   var linestartpos = 0;
 	this.map.sidebarelements = new Array();
 
@@ -1556,7 +1565,7 @@ emdparser.prototype.parseMap = function(){
 			// add ul/ol-tag element to map:
 		  this.map.addElement({
 		    line:x, pos:0, html:liststarthtml, mdcode:"", typ:"start",
-		    weight:1
+		    weight:1, tag:"liststart", listtyp:listtyp
 		  });
 		  var listzeichenarr = [". ", ".) ", ") ", ") ", ") ", "- ", "* ", "+ "];
 		  var listzeichen = listzeichenarr[nlregnr];
@@ -1680,8 +1689,8 @@ emdparser.prototype.parseMap = function(){
 		  //if(sublist)sublistweight=3;
 		  this.map.addElement({
 		    line:listx-1, pos:lines[listx-1].length, html:"</"+listtyp+">", mdcode:"",
-		    typ:"end",
-		    tag:listtyp+"-end-li", weight:4+listweight
+		    typ:"end", listtyp:listtyp,
+		    tag:"listend", weight:4+listweight
 		  });
 			//set lineswithhtml:
 			for(var lx=x;lx<listx;lx++){
@@ -1833,23 +1842,27 @@ emdparser.prototype.parseMap = function(){
 			          this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol ```"));
 			        }else{
 			          //codeend found:
+								var codeblock = {
+									line:x, head:lines[x], endline:codeende
+								}
 			          this.map.addElement({
-			            line:x,pos:0,html:"<code>",mdcode:lines[x],typ:"start",
-			            tag:"codestart"
+			            line:x,pos:0,html:'<code class="codeblock">',mdcode:origlines[x],typ:"start",
+			            tag:"codestart", endline:codeende
 			          });
 			          this.map.addElement({
 			            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"start",
 			            tag:"codeende"
 			          });
+								this.map.codeblocks.push(codeblock);
 			          for(var cx = x;cx<=codeende;cx++){
-			            lines[cx]=substitutewitheuro(lines[cx].length); //substitute line to avoid further parsing
+									this.map.codeblocklines.push({codeblock:codeblock, origtext:origlines[cx], line:cx}); //numeral list of all codelines in editor
+									lines[cx]=substitutewitheuro(lines[cx].length); //substitute line to avoid further parsing
 			            this.lineswithhtml[cx]="code"; //mark lines as codelines
 			          }
 								this.map.sidebarelements.push({
 									typ:"multiline",text:"code",tag:"code",
 									startline:x, endline:codeende
 								});
-
 			        }
 
 				}
@@ -2552,7 +2565,7 @@ pagegenerator.prototype.afterStyle = function(){
 	this.calculationtimeend = new Date();
 	var calctime = this.calculationtimeend - this.calculationtimestart;
 	console.log("Timecheck: Presentation generated in "+calctime+"Ms");
-	if(calctime<2000){
+	if(calctime<2000 && calctime > 500){
 		setTimeout(function(){
 		var loadingscreen = document.getElementById("slidenoteLoadingScreen");
 			loadingscreen.classList.remove("active");
@@ -2623,7 +2636,15 @@ pagegenerator.prototype.showInsertMenu = function(){
 		extrainsertmenu.innerHTML = "";
 		extrainsertmenu.appendChild(slidenote.extensions.getThemeByName("imgtourl").insertMenu(onObject));
 		document.getElementById("insertmenulabel").innerText = "IMAGE";
-
+	}else if(onObject && (onObject.tag === "codestart" || onObject.tag === "codeende")
+		&& slidenote.datatypes.elementOfType("code").theme){
+		var codemenu = slidenote.datatypes.elementOfType("code").theme.insertMenuArea(onObject);
+		console.log(codemenu);
+		insertmenu.classList.add("insertmenu-extra");
+		var xtram = document.getElementById("extrainsertmenu");
+		xtram.innerHTML = "";
+		xtram.appendChild(codemenu);
+		document.getElementById("insertmenulabel").innerText = "CODE";
 	}else{
 		insertmenu.classList.remove("insertmenu-extra");
 		document.getElementById("insertmenulabel").innerText = "INSERT";
@@ -2954,7 +2975,7 @@ ExtensionManager.prototype.loadBasicThemes = function(){
 	this.loadTheme("history");
 	this.loadTheme("extraoptions", true);
 	this.loadTheme("hiddenobjects");
-	this.loadTheme("contextfield");
+	//this.loadTheme("contextfield");
 	this.loadTheme("blocks");
 	this.loadTheme("stickytitles", true);
 	this.loadTheme("procontra");
@@ -3348,6 +3369,7 @@ slidenotes.prototype.parseneu = function(){
 		//add sidebar here
 		nachrendernzeit = new Date();
 		this.parser.setDropDownMenu();
+		//setTimeout("slidenote.parser.setDropDownMenu()",1);
 		dropdownmenuzeit = new Date();
 		if(this.editormodus!="focus" && document.getElementById("editorchoice").value!="focus"){
 			//this.parser.generateSidebar(compareResult);
@@ -3385,13 +3407,16 @@ slidenotes.prototype.parseneu = function(){
 	var gesamtzeit = endzeit - startzeit;
 	console.log("Timecheck: Parsen von "+this.textarea.value.length+" Zeichen und "+this.parser.map.insertedhtmlelements.length+" Elementen brauchte: "+parszeit+"ms - Rendern brauchte:"+renderzeit+"ms" );
 	var purerenderzeit = nachrendernzeit - zwischenzeit;
-	var sidebarrenderzeit = sidebarzeit - nachrendernzeit;
+	var sidebarrenderzeit = sidebarzeit - dropdownmenuzeit;
+	var insertmenuzeit = dropdownmenuzeit - nachrendernzeit;
 	var highlightzeit = themechangeszeit - sidebarzeit;
 	var ppszeit = handlingproposedsymbolszeit - themechangeszeit;
 	var scrllzt = scrollzeit - handlingproposedsymbolszeit;
 	var rahmenzeit = rahmensetzenzeit - scrollzeit;
 	var styleMDzeit = endzeit - rahmensetzenzeit;
-	console.log("Timecheck: pures rendern:"+purerenderzeit+"Ms\nsidebar:"+sidebarrenderzeit+
+	console.log("Timecheck: pures rendern:"+purerenderzeit+
+							"Ms\ninsertmenuzeit"+insertmenuzeit+
+							"Ms\nsidebar:"+sidebarrenderzeit+
 							"Ms\n highlight:"+highlightzeit+"Ms\n proposedsymbolverarbeitung:"+ppszeit+
 							"MS\n scroll:"+scrllzt+" rahmensetzen:"+rahmenzeit +"\n"+
 							"styleMDZeit:"+styleMDzeit);
