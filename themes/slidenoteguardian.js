@@ -94,9 +94,53 @@ function slidenoteGuardian(slidenote){
 slidenoteGuardian.prototype.init = function(){
   //init will be called once the slidenote has been loaded from cms
   //this.getCMSFields();
-  notetitle = this.restObject.title;
+  var notetitle = this.restObject.title;
   this.notetitle = this.restObject.title;
-  notehash = this.restObject.notehash;
+  var notehash = this.restObject.notehash;
+  var cachednote = {
+    title: this.localstorage.getItem("title"),
+    saved: this.localstorage.getItem("saved"),
+    nid: this.localstorage.getItem("nid"),
+    notehash: this.localstorage.getItem("slidenotehash"),
+    url:this.localstorage.getItem("url")
+  }
+  console.log(
+    "cachednote.saved:"+cachednote.saved+
+    "\n cmsconnection:"+this.hascmsconnection+
+    "\n restObject.notehash:"+notehash+
+    "\n cachednote.notehash:"+cachednote.notehash+
+    "\n cachednote.url :"+cachednote.url+
+    "\n window.location:"+window.location.href+
+    //"\n restobj.encnote:"+this.restObject.encnote.substring(0,10)+
+    "\n restobj.encnote-empty?"+(this.restObject.encnote==="")
+  );
+
+  if(cachednote.saved === "true" &&
+      this.hascmsconnection &&
+    this.restObject.encnote.length>1){
+    setTimeout("slidenoteguardian.loadNote('cms')",1);
+  }else if(this.restObject.encnote!=undefined && this.restObject.encnote ===""){
+    //new slidenote, save to get password-prompt? seems not necesary
+    //setTimeout("slidenoteguardian.saveNote('local')");
+  }else if(notehash===undefined && cachednote.notehash != undefined){
+    setTimeout("slidenoteguardian.loadNote('local')",1);
+  }else{
+    if(cachednote.url === window.location.href){
+      var confirmtext = "You have an unsaved Version of this slidenote in Cache. Load local Cache instead of Cloud?";
+      if(confirm(confirmtext))setTimeout("slidenoteguardian.loadNote('local')",1);
+      else setTimeout("slidenoteguardian.loadNote('cms')",1);
+    }else if(cachednote.url != undefined){
+      var confirmtext = "You have an unsaved Version in Cache from another Slidenote "+this.localstorage.getItem("title");
+      confirmtext +="\n Open unsaved Slidenote? ("+cachednote.url+") \n\n Warning - unsaved Cache will be lost if not saved to Cloud";
+      if(confirm(confirmtext)){
+        window.location = cachednote.url;
+      }else{
+          setTimeout("slidenoteguardian.loadNote('cms')",1);
+      }
+    }
+  }
+
+  /*
   if(this.localstorage.getItem("title") && this.localstorage.getItem("title").length>0){//===this.notetitle){
     let loadtext = "We found a Slidenote in your Browsers Cache of the loaded Slidenote. Use Version of Browser-Cache?";
     if(this.localstorage.getItem("title")!=notetitle)loadtext="We found a Slidenote with title \""+this.localstorage.getItem("title")+"\" in your local Storage but loaded Title is \""+this.notetitle+"\". Do you want to load the cached version instead?";
@@ -112,7 +156,7 @@ slidenoteGuardian.prototype.init = function(){
       //this.loadNote("cms");
       //this.loadConfig("cms");
     }
-  }
+  }*/
   if(this.localstorage.getItem("config")!=null){
     //i cant do it directly because its quite obvious that some themes are not added yet
     //for testing purpose i should just wait 2 seconds
@@ -371,10 +415,17 @@ slidenoteGuardian.prototype.savedToRest = function(resolve){
     statusimg.src = slidenote.imagespath+"buttons/cloudsaved.png";
     statusimg.title = "slidenote in sync with cloud";
     this.restObject.combine(this.uploadRestObject);
+    //check if cached-version is same - if so set to saved:
+    let cachedhash = this.localstorage.getItem("slidenotehash");
+    console.log("savedToRest: cache vs. cms \n"+cachedhash + "\n"+this.restObject.notehash);
+    if(cachedhash === this.restObject.notehash)this.localstorage.setItem("saved","true");
+    //this.localstorage.setItem("nid",this.restObject.drupal7.nid);
+    //this.localstorage.setItem("url",window.location.href);
   }else{
     statusimg.src = slidenote.imagespath+"buttons/clouderror.png";
     statusimg.title=resolve.statusText;
   }
+  this.savingtoDestination=undefined;
 }
 
 slidenoteGuardian.prototype.exportPresentationToRest = function(payload){
@@ -438,7 +489,11 @@ slidenoteGuardian.prototype.exportPresentation = async function(destination, pre
   if(destination==="filesystem")this.preparePresentationForFilesystem(presentationdiv);
   var presentationstring = '<div class="'+presentationdiv.classList.toString()+'">'+
                             presentationdiv.innerHTML + "</div>";
-  if(destination==="cms")presentationstring = slidenote.textarea.value;
+  if(destination==="cms"){
+    presentationstring = slidenote.textarea.value;
+    presentationstring += "§§§€€€€€IMAGEBLOCK€€€€€§§§";
+    presentationstring += slidenote.base64images.allImagesAsString();
+  }
   var encResult = await this.encryptForExport(presentationstring, password);
   var encString = this.encBufferToString(encResult);
   this.uploadRestObject.encpresentation = encString;
@@ -468,6 +523,8 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
     payloadobj.field_encryptednote = this.uploadRestObject.encnote;
     payloadobj.field_notehash=this.uploadRestObject.notehash;
   }else if(mode==="image"){
+    payloadobj.field_encryptednote = this.uploadRestObject.encnote;
+    payloadobj.field_notehash=this.uploadRestObject.notehash;
     payloadobj.field_encimages= this.uploadRestObject.encimg;
     payloadobj.field_imageshash=this.uploadRestObject.imagehash;
   }
@@ -666,48 +723,41 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   if(slidenote ===undefined || this.slidenote.base64images ===undefined)return;
   var starttime = new Date().getTime();
   console.log("starting save note to destination "+destination);
+  console.log("saving to somewhere?"+this.savingtoDestination);
+  if(this.savingtoDestination!=undefined){
+    setTimeout("slidenoteguardian.saveNote('"+destination+"')",100);
+    return;
+  }
+  this.savingtoDestination = destination;
   //saves Note to cmsArea -> CMS or to local destination
-  //destination is cms or local - will be encrypted nevertheless
+  //destination is cms, filesystem or local - will be encrypted nevertheless
   if(document.getElementById("slidenoteGuardianPasswortPrompt")!=null)return;
   let slidenotetext = this.slidenote.textarea.value;
+  console.log("encrypting slidenote:"+slidenotetext.substring(0,300));
   let encResult;
   if(destination ==="filesystem"){
-    let exportstring = this.slidenote.textarea.value +
+    let exportstring = slidenotetext +
                         "\n||€€imagepart€€||\n" +
                       this.slidenote.base64images.allImagesAsString();
      encResult = await this.encryptForExport(exportstring);
   }else{
-    encResult = await this.encrypt(slidenote.textarea.value);
+    encResult = await this.encrypt(slidenotetext);
   }
- /*
-  let encTextBuffer = encResult.encbuffer;
-  let iv = encResult.iv;
-  //getting only displayable chars without control-chars:
-  let utf8array = new Uint8Array(encTextBuffer); //changing into utf8-Array
-  //console.log(utf8array);
-  let utf8string = ""; //starting new string for utf8
-  for(let i =0; i<utf8array.length;i++){
-    utf8string+=String.fromCharCode(utf8array[i]+255); //fill string with save values
-  }
-  //converting iv to string with same method:
-  let ivstring="";
-  for(let i=0; i<iv.length;i++)ivstring+=String.fromCharCode(iv[i]+255);
-  let result = ivstring+utf8string;//save iv in front of code
-  */
   let result = this.encBufferToString(encResult);
   //save Images:
   let encimgstring="";
+  let newimghash="";
   var imghash = null;
   if(this.slidenote.base64images.notempty){
     if(destination ==="cms"){
       //first get the fields right:
       //this.getCMSFields();
       //slidenote has images - check if already saved:
-      let newimghash = await this.hash(this.slidenote.base64images.allImagesAsString());
+      newimghash = await this.hash(this.slidenote.base64images.allImagesAsString());
       if(this.restObject.imagehash!=newimghash){//this.cmsImagesHash.value != newimghash){
         console.log("save images with hash:"+newimghash);
         if(!this.isencryptingimages){
-          console.log("its not encrypting so start:"+this.isencryptingimages);
+          console.log("its not encrypting so start:");
           this.isencryptingimages = true;
           encimgstring = await this.encryptImages(); //encrypt imagestring
           this.uploadRestObject.imagehash = newimghash; //this.cmsImagesHash.value = newimghash; //send new hash to cms
@@ -739,33 +789,36 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     savestatus.src=slidenote.imagespath+"buttons/cloudupload.gif";
     savestatus.title="saving note into cloud";
 
+    var drupal7prepare = this.prepareDrupal7Rest("text");
     //TODO: images?
     if(encimgstring!=""){
       var starttimecopy = new Date().getTime();
       //this.cmsImages.value=encimgstring; //dont do it for test purpose
       this.uploadRestObject.encimg = encimgstring;
+      this.uploadRestObject.imagehash = newimghash;
       var endtimecopy = new Date().getTime();
       var usedtimecopy = endtimecopy - starttimecopy;
       console.log("Timecheck: Copied imagestring with length "+encimgstring.length+" in "+usedtimecopy+"Ms");
       //this.sendToCMS("images"); //cant do that like this? because copy is async?
-      var drupal7prepare = this.prepareDrupal7Rest("image");
-      await this.saveToRest(drupal7prepare.path, drupal7prepare.payload);
+      drupal7prepare = this.prepareDrupal7Rest("image");
+      //await this.saveToRest(drupal7prepare.path, drupal7prepare.payload);
 
     }
     //TODO: sending result to CMS
     //this.sendToCMS("note");
-    var drupal7prepare = this.prepareDrupal7Rest("text");
+
     console.log("saving to cms drupal7:"+drupal7prepare.path);
     console.log(JSON.parse(drupal7prepare.payload));
     this.saveToRest(drupal7prepare.path,drupal7prepare.payload);
   }else if(destination==="local"){
     //TODO: testing max-size of local storage
     this.localstorage.setItem('cryptnote',result); //saving it to local storage
-    this.localstorage.setItem('cryptnote'+this.notetitle,result); //new approach with multiple notes
+    //this.localstorage.setItem('cryptnote'+this.notetitle,result); //new approach with multiple notes
     this.localstorage.setItem('title',this.notetitle); //can be deleted in future
-    let titles = this.localstorage.getItem("notetitles"); //multiple notes can be saved
-    if(titles===null)titles=this.notetitle;
-    if(titles.indexOf(this.notetitle)===-1)titles+="#|#"+this.notetitle;
+    this.localstorage.setItem('url',window.location.href);
+    //let titles = this.localstorage.getItem("notetitles"); //multiple notes can be saved
+    //if(titles===null)titles=this.notetitle;
+    //if(titles.indexOf(this.notetitle)===-1)titles+="#|#"+this.notetitle;
 
     if(imghash!=null){
       this.localstorage.setItem('cryptimagestring',encimgstring); //TODO: new aproach with multiple notes
@@ -773,6 +826,14 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     }
     let notehash = await this.hash(slidenotetext);
     this.localstorage.setItem("slidenotehash", notehash);
+    //check if version is saved to cms, else saved is false:
+    var savedToCMS = false;
+    //check if hashes are the same::
+    savedToCMS = (notehash === this.restObject.notehash);
+    //console.log("saved or not saved in cms?"+ "\n note-check:"+(result===this.restObject.encnote)+ "\n hash-check:"+(notehash === this.restObject.notehash));
+    this.localstorage.setItem("saved", savedToCMS);
+    this.localstorage.setItem("url",window.location.href);
+    this.savingtoDestination = undefined;
 
   }else if(destination ==="filesystem"){
     //export/save it to the local filesystem
@@ -783,6 +844,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
       if(exportfilename.substring(exportfilename.length-10)!=".slidenote")exportfilename+=".slidenote";
     }
     this.exportToFilesystem(exportstring, exportfilename);
+    this.savingtoDestination = undefined;
   }
   var endtime = new Date().getTime();
   var usedtime = endtime - starttime;
@@ -1169,6 +1231,7 @@ slidenoteGuardian.prototype.autoSaveToCMS = async function(){
     setTimeout("slidenoteguardian.autoSaveToCMS()",30000);
     return;
   }
+  console.log("saving to cms...");
   let acthash = await this.hash(this.slidenote.textarea.value); //hash the actual slidenote
   //this.getCMSFields();//getting the fields right:
   let oldhash = this.restObject.notehash;//this.cmsSlidenoteHash.value; //oldhash
@@ -1176,7 +1239,7 @@ slidenoteGuardian.prototype.autoSaveToCMS = async function(){
     //acthash diffs from old saved hash in cms so we have to save:
     console.log("autosave oldhash:"+oldhash+"\nnew hash:"+acthash);
     this.saveNote("cms");
-  }
+  }else console.log("autosave aborted. oldhash === new hash");
   //check if cms-save is actually done yet (drupal7):
   //if(this.cmsNoteSave && this.cmsNoteSave.id != this.lastNoteFormId){
   //  this.lastNoteFormId = this.cmsNoteSave.id;
