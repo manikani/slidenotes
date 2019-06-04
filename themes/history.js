@@ -14,8 +14,8 @@ newtheme.init = function(){
   var buttondiv = document.createElement("div");
   var backb = document.createElement("button");
   var forwb = document.createElement("button");
-  backb.onclick = function(){slidenote.presentation.getThemeByName("history").goBack()};
-  forwb.onclick = function(){slidenote.presentation.getThemeByName("history").goForward()};
+  backb.onclick = function(){slidenote.extensions.getThemeByName("history").goBack()};
+  forwb.onclick = function(){slidenote.extensions.getThemeByName("history").goForward()};
   backb.id="historyBackButton";
   forwb.id="historyForwardButton";
   backb.classList.add("historyButton");

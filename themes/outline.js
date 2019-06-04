@@ -57,7 +57,7 @@ newtheme.generateOutlineBlock = function(){
   wordchars.appendChild(wordc);
   this.wordBlock=wordc;
   var wordcl = document.createElement("span");
-  wordcl.innerText="WORDS, ";
+  wordcl.innerText=" WORDS, ";
   wordchars.appendChild(wordcl);
   var charc = document.createElement("span");
   charc.id="outlineCharCount";
@@ -231,10 +231,10 @@ newtheme.calculateSpeakTime = function(wordcount, selectionbol){
 
   var result ="";
   if(speaktime>60){
-    result = " MINUTES";
+    result = " MIN";
     speaktime = Math.ceil(speaktime/60);
   }else{
-    result = " SECONDS";
+    result = " SEC";
   }
   result = speaktime + result
   return result;

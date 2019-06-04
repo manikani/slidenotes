@@ -26,6 +26,7 @@ slidenote.base64images = {
     }
   },
   rebuildOldImages: function(){
+    if(!document.getElementById("fileOld"))return;
     //displays images in js-database of slidenote in div
     var oldimagestext = "";
     for(var x=0;x<this.base64images.length;x++){

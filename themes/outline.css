@@ -1,5 +1,6 @@
 div#outlineblock {
     display: grid;
+	font-size: x-small;
     grid-area: outline;
     grid-template-areas: "symbol title" "symbol count" "symbol speaking";
 }
