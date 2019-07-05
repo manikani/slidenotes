@@ -3186,6 +3186,9 @@ ExtensionManager.prototype.loadBasicThemes = function(){
 	this.loadTheme("switchparseelements", true);
 	this.loadTheme("sections");
 	this.loadTheme("outline");
+	this.loadTheme("speaker",true);
+	this.loadTheme("sequencediagram", true);
+	this.loadTheme("footnote",true);
 	}else{
 		console.log("extraoptions found");
 		for(var x=0;x<themenamesToLoad.length;x++)this.loadTheme(themenamesToLoad[x].name, themenamesToLoad[x].css);
@@ -3983,6 +3986,45 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	}else if(emdzeichen==="%comment"){
 		emdstart = "\n//";
 		endend = "\n";
+	}else if(emdzeichen==="%footnote"){
+		emdstart = "[^";
+		emdend = "]";
+		var pagenr = slidenote.parser.map.pageAtPosition();
+		var pst = slidenote.parser.map.pagestart[pagenr].line;
+		var pend = slidenote.parser.map.pageend[pagenr].line;
+		var elines = slidenote.parser.map.insertedhtmlinline;
+		var selend = slidenote.textarea.selectionEnd;
+		var selstart = slidenote.textarea.selectionStart;
+		var fnbefore = 0;
+		var fnafter = 0;
+		for(var i=pst;i<pend;i++){
+			for(var ii=0;ii<elines[i].length;ii++){
+		        var act = elines[i][ii];
+				if(act.label==="footnoteanchor" && act.typ==="start"){
+				    if(act.posinall < selstart)fnbefore++;
+		        if(act.posinall > selend)fnafter++;
+				}
+			}
+		}
+		if(selstart===selend){
+				var fzeichen = "*";
+		    for(var fz=0;fz<=fnbefore+fnafter;fz++)emdstart+=fzeichen;
+		}else emdstart+= slidenote.textarea.value.substring(selstart,selend);
+		var insline = pend-fnafter;
+		var inspos = slidenote.parser.map.lineend[insline];
+		var txt = slidenote.textarea.value;
+		txt = txt.substring(0,selstart)+emdstart+emdend+
+		      txt.substring(selend,inspos)+
+		      "\n"+emdstart+emdend+":"+
+		      txt.substring(inspos);
+		var inslength = (emdstart.length+emdend.length)*2+2; //"[^*]\n[^*]:".length
+		slidenote.textarea.value = txt;
+		slidenote.textarea.selectionStart = inspos+inslength;
+		slidenote.textarea.selectionEnd = inspos+inslength;
+		slidenote.parseneu();
+		slidenote.textarea.blur();
+		slidenote.textarea.focus();
+		return;
 	}else{ //einfache zeichen:
 		//emdnr = startemdl.positionOf(emdzeichen); //sollte im array vorkommen. da ich den befehl grad nicht weiß:
 		for(var x=0;x<startemdl.length;x++)if(startemdl[x]==emdzeichen)emdnr=x;
