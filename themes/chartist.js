@@ -47,7 +47,7 @@ document.getElementsByTagName("head")[0].appendChild(jsfile);*/
 //newtheme.loadingFiles = new Array();
 slidenote.extensions.loadingThemes.push({name:"chartist-placeholder"});
 slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins
-newtheme.addEditorbutton('<img src="'+slidenote.basepath+'themes/chartist/chartbutton.png" title="Chart">','```chart'); //only for comparison right now
+newtheme.addEditorbutton('<img src="'+slidenote.basepath+'themes/chartist/chartbutton.png" alt="Chart" title="Chart">','```chart'); //only for comparison right now
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme}); //TODO: change chartsvg to chart
 
 
@@ -182,7 +182,9 @@ newtheme.insert = function(selection){
       }
       //check for datalabels:
       if(selection==="datasetlabel"){
-        var posoflastdatalabel = slidenote.textarea.value.lastIndexOf("\n"+this.syntaxContainer.datasetidentifier,selectionstart);
+        var oldend=posofheadseparator;
+        if(oldend===-1 || oldend===undefined)oldend=posofchartend;
+        var posoflastdatalabel = slidenote.textarea.value.lastIndexOf("\n"+this.syntaxContainer.datasetidentifier,oldend);
         if(posoflastdatalabel>-1 && posoflastdatalabel>posofchartbegin){
           var datasetnr = slidenote.textarea.value.substring(posoflastdatalabel+this.syntaxContainer.datasetidentifier.length+1,slidenote.textarea.value.indexOf(this.syntaxContainer.metadataseparator,posoflastdatalabel));
           if(!isNaN(datasetnr))datasetnr++;
@@ -196,14 +198,28 @@ newtheme.insert = function(selection){
         }else{
           injection="\n"+this.syntaxContainer.datasetidentifier+"1"+this.syntaxContainer.metadataseparator+" ";
         }
+      }else{
+        //no datasetlabel, so it must be unique:
+        var oldend=posofheadseparator;
+        if(oldend===-1 || oldend===undefined)oldend=posofchartend;
+        var oldposofelement = slidenote.textarea.value.lastIndexOf("\n"+posibleinjections[selection],oldend);
+        if(oldposofelement>posofchartbegin){
+          injection="";
+          selectionstart=oldposofelement+posibleinjections[selection].length+1;
+          selectionend = selectionstart;
+        }
+        console.log("chart:oldposofelement"+oldposofelement+"\n>>"+selection+"<<");
+
       }
 
     }
+  var scrtop = slidenote.textarea.scrollTop;
   slidenote.textarea.value = slidenote.textarea.value.substring(0,selectionstart)+injection+slidenote.textarea.value.substring(selectionstart);
   diff+= injection.length;
   slidenote.textarea.focus();
   slidenote.textarea.selectionStart = selectionstart + diff;
   slidenote.textarea.selectionEnd = selectionend + diff;
+  slidenote.textarea.scrollTop = scrtop;
   console.log("parseneu forced by insert of chartmenu");
   slidenote.parseneu();
 
@@ -485,7 +501,7 @@ newtheme.getChartOptions = function(data){
   };
   if(charttype == "line"){
   	options.fullWidth = true;
-    options.chartPadding=20;
+    options.chartPadding=60;
   	options.axisY = {
   		onlyInteger:true,
   		offset:20
@@ -629,6 +645,8 @@ newtheme.styleThemeMDCodeEditor = function(){
     var start = dataobjects[x].startline+1;
     var olines = dataobjects[x].raw;
     for(var ol=0;ol<olines.length;ol++)if(olines[ol]==="---"){
+      var cpos = lines[start+ol].innerHTML.indexOf("carret");
+      if(cpos===-1)
       lines[start+ol].innerHTML = '--- &nbsp;&nbsp;&nbsp;&nbsp;<span class="pagenr">&uarr;options&uarr; &darr;data&darr;</span>'
       lines[start+ol].classList.add("metadataseparator");
       for(mdl=ol-1;mdl>=0;mdl--)lines[start+mdl].classList.add("metadata");
