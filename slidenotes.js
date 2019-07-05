@@ -125,12 +125,13 @@ mapping.prototype.positionInHtml = function(position, line){
 
 mapping.prototype.pageAtPosition = function(position){
 	var result = 0;
+	var p=position || slidenote.textarea.selectionEnd;
 
 	for(var x=0;x<this.pagestart.length;x++){
-		if(this.linestart[this.pagestart[x].line]<=position)result = x;
+		if(this.linestart[this.pagestart[x].line]<=p)result = x;
 		//console.log(this.pagestart[x].line+"<"+position);
 	}
-	console.log("Page at Position"+position+"-"+x);
+	console.log("Page at Position "+position+"/"+p+" : "+x);
 	return result;
 
 }
@@ -1089,8 +1090,10 @@ emdparser.prototype.CarretOnElement = function(carrethardpos){
 	var element;
 	var carretpos = carrethardpos;
 	if(carretpos===undefined || carretpos ===null)carretpos = slidenote.textarea.selectionEnd;
-	for(var x=0;x<this.map.insertedhtmlelements.length;x++){
-		var actel = this.map.insertedhtmlelements[x];
+	var line = this.lineAtPosition(carretpos);
+	this.map.insertedhtmlinline[line].sort(function(a,b){return a.pos-b.pos;});
+	for(var x=0;x<this.map.insertedhtmlinline[line].length;x++){
+		var actel = this.map.insertedhtmlinline[line][x];
 		var actelstart = actel.posinall;
 		var actelend = actel.posinall+actel.mdcode.length ;
 		//var linenr = this.lineAtPosition(carretpos);
@@ -1103,24 +1106,47 @@ emdparser.prototype.CarretOnElement = function(carrethardpos){
 		if(actelstart<=carretpos && actelend >= carretpos){
 			//element getroffen:
 			var allowed = "###***__~~"
-
 			element = actel;
+			//break;
 		}
 
 	}
 	if(element == null){
-		var line = this.lineAtPosition(carretpos);
 		var linetype = this.lineswithhtml[line];
-		if(linetype === "pagebreak" || linetype === "h1" && this.map.insertedhtmlinline[line].length ===1){
+		if(linetype === "pagebreak" || linetype === "h1"
+				&& this.map.insertedhtmlinline[line].length ===1){
 			element = this.map.insertedhtmlinline[line][0];
 		}
-		if(linetype==="code"){
+		if(linetype==="code" || linetype==="data"){
 			var sline = line;
-			while(sline>=0 && this.lineswithhtml[sline]==="code")sline--;
+			while(sline>=0 && this.lineswithhtml[sline]===linetype)sline--;
 			sline++;
 			element = this.map.insertedhtmlinline[sline][0];
 		}
+		if(linetype && (linetype.indexOf("list")>=0)){
+			var eil = this.map.insertedhtmlinline[line];
+			for(var ex=0;ex<eil.length;ex++)if(eil[ex].html==="<li>"){
+				element=eil[ex];
+				break;
+			}
+		}
+		if(linetype==="quote"){
+			//console.log("quotelog:start");
+			var eil = this.map.insertedhtmlinline[line];
+			//console.log("quotelog:");console.log(eil);
+			for(var ex=0;ex<eil.length;ex++){
+				//console.log("quotelog:"+eil[ex].label);
+				if(eil[ex].label==="quote"){
+				//console.log("quotelog:"+eil[ex].label);
+				element=eil[ex];
+				break;
+			}}
+
+		}
+
+
 	}
+	console.log(element);
 	return element;
 }
 /*	* replace: hilfsmethode um nicht zu regexen(text,symbol,newsymbol)
@@ -1461,6 +1487,7 @@ emdparser.prototype.parseMap = function(){
 	//console.log("Timecheck: replace T_T needed:"+(new Date().getTime() - TimecheckStart));
   var lines = this.returnparsedlines(sourcecode);
 	var origlines = lines.slice(0);
+	this.map.origLines = origlines;
   var linestartpos = 0;
 	this.map.sidebarelements = new Array();
 
@@ -1495,11 +1522,13 @@ emdparser.prototype.parseMap = function(){
       //how many? as jakob only wants till ### we just check it this way:
       if(lines[x].substring(0,2)==="##")rauten="##";
       if(lines[x].substring(0,3)==="###")rauten="###";
+			var label = ["title","subtitle","subsubtitle"];
       var ersatz = "€€€";
       ersatz = ersatz.substring(0,rauten.length);
       this.map.addElement({
 				line:x,pos:0,html:"<h"+rauten.length+">",mdcode:rauten,
-				typ:"start", tag:"title", htmlend:"</h"+rauten.length+">"
+				typ:"start", tag:"title", htmlend:"</h"+rauten.length+">",
+				label: label[rauten.length-1]
 			});
 			this.lineswithhtml[x]="h"+rauten.length;
 			var rautentext = ["", "H1", "H2", "H3"];
@@ -1562,25 +1591,32 @@ emdparser.prototype.parseMap = function(){
 		    if(nlregnr>=2)start = ' start="'+lines[x].substring(listspaces,lines[x].indexOf(")"))+'" ';
 		  }
 		  var liststarthtml = "<"+listtyp+start+">";
-			// add ul/ol-tag element to map:
-		  this.map.addElement({
-		    line:x, pos:0, html:liststarthtml, mdcode:"", typ:"start",
-		    weight:1, tag:"liststart", listtyp:listtyp
-		  });
-		  var listzeichenarr = [". ", ".) ", ") ", ") ", ") ", "- ", "* ", "+ "];
+			var listzeichenarr = [". ", ".) ", ") ", ") ", ") ", "- ", "* ", "+ "];
 		  var listzeichen = listzeichenarr[nlregnr];
+			// add ul/ol-tag element to map:
+			var listtmpelement = {
+		    line:x, pos:0, html:liststarthtml, mdcode:"", typ:"start",
+		    weight:1, tag:"liststart", listtyp:listtyp, label:"list",
+				listregex: listregex, listmarker: listzeichen, olstart:start,
+				listchilds:[]
+		  };
+			this.map.addElement(listtmpelement);
+
 		  var listmdcode = lines[x].substring(0,lines[x].indexOf(listzeichen)+listzeichen.length);
 			//add first li-tag element to map:
-		  this.map.addElement({
+		  var listtmpli = {
 		    line:x, pos:0, html:"<li>", mdcode: listmdcode,
-		    typ:"start",
-		    tag:listtyp+"-li-start", weight:2
-		  });
+		    typ:"start", parentelement:listtmpelement,
+		    tag:listtyp+"-li-start", weight:2, label:"list"
+		  }
+			this.map.addElement(listtmpli);
+			listtmpelement.listchilds.push(listtmpli);
 		  //ol/ul-start-tag + first li-tag are now set
 			//get weight of list - as to mean which number of recursion are we in
 			var listweight = 0;
 			//sublist-check in lineswithhtml:
-			if(this.lineswithhtml[x]&& this.lineswithhtml[x].substring(0,7)==="sublist"){ //only on lineswithhtml == list are we on a sublist.
+			if(this.lineswithhtml[x]&&
+				this.lineswithhtml[x].substring(0,7)==="sublist"){ //only on lineswithhtml == list are we on a sublist.
 				//console.log(this.map.insertedhtmlinline[x-1][0])
 				listweight+=this.lineswithhtml[x].length - 7;
 			}
@@ -1602,7 +1638,7 @@ emdparser.prototype.parseMap = function(){
 		      //other listtype found: add br to last line
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"<br>", mdcode:"",
-		        typ:"end",
+		        typ:"end", label:"list",
 		        tag:listtyp+"-sublist-start-br", weight:3+listweight
 		      });
 		      sublist = true;
@@ -1625,19 +1661,21 @@ emdparser.prototype.parseMap = function(){
 		      //found other element of origlist, so close sublist in previous line:
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		        typ:"end",
+		        typ:"end", label:"list",
 		        tag:listtyp+"-sublist-end-li", weight:3+listweight,
 						whitespaces:listspaces
 		      });
 		      sublist = false;
 					//get mdcode for list-start-element:
 					listmdcode = lines[listx].substring(0,lines[listx].indexOf(listzeichen)+listzeichen.length);
-		      this.map.addElement({
+		      var listtmpli2 = {
 		        line:listx, pos:0, html:"<li>", mdcode:listmdcode,
-		        typ:"start",
+		        typ:"start", label:"list", parentelement:listtmpelement,
 		        tag:listtyp+"-start-li", weight:0,
 						whitespaces:listspaces
-		      });
+		      };
+					this.map.addElement(listtmpli2);
+					listtmpelement.listchilds.push(listtmpli2);
 					//get rid of mdcode in line:
 					//console.log("linelistx before change"+lines[listx]);
 					lines[listx] = substitutewitheuro(listmdcode.length)+lines[listx].substring(listmdcode.length);
@@ -1646,18 +1684,20 @@ emdparser.prototype.parseMap = function(){
 		      //found other element of origlist without being in a sublist
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		        typ:"end",
+		        typ:"end", label:"list",
 		        tag:listtyp+"-sublist-end-li", weight:3+listweight,
 						whitespaces:listspaces
 		      });
 					//get mdcode for list-start-element:
 					listmdcode = lines[listx].substring(0,lines[listx].indexOf(listzeichen)+listzeichen.length);
-		      this.map.addElement({
+					var listtmpli3 = {
 		        line:listx, pos:0, html:"<li>", mdcode:listmdcode,
-		        typ:"start",
+		        typ:"start", label:"list", parentelement:listtmpelement,
 		        tag:listtyp+"-start-li", weight:0,
 						whitespaces:listspaces
-		      });
+		      }
+					this.map.addElement(listtmpli3);
+					listtmpelement.listchilds.push(listtmpli3);
 					//get rid of mdcode in line:
 					//console.log("linelistx before change"+lines[listx]);
 					lines[listx] = substitutewitheuro(listmdcode.length)+lines[listx].substring(listmdcode.length);
@@ -1666,7 +1706,7 @@ emdparser.prototype.parseMap = function(){
 		      //no listelement in line - add /li and end the loop
 		      this.map.addElement({
 		        line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		        typ:"end",
+		        typ:"end", label:"list",
 		        tag:listtyp+"-end-li", weight:3+listweight,
 						whitespaces:listspaces
 		      });
@@ -1679,7 +1719,7 @@ emdparser.prototype.parseMap = function(){
 		    //last line is still a sublist, so one /li is missing
 		    this.map.addElement({
 		      line:listx-1, pos:lines[listx-1].length, html:"</li>", mdcode:"",
-		      typ:"end",
+		      typ:"end", label:"list",
 		      tag:listtyp+"sublist-end-li", weight:2,
 					whitespaces:listspaces
 		    });
@@ -1689,13 +1729,14 @@ emdparser.prototype.parseMap = function(){
 		  //if(sublist)sublistweight=3;
 		  this.map.addElement({
 		    line:listx-1, pos:lines[listx-1].length, html:"</"+listtyp+">", mdcode:"",
-		    typ:"end", listtyp:listtyp,
+		    typ:"end", listtyp:listtyp, label:"list",
 		    tag:"listend", weight:4+listweight
 		  });
 			//set lineswithhtml:
 			for(var lx=x;lx<listx;lx++){
 				if(this.lineswithhtml[lx]==undefined)this.lineswithhtml[lx]="list";
 			}
+			listtmpelement.lastline = listx-1;
 			this.map.sidebarelements.push({
 				typ:"multiline",text:listtyp, tag: listtyp,
 				startline:x, endline:listx-1
@@ -1718,18 +1759,20 @@ emdparser.prototype.parseMap = function(){
   			//console.log("quote gefunden von"+x+" bis:"+qlc)
   			qlc--;
   			//if(this.map.insertedhtmlinline[x]==null)this.insertedhtmlinline[x]=new Array();
-  			this.map.addElement({line:x,pos:0,html:"<quote>",mdcode:"> ",typ:"start"});
+  			this.map.addElement({line:x,pos:0,html:"<quote>",
+				mdcode:"> ",typ:"start", label:"quote"});
 
   			for(var ql=x;ql<qlc;ql++)this.map.addElement({line:ql,pos:lines[ql].length,
-          html:"<br>",mdcode:"",typ:"end"
+          html:"<br>",mdcode:"",typ:"end", label:"quoteend"
         })//lines[ql]+="<br>";
   			//console.log("quotes br-tags abgeschlossen");
   			//lines[qlc]+="</quote>";
         this.map.addElement({line:qlc,pos:lines[qlc].length,
-          html:"</quote>",mdcode:"",typ:"end"
+          html:"</quote>",mdcode:"",typ:"end", label:"quoteend"
         })
   			for(var qil=x+1;qil<=qlc;qil++){
-  				this.map.addElement({line:qil,pos:0,html:"",mdcode:"> ",typ:"start"});
+  				this.map.addElement({line:qil,pos:0,html:"",mdcode:"> ",
+					typ:"start", label:"quote"});
   			}
   			letztezeile = qlc;
   			for(var lwh=x;lwh<=letztezeile;lwh++)this.lineswithhtml[lwh]="quote";
@@ -1780,7 +1823,7 @@ emdparser.prototype.parseMap = function(){
 					}else{
 						var rawdata = new Array();
 			              for(var rdx=x+1;rdx<dataende;rdx++){
-			                rawdata.push(lines[rdx]);
+			                rawdata.push(origlines[rdx]);
 			                if(slidenote.datatypes.elementOfType(datatyp).mdcode==false){ //is mdcode allowed? if not:
 			                          lines[rdx]=substitutewitheuro(lines[rdx].length); //prevent further parsing
 											}else{ //mdcode is allowed
@@ -1809,7 +1852,7 @@ emdparser.prototype.parseMap = function(){
 											//add new comment to map:
 											this.map.addElement({
 												line:x,pos:datahead.length,html:"",
-												mdcode:headcomment,typ:"start",tag:"comment"
+												mdcode:headcomment,typ:"start",tag:"comment", label:"comment"
 											});
 										}
 			    					this.dataobjects.push({
@@ -1847,11 +1890,11 @@ emdparser.prototype.parseMap = function(){
 								}
 			          this.map.addElement({
 			            line:x,pos:0,html:'<code class="codeblock">',mdcode:origlines[x],typ:"start",
-			            tag:"codestart", endline:codeende
+			            tag:"codestart", endline:codeende, label:"code"
 			          });
 			          this.map.addElement({
 			            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"start",
-			            tag:"codeende"
+			            tag:"codeende", label:"code"
 			          });
 								this.map.codeblocks.push(codeblock);
 			          for(var cx = x;cx<=codeende;cx++){
@@ -1872,7 +1915,7 @@ emdparser.prototype.parseMap = function(){
 					//valid comment found:
 					var mapcomstart = {
 						line:x, pos:0, html:"", mdcode:lines[x],
-						typ:"start", tag:"comment"
+						typ:"start", tag:"comment", label:"comment"
 					}
 					this.map.addElement(mapcomstart);
 					//prevent further parsing:
@@ -1955,7 +1998,7 @@ emdparser.prototype.parseMap = function(){
             this.map.addElement({
               line:x, pos:imgpos, html: imghtml,
               mdcode:lines[x].substring(imgpos,imgposend+1),
-              typ:"image",
+              typ:"image", label:"image",
               src:imgurl, midpos:imgposmid, endpos:imgposend,
               alt:imgalt
             });
@@ -1992,7 +2035,7 @@ emdparser.prototype.parseMap = function(){
               line:x, pos:linkstart,
               html: '<a href="'+linkurl+'">',
               mdcode: "[",
-              typ:"link",
+              typ:"link", label:"link",
               tag:"linkstart",
               linkurl:linkurl,
               linktext:linktext
@@ -2001,7 +2044,7 @@ emdparser.prototype.parseMap = function(){
               line:x, pos:linkmid,
               html:"</a>",
               mdcode:']('+linkurl+')',
-              typ:"link",
+              typ:"link", label:"link",
               tag:"linkend",
               brotherelement:linkmapelstart
             };
@@ -2029,7 +2072,8 @@ emdparser.prototype.parseMap = function(){
           }else{
             this.lineswithhtml[x] = "pagebreak";
             this.map.addElement({
-              line:x,pos:0,html:"<hr>",mdcode:lines[x],typ:"pagebreak"
+              line:x,pos:0,html:"<hr>",mdcode:lines[x],typ:"pagebreak",
+							label:"new slide"
             });
             this.map.pageend.push({line:x-1, posinall: this.map.lineend[x-1]});
             this.map.pagestart.push({line:x+1, posinall: this.map.linestart[x+1]});
@@ -2076,14 +2120,16 @@ emdparser.prototype.parseMap = function(){
     						if(islastelement){
     							//everything is good, save the map-parsing:
     							this.lineswithhtml[footnoteline]="footnote";
-    							var fstart = {line:x,pos:actpos,html:"<sup>",mdcode:"[^",
+    							var fstart = {line:x,pos:actpos,html:"<sup>",
+										mdcode:"[^", label:"footnoteanchor",
     								typ:"start", footnoteline:footnoteline, tag:"footnote-anchor"};
-    							var fend = {line:x, pos:endpos, html:"</sup>",typ:"end",mdcode:"]",
+    							var fend = {line:x, pos:endpos, html:"</sup>",
+									typ:"end",mdcode:"]", label:"footnoteanchor",
     								brotherelement:fstart, tag:"footnote-anchor"};
     							fstart.brotherelement = fend;
     							var fnote = {line:footnoteline, pos:0, typ:"start",
     								html:"<p>"+footname+":",mdcode:footident,
-    							 	footanchor:fstart, tag:"footnote"};
+    							 	footanchor:fstart, tag:"footnote", label:"footnote"};
     							fstart.footer = fnote;
     							this.map.addElement(fstart);
     							this.map.addElement(fend);
@@ -2192,13 +2238,13 @@ emdparser.prototype.parseMap = function(){
             var mapstart = {
               line:x, pos:startpos, html:pelement.htmlstart,
               mdcode:mdstart, typ:"start",
-							weight:1
+							weight:1, tag:"simpleelement"
             };
             var mapend = {
               line:endline, pos:endpos, html:pelement.htmlend, mdcode:mdend,
 							typ:"end",
               brotherelement:mapstart,
-							weight:1
+							weight:1, tag:"simpleelement"
             };
             mapstart.brotherelement = mapend;
             this.map.addElement(mapstart);
@@ -2604,7 +2650,17 @@ pagegenerator.prototype.showPage = function(page){
 }
 
 pagegenerator.prototype.showInsertMenu = function(){
+	//helperfunction:
+	function constructButton(innerhtml, insertfunction){
+		var b = document.createElement("button");
+		b.innerHTML = innerhtml;
+		b.onclick = insertfunction;
+		return b;
+	}
+
 	var insertmenu = document.getElementById("insertarea");
+	var xtram = document.getElementById("extrainsertmenu");
+
 	//check if we are on an object:
 	var onObject = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
 
@@ -2645,6 +2701,137 @@ pagegenerator.prototype.showInsertMenu = function(){
 		xtram.innerHTML = "";
 		xtram.appendChild(codemenu);
 		document.getElementById("insertmenulabel").innerText = "CODE";
+	}else if(onObject && onObject.typ==="pagebreak"){
+		insertmenu.classList.add("insertmenu-extra");
+		xtram.innerHTML = "";
+		xtram.appendChild(constructButton("Add Backgroundimage", function(){
+			var pagenr = slidenote.parser.map.pageAtPosition(slidenote.textarea.selectionEnd)+1;
+			console.log("Add Backgroundimage to slide"+pagenr);
+			var inserttext = "![](backgroundslide"+pagenr+")\n\n";
+			var pos = slidenote.parser.map.pagestart[pagenr].posinall;
+			slidenote.textarea.value = slidenote.textarea.value.substring(0,pos)+
+																	inserttext+
+																	slidenote.textarea.value.substring(pos);
+			slidenote.textarea.selectionEnd=pos+inserttext.length-3;
+			slidenote.parseneu();
+			slidenote.textarea.focus();
+			setTimeout("slidenote.presentation.showInsertMenu()",500);
+		}));
+	}else if(onObject && onObject.tag ==="title"){
+			insertmenu.classList.add("insertmenu-extra");
+			xtram.innerHTML="";
+			var titlef = function(){
+				var el = slidenote.parser.CarretOnElement();
+				var selend = slidenote.textarea.selectionEnd;
+				var pos = el.posinall;
+				var newel = this.insert;
+				var newpos = pos+el.mdcode.length;
+				slidenote.textarea.value = slidenote.textarea.value.substring(0,pos)+
+													newel + slidenote.textarea.value.substring(newpos);
+				slidenote.textarea.selectionEnd = selend+newel.length-el.mdcode.length;
+				slidenote.parseneu();
+				slidenote.textarea.focus();
+			}
+			var h1b = constructButton("H1",titlef);
+			h1b.insert = "#";
+			var h2b = constructButton("H2",titlef);
+			h2b.insert = "##";
+			var h3b = constructButton("H3",titlef);
+			h3b.insert ="###";
+			xtram.appendChild(h1b);
+			xtram.appendChild(h2b);
+			xtram.appendChild(h3b);
+	}else if(onObject && onObject.label ==="list"){
+		insertmenu.classList.add("insertmenu-extra");
+		xtram.innerHTML="";
+		var listfunc = function(){
+			var el = slidenote.parser.CarretOnElement();
+			var latinnumbers = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+			var liste = el.parentelement;
+			var start = 1;
+			var insert = this.insert;
+			console.log("listinsert:"+insert);
+			if(liste.olstart){
+				start = liste.olstart.split('"')[1];
+				var ostart=start;
+				console.log("listinsert:olstart="+start);
+				if(!(start*1>=0)){
+					console.log("listinsert:start="+start);
+					start=" abcdefghijklmnopqrstuvwxyz".indexOf(start);
+					if(start===-1){
+						for(var lnb=1;lnb<latinnumbers;lnb++)
+										if(latinnumbers[lnb]===ostart)start=lnb;
+					}
+					if(start===-1)start=1;
+				}
+			}
+			start = start*1;
+			console.log("listinsert:start="+start);
+			var isnumber = (insert.substring(0,1)>0);
+			var newlisttype = insert.substring(0,1);
+			if(newlisttype==="*"||newlisttype==="-" || newlisttype==="+")newlisttype="ul";else newlisttype="ol";
+			var newmarker = insert.substring(1);
+			var resulttext = slidenote.textarea.value;
+			for(var x=liste.listchilds.length-1;x>=0;x--){
+				var actchild = liste.listchilds[x];
+				var newtext;
+				if(newlisttype==="ul")newtext=insert;
+				if(newlisttype==="ol"){
+					newtext = start + x;
+					console.log("listinsert:newtext start+x="+start+"+"+x);
+					if(!isnumber){
+						console.log("listinsert is:"+insert+"<<<");
+						if(insert==="I) "){
+							if(newtext>10)newtext=newtext-(Math.floor(newtext/10)*10);
+							newtext = latinnumbers[newtext];
+							if(start+x>10)newtext = "X"+newtext;
+						}else{
+							if(newtext>26)newtext=1;
+							newtext = " abcdefghijklmnopqrstuvwxyz".substring(newtext,newtext+1);
+						}
+					}
+					newtext+=newmarker;
+				}
+				resulttext = resulttext.substring(0,actchild.posinall)+
+										newtext+
+										resulttext.substring(actchild.posinall+actchild.mdcode.length);
+			}
+			console.log(resulttext);
+			var selend = slidenote.textarea.selectionEnd;
+			slidenote.textarea.value = resulttext;
+			slidenote.textarea.selectionEnd = selend;
+			slidenote.textarea.focus();
+			slidenote.parseneu();
+
+		}//end of insertfunction
+
+		var lbuttonlist = ["- ", "+ ", "* ","1. ","1.) ","1) ", "a) ","I) "];
+		for(var lbx=0;lbx<lbuttonlist.length;lbx++){
+			var b=constructButton(lbuttonlist[lbx],listfunc);
+			b.insert=lbuttonlist[lbx];
+			xtram.appendChild(b);
+			if(lbx===2)xtram.appendChild(document.createElement("hr"));
+		}
+	}else if(onObject){
+		//standard-Object:
+		insertmenu.classList.add("insertmenu-extra");
+		console.log(onObject);
+		xtram.innerHTML = "";
+		var b=constructButton("select element",function(){
+			var el = slidenote.parser.CarretOnElement();
+			if(el && el.brotherelement){
+				slidenote.textarea.selectionStart = el.posinall;
+				slidenote.textarea.selectionEnd = el.brotherelement.posinall+el.brotherelement.mdcode.length;
+			}else if(el){
+				slidenote.textarea.selectionStart = el.posinall;
+				slidenote.textarea.selectionEnd =slidenote.parser.map.lineend[el.line];
+			}
+			slidenote.textarea.blur();
+			slidenote.textarea.focus();
+		});
+		xtram.appendChild(b);
+		xtram.appendChild(constructButton("none"),function(){alert('hi')});
+
 	}else{
 		insertmenu.classList.remove("insertmenu-extra");
 		document.getElementById("insertmenulabel").innerText = "INSERT";
@@ -2684,13 +2871,19 @@ pagegenerator.prototype.showInsertMenu = function(){
 		insertmenu.style.top = top+"px";
 
 	}
-	slidenote.textarea.focus(); //get focus on slidenote again to regain cursor
+	//slidenote.textarea.focus(); //get focus on slidenote again to regain cursor
+	document.getElementById("carret").classList.add("show");
 	//insertmenu.focus();
 	if(carretline)carretline.style.visibility="hidden";
 	symbol.style.visibility = "hidden";
 
-	var closeMenu = function(){
+	this.closeMenu = function(e){
+		console.log(e);
+		slidenote.textarea.removeEventListener("click",slidenote.presentation.closeMenu);
+		slidenote.textarea.removeEventListener("keydown",slidenote.presentation.closeMenu);
+		slidenote.textarea.removeEventListener("scroll",slidenote.presentation.closeMenu);
 		setTimeout(function (){
+			document.getElementById("carret").classList.remove("show");
 			var insertmenu = document.getElementById("insertarea");
 			var symbol = document.getElementById("nicesidebarsymbol");
 			symbol.style.visibility = "visible";
@@ -2702,10 +2895,10 @@ pagegenerator.prototype.showInsertMenu = function(){
 		},200);
 
 	}
-		insertmenu.onclick = closeMenu;
-		slidenote.textarea.addEventListener("click", closeMenu);
-		slidenote.textarea.addEventListener("keyup",closeMenu);
-		slidenote.textarea.addEventListener("scroll",closeMenu);
+		insertmenu.onclick = this.closeMenu;
+		slidenote.textarea.addEventListener("click", this.closeMenu);
+		slidenote.textarea.addEventListener("keydown",this.closeMenu);
+		slidenote.textarea.addEventListener("scroll",this.closeMenu);
 		for(var x=0;x<slidenote.extensions.themes.length;x++){
 			if(slidenote.extensions.themes[x].active)slidenote.extensions.themes[x].styleThemeMDCodeEditor("insertAreaVisible"); //Hook-Funktion
 		}
@@ -3608,8 +3801,8 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 				this.textarea.selectionEnd = this.textarea.selectionEnd +1;
 				this.textarea.selectionStart = this.textarea.selectionEnd;
 			}else{
-				this.parseneu();
-				this.presentation.showpresentation();
+				//this.parseneu();
+				//this.presentation.showpresentation();
 			}
 		}
 		if(this.lastpressedkey==="Dead"){
@@ -3708,7 +3901,8 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 		emdend="\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text     | Text     |";
 	}else if(emdzeichen=="%code"){
 		var selectedtext = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
-		if(selectedtext.indexOf("\n")>-1){
+		if(selectedtext.indexOf("\n")>-1 ||
+				(textarea.value.substring(textarea.selectionStart-1, textarea.selectionEnd+1)==="\n\n")){
 			emdstart="\n```code\n";
 			emdend="\n```\n";
 		}else{
@@ -3750,9 +3944,10 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	//textarea.focus();
 	//var textarbody = textarea.value;
 	//textarea.value = textarbody.substring(0,selectionend);
+	textarea.selectionEnd = selectionend+emdstart.length; //cursor vor emdendsymbol stellen
+	textarea.blur();
 	textarea.focus();
 	//textarea.value = textarbody;
-	textarea.selectionEnd = selectionend+emdstart.length; //cursor vor emdendsymbol stellen
 	//textarea.scrollTop = scrolltop; //scrolle an richtige stelle
 	//testparsenachzeilen(document.getElementById("quelltext").value); //zeichen einparsen
 	console.log("parse nach input");

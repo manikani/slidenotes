@@ -194,30 +194,32 @@ function parsetesting(){
 		</div>
 		<div id="editoroptionbutton"><button id="editoroptionbuttonbutton">Options <img src="images/buttons/optioni.png"></button></div>
 		<div id="texteditorbuttons">
+			<div class="screenreader-only">Toolbar</div>
 			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
 			<button onclick="insertbutton('---')" title="new slide">---</button>
-			<button onclick="insertbutton('%head1')" title="Title"><img src="images/buttons/h1.png"></button>
-			<button onclick="insertbutton('%head2')" title="2nd Title"><img src="images/buttons/h2.png"></button>
-			<button onclick="insertbutton('%head3')" title="3rd Title"><img src="images/buttons/h3.png"></button>
-			<button onclick="insertbutton('%list')" title="unordered List"><img src="images/buttons/ul.png"></button>
-			<button onclick="insertbutton('%nrlist')" title="ordered list"><img src="images/buttons/ol.png"></button>
-			<button onclick="insertbutton('%quote')" title="quote"><img src="images/buttons/quote.png"></button>
-			<button onclick="insertbutton('%comment')" title="comment"><img src="images/buttons/comment.png"></button>
-			<button onclick="insertbutton('**')" title="bold"><img src="images/buttons/bold.png"></button>
-			<button onclick="insertbutton('*')" title="italic"><img src="images/buttons/italic.png"></button>
-			<button onclick="insertbutton('~~')" title="crossed"><img src="images/buttons/stroke.png"></button>
-			<button onclick="insertbutton('%code')" title="code"><img src="images/buttons/code.png"></button>
-			<button onclick="insertbutton('%link')" title="hyperlink"><img src="images/buttons/link.png"></button>
+			<button onclick="insertbutton('%head1')" title="Title"><img src="images/buttons/h1.png" alt="Title"></button>
+			<!-- <button onclick="insertbutton('%head2')" title="2nd Title"><img src="images/buttons/h2.png"></button>
+			<button onclick="insertbutton('%head3')" title="3rd Title"><img src="images/buttons/h3.png"></button>-->
+			<button onclick="insertbutton('%list')" title="unordered List"><img src="images/buttons/ul.png" alt="list"></button>
+			<button onclick="insertbutton('%nrlist')" title="ordered list"><img src="images/buttons/ol.png" alt="ordered list"></button>
+			<button onclick="insertbutton('%quote')" title="quote"><img src="images/buttons/quote.png" alt="quote"></button>
+			<button onclick="insertbutton('%comment')" title="comment"><img src="images/buttons/comment.png" alt="comment"></button>
+			<button onclick="insertbutton('**')" title="bold"><img src="images/buttons/bold.png" alt="bold"></button>
+			<button onclick="insertbutton('*')" title="italic"><img src="images/buttons/italic.png" alt="italic"></button>
+			<button onclick="insertbutton('~~')" title="crossed"><img src="images/buttons/stroke.png" alt="stroke"></button>
+			<button onclick="insertbutton('%code')" title="code"><img src="images/buttons/code.png" alt="code"></button>
+			<button onclick="insertbutton('%link')" title="hyperlink"><img src="images/buttons/link.png" alt="link"></button>
+			<button onclick="insertbutton('%footnote')" title="footnote"><img src="images/buttons/quote.png" alt="footnote"></button>
 			<!--<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>-->
 		</div>
 		<div id="sidebarcontainer">
 			<div id="sidebar"></div>
-			<div id="nicesidebarsymbol"><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="images/buttons/droptilde.png"></a><img src="images/buttons/cursorline.png"></div>
+			<div id="nicesidebarsymbol"><span id="nicesidebarsymbollabel"></span><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="images/buttons/droptilde.png"></a><img src="images/buttons/cursorline.png"></div>
 			<div id="insertarea">
 				<span> <label><span id="insertmenulabel">INSERT</span>   <img src="images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="images/buttons/cursorline.png"></span>
 
 				<div id="standardinsertmenu">
-					<button class="newpagebutton" onclick="insertbutton('---')" >new Page</button>
+					<!--<button class="newpagebutton" onclick="insertbutton('---')" >new Page</button>-->
 				</div>
 				<div id="extrainsertmenu">
 				</div>
