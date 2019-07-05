@@ -10,3 +10,22 @@ code {
 	text-decoration:underline;
 	font-weight:bold;
 }
+/*
+.specialline li{
+	opacity:0.5;
+}
+
+.specialline li.specialline{
+	opacity:1;
+}
+
+.specialline ul{
+	list-style:none;
+}*/
+
+span.codeline{
+	opacity:0.5;
+}
+span.specialline{
+	opacity:1;
+}

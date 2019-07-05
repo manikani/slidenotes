@@ -75,6 +75,7 @@ newtheme.styleThemeSpecials = function(){
 	for(var x=0;x<codeblocks.length;x++){
 		var block = codeblocks[x];
 		console.log("highlightlines:"+block.innerHTML);
+		if(block.innerHTML.substring(0,1)==="\n")block.innerHTML=block.innerHTML.substring(1);
 		//hljs.lineNumbersBlock(block);
 		var options;
 		if(codeheads[x] && codeheads[x].indexOf(this.metablockSymbol)>-1){
@@ -85,6 +86,10 @@ newtheme.styleThemeSpecials = function(){
 		this.findHighlightLines(block);
 		hljs.highlightBlock(block);
 		this.highlightLines(block);
+		var buildlines = (this.options.linehighlight!=null) || (this.options.linenumbering==="on" || this.options.linenumbering==="true");
+		if(buildlines){
+			//this.buildLines(block);
+		}
 		if(this.options.linenumbering === "on" ||
 				this.options.linenumbering === "true")this.buildLines(block);
 	}
@@ -116,7 +121,7 @@ newtheme.findHighlightLines = function(block){
 		}
 	}
 	if(this.options.linehighlight===null)this.options.linehighlight = foundlines.toString();
-	else this.options.linehighlight += foundlines.toString();
+	else this.options.linehighlight += ","+foundlines.toString();
 	console.log("found highlightlines:"+foundlines.toString());
 	block.innerHTML = lines.join("\n");
 }
@@ -125,7 +130,7 @@ newtheme.highlightLines = function(block){
 	var text = block.innerHTML;
 	console.log("start highlightlines with:"+text);
 	if(this.options === undefined)this.options = new slidenotecodeblockoptions();
-	var linemarker = "\n"+this.options.speciallinemarker;
+	//var linemarker = "\n"+this.options.speciallinemarker;
 	//this.speciallinemarker = linemarker;
 	block.classList.remove("specialline");
 	/*while(text.indexOf(linemarker)>-1 && confirm("linemarker: |"+linemarker+"|\n"+text)){
@@ -137,12 +142,21 @@ newtheme.highlightLines = function(block){
 		block.classList.add("specialline");
 	}*/
 	var textarr = text.split("\n");
+	var lastel = textarr.pop();
+	if(lastel.length>0)textarr.push(lastel);
 	var markerlnr = this.options.linesToHighlight();
-	for(var x=0;x<textarr.length;x++)if(markerlnr.includes(x+1)){
-		textarr[x]='<span class="specialline">'+textarr[x]+"</span>";
+	var specialLinesFound = false;
+	for(var x=0;x<textarr.length;x++){
+		if(markerlnr.includes(x+1)){
+			specialLinesFound = true;
+			textarr[x]='<span class="specialline">'+textarr[x]+"</span>";
+		}else{
+			textarr[x]='<span class="codeline">'+textarr[x]+"</span>";
+		}
 	}
 	text = textarr.join("\n");
 	block.innerHTML = text;
+	if(specialLinesFound)block.classList.add("specialline");
 	console.log("end with:"+text);
 	return text;
 }
@@ -184,7 +198,7 @@ function slidenotecodeblockoptions(){
 	}
 }
 newtheme.options = new slidenotecodeblockoptions();
-newtheme.metablockSymbol = "styled";
+newtheme.metablockSymbol = "options";//"styled";
 newtheme.hasInsertMenu = true;
 
 newtheme.insertMenuArea = function(dataobject){
@@ -208,6 +222,7 @@ newtheme.insertMenuArea = function(dataobject){
 			var metablockend = slidenote.textarea.value.indexOf("\n---\n",codeblockstart);
 			if(metablockend<0 || metablockend>codeblockend)	metablockend = false;
 			var metablockhead = (celement.mdcode.indexOf(theme.metablockSymbol)>-1);
+			if(key==="linehighlight")keyvalue="1,2-3,4";
 			var insertText = key + "="+keyvalue+"\n";
 			var insertPos = codeblockstart;
 			var foundkey = slidenote.textarea.value.indexOf("\n"+key,codeblockstart-1);
@@ -264,7 +279,7 @@ newtheme.parseStyledBlockOptions = function(block){
 	var options = new slidenotecodeblockoptions();
 	for(var x=0;x<optionlines.length;x++){
 		console.log(optionlines[x]);
-		var oline = optionlines[x].split("=");
+		/*var oline = optionlines[x].split("=");
 		if(oline.length>2){
 			var tmp = oline.shift();
 			var tmp2 = oline.join("=");
@@ -273,6 +288,20 @@ newtheme.parseStyledBlockOptions = function(block){
 		}
 		console.log(oline);
 		if(oline.length<2)continue;
+		*/
+		var oline = new Array();
+		var sign = "=";
+		var poseq = optionlines[x].indexOf("=");
+		var signpos = poseq;
+		var pospoint = optionlines[x].indexOf(":");
+		if(poseq + pospoint <0)continue; //no valid pos found
+		if(pospoint>0 &&
+			pospoint<poseq){
+				sign=":";
+				signpos = pospoint;
+			}
+		oline[0]=optionlines[x].substring(0,signpos);
+		oline[1]=optionlines[x].substring(signpos+1);
 		var optionname = oline[0].replace(/\s/g,"").toLowerCase();
 		var optiondata = oline[1].replace(" ","");
 		console.log(optionname+":"+optiondata);
@@ -311,8 +340,13 @@ newtheme.highlightLinesInEditor = function(){
 			}
 			if(map.codeblocklines[x].codeblock.metablockendline ===undefined &&
 				map.codeblocklines[x].origtext.indexOf("linemarker")>-1){
-				linemarker = map.codeblocklines[x].origtext.substring(map.codeblocklines[x].origtext.indexOf("=")+1).replace(" ","");
-				map.codeblocklines[x].codeblock.linemarker = linemarker;
+					var eqpos = map.codeblocklines[x].origtext.indexOf("=");
+					var popos = map.codeblocklines[x].origtext.indexOf(":");
+					if(popos>0&&popos<eqpos)eqpos=popos;
+					if(eqpos>0){
+						linemarker = map.codeblocklines[x].origtext.substring(eqpos+1).replace(" ","");
+						map.codeblocklines[x].codeblock.linemarker = linemarker;
+					}
 			}
 		}
 		console.log("highlight line: "+codes[x].innerHTML);
@@ -331,11 +365,27 @@ newtheme.styleThemeMDCodeEditor = function(){
 
 newtheme.buildLines = function(block){
 	var text = block.innerHTML;
+	var markedlines = this.options.linesToHighlight();
+	if(markedlines.length>0)block.classList.add("specialline");
 	console.log(text);
 	//text = text.replace('\n', '<ol start="'+this.options.linenumberingstart+'"><li>');
-	text = '<ol start="'+this.options.linenumberingstart+'"><li>'+text;
+	var firstli = "<li>";
+	if(markedlines.includes(1))firstli='<li class="specialline">';
+	if(this.options.linenumbering === "on"|| this.options.linenumbering==="true"){
+		text = '<ol start="'+this.options.linenumberingstart+'">'+firstli+text;
+	}else{
+		text = '<ul>'+firstli+text;
+	}
+
 	console.log(text);
-	text = text.replace(/\n/g, "</li><li>");
+	var linenr = 1;
+	while(text.indexOf("\n")>-1){
+		linenr++;
+		let litag = "<li>";
+		if(markedlines.includes(linenr))litag = '<li class="specialline">'
+		text = text.replace(/\n/, "</li>"+litag);
+	}
+	//text = text.replace(/\n/g, "</li><li>");
 	console.log(text);
 	text+="</li></ol>";
 	//text = text.replace(/\n/g,"");
