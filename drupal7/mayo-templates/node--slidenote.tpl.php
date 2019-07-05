@@ -84,7 +84,9 @@ var initial_note = {
 title: '<?php print $title;?>',
 nid: <?php print $node->nid;?>,
 encnote:'<?php if(isset($field_encryptednote[0]))print($field_encryptednote[0]['value']);?>',
-encimg:'<?php if(isset($field_encimages[0]))print($field_encimages[0]['value']);?>',
+encimg:'<?php if(isset($field_encimages[0]))print($field_encimages[0]['value']);?>', //old! delete in future update!
+encimages:[<?php if(isset($field_encimg))foreach($field_encimg as $actimg){print('"'.str_replace("\n","",$actimg['value']).'",')};?>], //new one
+encimgmeta:'<?php if(isset($field_imagemeta[0]))print($field_imagemeta[0]['value']);?>',
 notehash:'<?php if(isset($field_notehash[0]))print($field_notehash[0]['value']);?>',
 imagehash:'<?php if(isset($field_imageshash[0]))print($field_imageshash[0]['value']);?>',
 author: {id:<?php print($uid);?>} 

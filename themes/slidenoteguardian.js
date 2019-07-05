@@ -39,16 +39,21 @@ function slidenoteGuardian(slidenote){
   }
   if(location.protocol!="file:"){
     console.log("get all css from static webserver");
-    this.getCSSFromStaticWebserver();
-    this.getJSFromStaticWebserver();
+    setTimeout("slidenoteguardian.getCSSFromStaticWebserver();"+
+      "slidenoteguardian.getJSFromStaticWebserver();",100);
   }
   if(this.restObject.exportedPresentations===undefined)this.restObject.exportedPresentations = new Array();
   this.restObject.combine = function(uploadobj){
     for(var key in uploadobj){
       if(uploadobj.hasOwnProperty(key)){
-        this[key]=uploadobj[key];
+        if(key==="encimages"){
+            this[key].push(uploadobj[key]);
+        }else{
+          this[key]=uploadobj[key];
+        }
       }
     }
+    uploadobj = {}; //destroy uploadobject?
   }
   this.uploadRestObject = {};
 
@@ -88,7 +93,9 @@ function slidenoteGuardian(slidenote){
     savestatus.title = "no connection with the cloud";
   }
   //can we start the init here? why not?
-  this.init();
+  //this.init(); not, because slidenoteguardian is not initialised yet :(
+  setTimeout("slidenoteguardian.init()",10);
+  this.initialised = false;
 }
 
 slidenoteGuardian.prototype.init = function(){
@@ -115,7 +122,7 @@ slidenoteGuardian.prototype.init = function(){
     "\n restobj.encnote-empty?"+(this.restObject.encnote==="")
   );
 
-  if(cachednote.saved === "true" &&
+  if((cachednote.saved === "true" || cachednote.notehash === null) &&
       this.hascmsconnection &&
     this.restObject.encnote.length>1){
     setTimeout("slidenoteguardian.loadNote('cms')",1);
@@ -207,8 +214,8 @@ slidenoteGuardian.prototype.init = function(){
 
   window.onbeforeunload = function(){
     var acthash = slidenoteguardian.localstorage.getItem("slidenotehash");
-    if(acthash!=slidenoteguardian.cmsSlidenoteHash.value){
-      console.log(acthash+"\n localstoragehash vs cmshash\n"+slidenoteguardian.cmsSlidenoteHash.value);
+    if(acthash!=slidenoteguardian.restObject.notehash){
+      //console.log(acthash+"\n localstoragehash vs cmshash\n"+slidenoteguardian.cmsSlidenoteHash.value);
       return "do you really want to leave?";
     }
   }
@@ -250,13 +257,15 @@ slidenoteGuardian.prototype.init = function(){
     this.savebuttontitles = {default:"not in sync with cloud",
                              error:"error while connecting to cloud",
                              sync:""}
-  })
+  });
+  this.jsfilesForExport = [];
+  this.initialised = true;
 }
 
 slidenoteGuardian.prototype.loadFromRest = async function(filepath){
   var oReq = new XMLHttpRequest();
   oReq.addEventListener("load", function(){
-    slidenoteguardian.loadedFromRest(this);
+    slidenoteguardian.loadedFromRest(this.response);
   });
   oReq.open("GET", filepath);
   oReq.send();
@@ -386,7 +395,7 @@ slidenoteGuardian.prototype.getRestToken = async function(afterwards){
 //@param: payloadobject
 slidenoteGuardian.prototype.saveToRest= async function(path, payload){
   console.log("start saveToRest:"+path);
-  if(!this.restToken){
+  if(this.restToken===undefined || this.restToken===null){
     console.log("Rest-Token not set yet... getting Token and try again...");
     this.getRestToken("save"); //has to be with await
     return; //return and wait for next save till we can await
@@ -425,7 +434,8 @@ slidenoteGuardian.prototype.savedToRest = function(resolve){
     statusimg.src = slidenote.imagespath+"buttons/clouderror.png";
     statusimg.title=resolve.statusText;
   }
-  this.savingtoDestination=undefined;
+  this.savingtoDestination=undefined; //old? seems to not be used anymore
+  this.uploadRestObject = {}; //destroy uploadRestObject?
 }
 
 slidenoteGuardian.prototype.exportPresentationToRest = function(payload){
@@ -527,8 +537,18 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
     payloadobj.field_notehash=this.uploadRestObject.notehash;
     payloadobj.field_encimages= this.uploadRestObject.encimg;
     payloadobj.field_imageshash=this.uploadRestObject.imagehash;
-  }
-  else if(mode==="presentation"){
+  }else if(mode ==="images"){
+      payloadobj.field_imagemeta = this.uploadRestObject.encimgmeta;
+      payloadobj.field_encimgdelete = this.uploadRestObject.deleteImageHashes;
+      /*var imgupload = "";
+      for(var x=0;x<this.uploadRestObject.encimages.length;x++){
+        var act=this.uploadRestObject.encimages[x];
+        if(act)imgupload+=act + "\n";
+      }
+      payloadobj.field_encimgupload = imgupload;*/
+      //payloadobj.field_encimgupload = this.uploadRestObject.uploadImageString;
+      payloadobj.field_encimgupload = this.uploadRestObject.encimages.join("\n")+"\n";
+  }else if(mode==="presentation"){
     path = "/node/";
     let options = this.saveConfig();
     console.log(options);
@@ -668,7 +688,7 @@ slidenoteGuardian.prototype.loadCssFromRest = function(){
 
 }
 
-slidenoteGuardian.prototype.loadNote = async function(destination){
+slidenoteGuardian.prototype.loadNote = async function(destination, dontinsert){
     //loads Note from cmsArea or from local destination
     //destination is "cms" or "local"
     if(destination==="cms"){
@@ -676,7 +696,7 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
       //first thing to do is get the fields right:
       //this.getCMSFields();
       if(this.cmsArea)this.encBufferString = this.cmsArea.value;
-      if(initial_note)this.encBufferString = initial_note.encnote;
+      if(typeof initial_note!="undefined")this.encBufferString = initial_note.encnote;
       //this.encImageString = this.cmsImages.value;
     }else if(destination==="local"){
       this.encBufferString = this.localstorage.getItem('cryptnote');
@@ -697,12 +717,25 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
     }
     if(this.decText === "decryption has failed")return; //password wrong, abort the load
     console.log("decryption ended succesfully:"+this.decText.substring(0,20));
+    if(dontinsert)return this.decText;
     this.slidenote.textarea.value = this.decText; //putting result into textarea
     //loading images:
     let imgstring;
     if(destination==="cms"){
       if(this.cmsImages)imgstring = this.cmsImages.value;
-      else if(initial_note)imgstring = initial_note.encimg;
+      else if(typeof initial_note!="undefined"){
+        //imgstring = initial_note.encimg;
+        imgstring = await this.decryptText(initial_note.encimgmeta);
+        initial_note.imgmeta = imgstring;
+        for(var i=0;i<initial_note.encimages.length;i++){
+          let acthash = initial_note.encimages[i].substring(0,initial_note.encimages[i].indexOf(">>>"));
+          let actimg = initial_note.encimages[i].substring(acthash.length+3);
+          actimg = await this.decryptText(actimg);
+          imgstring = imgstring.replace(acthash,actimg);
+        }
+        slidenote.base64images.loadImageString(imgstring);
+        imgstring = undefined;
+      }
     }
     if(destination==="local")imgstring = this.localstorage.getItem('cryptimagestring');
     if(imgstring != undefined && imgstring.length>0){
@@ -712,12 +745,15 @@ slidenoteGuardian.prototype.loadNote = async function(destination){
 
     }
     //cleaning up:
+    this.slidenote.textarea.blur();
     this.slidenote.textarea.focus(); //focus on textarea for further editing
     this.slidenote.parseneu(); //let wysiwyg-editor notice change
 
 }
 
 slidenoteGuardian.prototype.saveNote = async function(destination){
+  var restObject = this.restObject;
+  if(!this.initialised)return;
   if(destination==="cms"&&!this.hascmsconnection)return;
   if(destination==="local" && !slidenote.extensions.allThemesLoaded)return;
   if(slidenote ===undefined || this.slidenote.base64images ===undefined)return;
@@ -725,7 +761,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   console.log("starting save note to destination "+destination);
   console.log("saving to somewhere?"+this.savingtoDestination);
   if(this.savingtoDestination!=undefined){
-    setTimeout("slidenoteguardian.saveNote('"+destination+"')",100);
+    //setTimeout("slidenoteguardian.saveNote('"+destination+"')",100);
     return;
   }
   this.savingtoDestination = destination;
@@ -753,21 +789,34 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
       //first get the fields right:
       //this.getCMSFields();
       //slidenote has images - check if already saved:
-      newimghash = await this.hash(this.slidenote.base64images.allImagesAsString());
-      if(this.restObject.imagehash!=newimghash){//this.cmsImagesHash.value != newimghash){
-        console.log("save images with hash:"+newimghash);
+      //newimghash = await this.hash(this.slidenote.base64images.allImagesAsString());
+      //if(this.restObject.imagehash!=newimghash){//this.cmsImagesHash.value != newimghash){
+      //  console.log("save images with hash:"+newimghash);
         if(!this.isencryptingimages){
-          console.log("its not encrypting so start:");
+          console.log("its not encrypting images so start preparing:");
           this.isencryptingimages = true;
-          encimgstring = await this.encryptImages(); //encrypt imagestring
-          this.uploadRestObject.imagehash = newimghash; //this.cmsImagesHash.value = newimghash; //send new hash to cms
+          //encimgstring = await this.encryptImages(); //encrypt imagestring
+          //this.uploadRestObject.imagehash = newimghash; //this.cmsImagesHash.value = newimghash; //send new hash to cms
+          //above: old part down: new part
+          var b64imor = slidenote.base64images.base64images;
+          var b64meta = slidenote.base64images.allImagesAsString();
+          var b64hashes = new Array(); var b64images = new Array();
+          for(var x=0;x<b64imor.length;x++){
+              var b64im=b64imor[x];
+              if(b64im.hash===undefined)b64im.hash = await this.hash(b64im.base64url);
+              if(b64im.encrypt===undefined)b64im.encrypt = await this.encryptText(b64im.base64url);
+              b64meta = b64meta.replace(b64im.base64url,b64im.hash);
+              b64hashes.push(b64im.hash);
+              b64images.push(b64im.encrypt);
+          }
+
           this.isencryptingimages = false; //allow further encrypting
           var enctime = new Date().getTime() - starttime;
           console.log("Timecheck: encrypted imgstring in "+enctime+"Ms");
         }else{ console.log("still encrypting images - do nothing"); return;}
-      } else{
-        console.log("images did not change:"+newimghash);
-      }
+      //} else{
+      //  console.log("images did not change:"+newimghash);
+      //}
     }else if(destination==="local"){
       //saving images to localStorage - TODO: do we want to check if already saved? Yes, because it can be quite bothersome to wait!
       imghash = await this.hash(this.slidenote.base64images.allImagesAsString());
@@ -782,7 +831,8 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     //this.cmsSlidenoteHash.value = await this.hash(slidenotetext); //putting hash into cms
     //this.cmsArea.value= result; //putting it in textarea of cms
     //----old://if(imagestring.length>0)this.cmsImages.value = ivstring+imagestring;
-    this.uploadRestObject = {};
+    if(this.uploadRestObject.inprogress)return; //do only try to save once at a time
+    this.uploadRestObject = {inprogress:true};
     this.uploadRestObject.notehash = await this.hash(slidenotetext); //putting into rest-object
     this.uploadRestObject.encnote = result;
     var savestatus = document.getElementById("savestatus")
@@ -790,7 +840,60 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     savestatus.title="saving note into cloud";
 
     var drupal7prepare = this.prepareDrupal7Rest("text");
-    //TODO: images?
+    //TODO: images? new part:
+    //check if we have to save:
+    if(restObject.imgmeta != b64meta){
+        this.uploadRestObject.encimgmeta = await this.encryptText(b64meta);
+        this.uploadRestObject.imgmeta = b64meta;
+        var deletedimages = new Array();
+        //check free spaces:
+        for(var x=restObject.encimages.length-1;x>=0;x--){
+            if(restObject.encimages[x]===undefined){
+              restObject.encimages.splice(x,1);
+              continue;
+            }
+            var acthash = restObject.encimages[x].substring(0,restObject.encimages[x].indexOf(">>>"));
+            var posinar = b64hashes.indexOf(acthash);
+            if(posinar>=0){
+                b64hashes.splice(posinar,1);
+                b64images.splice(posinar,1);
+            }else{
+                deletedimages.push(restObject.encimages[x]);
+                //restObject.encimages[x] = undefined; //deleted on local side
+                restObject.encimages.splice(x,1); //delete on local side
+            }
+        }
+        /*
+        for(var x=0;x<restObject.encimages.length;x++){
+            if(restObject.encimages[x]===undefined && b64hashes.length>0){
+                this.uploadRestObject.encimages[x] = b64hashes.pop() + ">>>"+b64images.pop();
+            }
+            if(b64hashes.length===0)break;
+        }*/
+        //this.uploadRestObject.uploadImageString = "";
+        this.uploadRestObject.encimages = [];
+        for(var x=0;x<b64hashes.length;x++){
+          //this.uploadRestObject.uploadImageString+= b64hashes[x]+
+          //  ">>>"+b64images[x]+"\n";
+            this.uploadRestObject.encimages.push(b64hashes[x]+
+              ">>>"+b64images[x]); //store it into upload Object
+
+        }
+        this.uploadRestObject.deleteImageHashes = "";
+        for(var x=0;x<deletedimages.length;x++){
+          this.uploadRestObject.deleteImageHashes += deletedimages[x].substring(0,deletedimages[x].indexOf(">>>"));
+          this.uploadRestObject.deleteImageHashes += "\n";
+
+        }
+        //if(b64hashes.length>0){
+            //exception: server-space is full
+        //}
+
+        drupal7prepare = this.prepareDrupal7Rest("images");
+
+
+    }
+    //oldpart:
     if(encimgstring!=""){
       var starttimecopy = new Date().getTime();
       //this.cmsImages.value=encimgstring; //dont do it for test purpose
@@ -876,6 +979,26 @@ slidenoteGuardian.prototype.loadImages = async function(destination){
   }
 };
 
+slidenoteGuardian.prototype.decryptText = async function(txt){
+  //image-part:
+  let encimagestring = txt;
+  //console.log("load Images" + encimagestring.substring(this.ivlength,30));
+  if(encimagestring.length>0){
+    //getting iv out of the string
+    let imgiv = new Uint8Array(this.ivlength);
+    for(let iiv=0;iiv<this.ivlength;iiv++)imgiv[iiv]=encimagestring.charCodeAt(iiv)-255;
+    //this.imgiv = imgiv;
+    encimagestring = encimagestring.substring(this.ivlength); //delete iv-chars
+    let imgbuffer = new Uint8Array(encimagestring.length);
+    for(let im=0;im<imgbuffer.length;im++)imgbuffer[im]=encimagestring.charCodeAt(im)-255;
+    let decodedString = await this.decrypt(imgbuffer.buffer, imgiv); //decrypt imgbuffer
+    return decodedString; //send it to slidenote
+
+  }
+};
+
+
+//old: can be removed in the future:
 slidenoteGuardian.prototype.encryptImages = async function(){
   //now the images:
   let imagestring="";
@@ -892,6 +1015,30 @@ slidenoteGuardian.prototype.encryptImages = async function(){
   }
 };
 
+slidenoteGuardian.prototype.encryptImage = async function(base64image){
+  //now the images:
+  let imagestring="";
+  imagestring += await this.hash(base64image.base64url);
+  base64image.hash = imagestring;
+  imagestring+=">>>";
+  //console.log("save Imagestring:"+this.slidenote.base64images.allImagesAsString());
+    let encResult = await this.encrypt(base64image.base64url);
+    let imageBuffer = encResult.encbuffer;
+    for(let i=0;i<encResult.iv.length;i++)imagestring+=String.fromCharCode(encResult.iv[i]+255);
+    let imageutf8 = new Uint8Array(imageBuffer);
+    for(let i=0;i<imageutf8.length;i++)imagestring+=String.fromCharCode(imageutf8[i]+255);
+    return imagestring;
+};
+
+slidenoteGuardian.prototype.encryptText = async function(txt){
+    var imagestring="";
+    let encResult = await this.encrypt(txt);
+    let imageBuffer = encResult.encbuffer;
+    for(let i=0;i<encResult.iv.length;i++)imagestring+=String.fromCharCode(encResult.iv[i]+255);
+    let imageutf8 = new Uint8Array(imageBuffer);
+    for(let i=0;i<imageutf8.length;i++)imagestring+=String.fromCharCode(imageutf8[i]+255);
+    return imagestring;
+};
 slidenoteGuardian.prototype.loadConfig = async function(destination){
   //loads Config from configarea or from local destination
   //destination is cms or local
@@ -1459,17 +1606,21 @@ slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
   mdcodeblock.id = "slidenoteGuardianCodePreview";
 
   if(imagestring){
-
-    var imagepuffer = imagestring.split("<<<");
-    imagepuffer.pop(); //delete last element as it has no meaning
+    //old: imagestring is now json, not old-style:
+    //var imagepuffer = imagestring.split("<<<");
+    //imagepuffer.pop(); //delete last element as it has no meaning
+    var imagepuffer = JSON.parse(imagestring);
     imageblocktitle.innerHTML = "Images from slidenote to import: (Total "+imagepuffer.length+" images)";
     for(let i=0;i<imagepuffer.length;i++){
-      let imgdata = imagepuffer[i].split(">>>");
+      let imgdata = imagepuffer[i].base64url;//imagepuffer[i].split(">>>");
+      let imgnames = imagepuffer[i].names; //imgdata[0].substring(0,imgdata[0].indexOf("§$§")).split("§€§");
+      let imgfilename = imagepuffer[i].filename;//imgdata[0].substring(imgdata[0].indexOf("§$§")+3);
+
       //previewimages.push({name:imgdata[0],src:imgdata[1]});
       let imgtitle = document.createElement("h3");
-      imgtitle.innerHTML = imgdata[0];
+      imgtitle.innerHTML = imgfilename + ": used as <i>![]("+imgnames.join(")</i> and <i>![](")+")</i>";
       let img = new Image();
-      img.src = imgdata[1];
+      img.src = imgdata;
       imageblock.appendChild(imgtitle);
       imageblock.appendChild(img);
     }

@@ -5,9 +5,16 @@ newtheme.active=true;
 
 //ergänze javascript-architektur für verwalten von images:
 //grundklasse:
-function base64Image(name,base64url){
-  this.name = name;
+function base64Image(name,base64url,filename){
+  //this.name = name;
   this.base64url = base64url;
+  //this.id = ???;
+  this.names = [];
+  if(name){
+    if(typeof name==="string")this.names.push(name);
+    else this.names = name;
+  }
+  this.filename = filename;
 }
 //objekt base64images
 slidenote.base64images = {
@@ -20,20 +27,33 @@ slidenote.base64images = {
   maxheight: 1080,//720, //1080,
   imageByName : function(imagename){  //returns fitting base64-image
     for(var x=0;x<this.base64images.length;x++){
-        if(this.base64images[x].name===imagename){
+      for(var y=0;y<this.base64images[x].names.length;y++){
+        if(this.base64images[x].names[y]===imagename){
           return this.base64images[x];
         }
+      }
+    }
+  },
+  imageBySource : function(base64url){
+    for(var x=0;x<this.base64images.length;x++){
+      if(this.base64images[x].base64url === base64url){
+        return this.base64images[x];
+      }
     }
   },
   rebuildOldImages: function(){
+    //will be replaced soon i think:
     if(!document.getElementById("fileOld"))return;
     //displays images in js-database of slidenote in div
     var oldimagestext = "";
     for(var x=0;x<this.base64images.length;x++){
       //oldimagestext+='<a href="Javascript:insertbutton(\'%b64'+this.base64images[x].name+'\')"';
-      oldimagestext+= 'Image #'+x+'. Use ![]('+this.base64images[x].name+') in md-code or click on image to insert into editor:';
-      oldimagestext+='<img src="'+this.base64images[x].base64url+'" name="'+this.base64images[x].name+'" onclick="slidenote.base64images.addImage(this.name,this.src)">';
-      oldimagestext+='<a href="Javascript:slidenote.base64images.deleteImage(\''+this.base64images[x].name+'\')">Delete Image from Database</a>';
+      oldimagestext+= 'Image #'+x+'. <br>';
+      for(var y=0;y<this.base64images[x].names.length;y++){
+          oldimagestext+='Use ![]('+this.base64images[x].names[y]+') in md-code or click on image to insert into editor<br>';
+      }
+      oldimagestext+='<img src="'+this.base64images[x].base64url+'" name="'+this.base64images[x].filename+'" onclick="slidenote.base64images.addImage(this.name,this.src)">';
+      oldimagestext+='<a href="Javascript:slidenote.base64images.deleteImage(\''+this.base64images[x].base64url+'\')">Delete Image from Database</a>';
       oldimagestext+='<br>';
     }
     document.getElementById("fileOld").innerHTML = oldimagestext;
@@ -43,10 +63,28 @@ slidenote.base64images = {
     var nombre = name;
     if(this.preselectedname!=null)nombre=this.preselectedname;
     console.log("add image"+nombre);
+    /*
     if(this.imageByName(nombre)!=null) {
       this.imageByName(nombre).base64url = base64url;
     } else {
       this.base64images.push(new base64Image(nombre,base64url)); //adds image to Database
+    }*/
+    var imgbysrc = this.imageBySource(base64url);
+    var imgbyname = this.imageByName(nombre);
+    if(imgbysrc && imgbysrc != imgbyname){
+      //image found in database, so add name to it:
+      imgbysrc.names.push(nombre);
+      //delete old connection if exists:
+      if(imgbyname)for(var x=0;x<imgbyname.names.length;x++){
+        if(imgbyname.names[x]===nombre)imgbyname.names.splice(x,1);
+      }
+    }else if(!imgbysrc){
+      //image not found in database - add new image:
+      this.base64images.push(new base64Image(nombre,base64url,name)); //adds image to Database
+      //delete old connection if exists:
+      if(imgbyname)for(var x=0;x<imgbyname.names.length;x++){
+        if(imgbyname.names[x]===nombre)imgbyname.names.splice(x,1);
+      }
     }
     var activeimage =slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
     //if(activeimage==null)activeimage =slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd-1);
@@ -66,9 +104,9 @@ slidenote.base64images = {
     slidenote.parseneu();
     this.preselectedname=null;
   },
-  deleteImage: function(name){
+  deleteImage: function(base64url){
     for(var x=0;x<this.base64images.length;x++){
-      if(this.base64images[x].name===name)this.base64images.splice(x,1);
+      if(this.base64images[x].base64url===base64url)this.base64images.splice(x,1);
     }
     this.rebuildOldImages();
   },
@@ -87,23 +125,70 @@ slidenote.base64images = {
     return this.base64images[this.base64images.length-1];
   },
   allImagesAsString: function(){
+    let allimages = [];
+    for(var x=0;x<this.base64images.length;x++){
+      let b=this.base64images[x];
+      allimages.push({names:b.names,filename:b.filename,
+                base64url:b.base64url});
+      //i do this to avoid including hash & encrypted image
+    }
+    return JSON.stringify(allimages);
+  },
+  loadImageString: function(jsonstring){
+    let loadimages = JSON.parse(jsonstring);
+    if(!loadimages.length)return; //something went wrong
+    for(var x=0;x<loadimages.length;x++){
+        let loadi = loadimages[x];
+        let existingimage = this.imageBySource(loadi.base64url);
+        if(!existingimage){ //image does not exist yet
+          this.base64images.push(new base64Image(loadi.names,loadi.base64url,loadi.filename));
+        }else{ //image is in database, put name to it:
+          for(var n=0;n<loadi.names.length;n++){
+            if(this.imageByName(loadi.names[n])===null){
+              existingimage.names.push(loadi.names[n]);
+            }
+          }
+        }
+    }
+    this.rebuildOldImages();
+  },
+  allImagesAsStringold: function(){
     let imagestring = "";
     for(let x=0;x<this.base64images.length;x++){
-      imagestring+=this.base64images[x].name+'>>>'+this.base64images[x].base64url+'<<<';
+      imagestring+=this.base64images[x].names.join("§€§")+
+                  "§$§"+this.base64images[x].filename+
+                  '>>>'+this.base64images[x].base64url+'<<<';
     }
     return imagestring;
   },
-  loadImageString: function(imagestring){
+  loadImageStringold: function(imagestring){
     let aktpos=0;
     let imgstring = imagestring;
     while(imgstring.indexOf('>>>')>0){
       let aktimg = imgstring.substring(0,imgstring.indexOf('<<<'));
       //check if imagename is yet in database - if so replace image-data:
-      let aktimgname = aktimg.substring(0,aktimg.indexOf(">>>"));
-      let existingimage = this.imageByName(aktimgname);
+      let aktimgmeta = aktimg.substring(0,aktimg.indexOf(">>>"));
+      let aktimgbase64 = aktimg.substring(aktimgmeta.length+3);
+      let aktimgnames = aktimgmeta.substring(0,aktimgmeta.indexOf("§$§")).split("§€§");
+      let aktimgfilename = aktimgmeta.substring(aktimgmeta.indexOf("§$§")+3);
+      let existingimage = this.imageBySource(aktimgbase64);
+      if(!existingimage){
+        //only load image if not existend in database:
+        this.base64images.push(new base64Image(aktimgnames, aktimgbase64, aktimgfilename));
+      }else{
+        //image exists
+        for(var x=0;x<aktimgnames.length;x++){
+          if(this.imageByName(aktimgnames[x])===null){
+            existingimage.names.push(aktimgnames[x]);//add name to it
+          }
+        }
+      }
+      /*let existingimage = this.imageByName(aktimgname);
       if(existingimage!=null)
             existingimage.base64url = aktimg.substring(aktimg.indexOf('>>>')+3); else
             this.base64images.push(new base64Image(aktimg.substring(0,aktimg.indexOf('>>>')), aktimg.substring(aktimg.indexOf('>>>')+3)));
+            */
+
       imgstring = imgstring.substring(imgstring.indexOf('<<<')+3);
     }
     this.rebuildOldImages();
