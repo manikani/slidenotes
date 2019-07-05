@@ -29,9 +29,16 @@
  * all elements are vanilla HTML5 tags or aria-roles for the CSS to be fully agnostic
  * (you can drop the css on top of semantic (!) HTML5 to generate a consistent look)
  */
-.prototyp {
+.presentation {
+	 background: white;
+ }
+.prototyp .ppage{
+	background:white;
+}
+.prototyp .presentation {
 	color: #050505; /* old IE */
 	color: rgba(15,15,15,1);
+	background:white;
 	background-color: #fafafa; /* old IE */
 	background-color: rgb(250,250,250);
 	max-width: 160em;
@@ -194,6 +201,12 @@
 		margin-right: 0.5em;
 		color: #808080; /*old IE */
 		color: rgba(128,128,128,1);
+	}
+	.prototyp code li:before{
+		content: none;
+	}
+	.prototyp code ol{
+		list-style-type: decimal-leading-zero;
 	}
 .prototyp pre {
 	font-family: inherit;
