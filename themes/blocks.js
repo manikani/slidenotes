@@ -225,6 +225,9 @@ newtheme.buildgrid = function(gridcontainer){
   for(var y=0;y<colums;y++)area+=gridarea[x][y]+' ';
   area+='" ';
   }
+  area+='" ';
+  for(var y=0;y<colums;y++)area+="nav "
+  area+='"';
   console.log("area to use:"+area);
   gridcontainer.style.gridTemplateAreas = area;
   //gridcontainer.style.gridTemplateRows = "repeat("+gridarray.length+", 1fr )";
@@ -249,6 +252,8 @@ newtheme.buildgrid = function(gridcontainer){
   }
   if(hasleftorrightsection)rowheights+="1fr ";
   if(footerline)rowheights+="auto ";
+  //add line for having space for nav-menu:
+  rowheights+="20px ";
   console.log("gridTemplateRows:"+rowheights);
   gridcontainer.style.gridTemplateRows=rowheights;
 }

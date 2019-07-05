@@ -793,6 +793,7 @@ emdparser.prototype.renderCodeeditorImagePreview = function(){
 }
 
 emdparser.prototype.generateSidebar = function(startend){
+	return;
 	var starttime = new Date();
 	var sidebarelements = slidenote.parser.map.sidebarelements;
 	var sidebar = document.getElementById("sidebar");
@@ -812,12 +813,12 @@ emdparser.prototype.generateSidebar = function(startend){
 		if(startend.start)startline = this.map.pagestart[startend.start].line;
 		if(startend.end)endline=this.map.pageend[startend.end].line;
 		if(startend.cursorchange || (startend.start===null && startend.end===null)){
-			var actpage = slidenote.parser.pageAtPosition(slidenote.textarea.selectionEnd);
-			startline = this.map.pagestart[actpage[0]].line;
-			endline = this.map.pageend[actpage[0]].line+1;
-			if(this.map.pagestart[actpage[0]].posinall>actpage[1]){
-				startline--;//endline=startline;
-			}
+			var actpage = slidenote.parser.map.pageAtPosition(slidenote.textarea.selectionEnd);
+			startline = this.map.pagestart[actpage].line;
+			endline = this.map.pageend[actpage].line+1;
+			//if(this.map.pagestart[actpage].posinall>actpage[1]){
+			//	startline--;//endline=startline;
+			//}
 			if(endline>bglines.length)endline=bglines.length;
 		}
 
