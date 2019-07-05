@@ -1667,3 +1667,46 @@ slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
   });
 
 }
+
+slidenoteGuardian.prototype.loadDiff = async function(){
+  this.initialised = false;
+  var cachedText = await this.loadNote("local",true);
+  var cmsText = await this.loadNote("cms",true);
+  var confirmpage = document.createElement("div");
+  confirmpage.id = "slidenoteguardiandiff";
+  var cachedButton = document.createElement("button");
+  cachedButton.onclick = function(){
+    slidenoteguardian.loadNote("local");
+    slidenoteguardian.initialised=true;
+    var confirmp = document.getElementById("slidenoteguardiandiff");
+    confirmp.parentNode.removeChild(confirmp);
+  };
+  var cmsButton = document.createElement("button");
+  cmsButton.onclick = function(){
+    slidenoteguardian.loadNote("cms");
+    slidenoteguardian.initialised=true;
+    var confirmp = document.getElementById("slidenoteguardiandiff");
+    confirmp.parentNode.removeChild(confirmp);
+  };
+  cachedButton.innerText = "Load Cached Version";
+  cmsButton.innerText = "Load Version of Cloud";
+  var title = document.createElement("h1");
+  title.innerText = "Cached Version differs from Cloud-Status";
+  confirmpage.appendChild(title);
+  var pretext = document.createElement("div");
+  pretext.innerText = "We found an unsaved Version of this Note in your local Cache. Load local Cache or Cloud?";
+  pretext.classList.add("pretext");
+  confirmpage.appendChild(pretext);
+  var cacheContainer = document.createElement("div");
+  cacheContainer.innerText = cachedText;
+  cacheContainer.classList.add("slidenoteguardian-diff");
+  var cmsContainer = document.createElement("div");
+  cmsContainer.innerText = cmsText;
+  cmsContainer.classList.add("slidenoteguardian-diff");
+  confirmpage.appendChild(cachedButton);
+  confirmpage.appendChild(cmsButton);
+  confirmpage.appendChild(cacheContainer);
+  confirmpage.appendChild(cmsContainer);
+  document.getElementsByTagName("body")[0].appendChild(confirmpage);
+
+}
