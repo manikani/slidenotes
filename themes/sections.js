@@ -134,7 +134,7 @@ newtheme.styleThemeSpecials = function(){
       }
 
       if(checkforgridbuild(sectiondata)){
-        var blocktheme = slidenote.presentation.getThemeByName("blocks");
+        var blocktheme = slidenote.extensions.getThemeByName("blocks");
         if(blocktheme && blocktheme.active){
           blocktheme.buildgrid(sectiondata);
         }
