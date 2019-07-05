@@ -14,6 +14,132 @@
 * Dependencies: FileSaver.js for saving exports
 */
 
+var SlidenoteCache = function(){
+    this.localstorage = window.localStorage;
+    //items in localstorage per slidenote - not sure if really needed inside object but for overview purposes stated here:
+    /*this.url;
+    this.config;
+    this.cryptnote;
+    this.slidenotehash;
+    this.cryptimagestring;
+    this.imghash;
+    this.saved;
+    this.title;
+    this.lastSavedTime;
+    */
+    //what IS usefull is an Array with localstorage-object-names, so:
+    this.cacheItems = ["url","config","cryptnote","slidenotehash","cryptimagestring","imghash","saved","title","lastActiveTime"];
+    this.activeTimeAccuracy = 60000; //How accurant has the lastActiveTime to be? Minute: 60.000 Hh: 3600.000
+    //meta-infos:
+    this.id; //an id put in front of item-name in localstorage
+    this.allIds; //a string in localstorage, containing all ids seperated by ","
+    this.maxSpace; //a number with maximum number of chars possible in browser
+}
+
+SlidenoteCache.prototype.init = function(){
+
+    this.allIds = this.localstorage.getItem("allIds");
+    if(this.allIds ===null){
+        //there is no cache in Browser - let things get started:
+        //first: clear local-cache totaly, we dont want things from the past lindering inside:
+        this.localstorage.clear();
+        this.id = "sl1";
+        this.allIds="sl1"; this.localstorage.setItem("allIds",this.allIds);
+        this.maxSpace = this.calculateMaxSpace(); this.localstorage.setItem("maxSpace",this.maxSpace);
+        if(typeof initial_note!="undefined")this.localstorage.setItem("nid",initial_note.nid);
+    }else{
+        this.maxSpace=this.localstorage.getItem("maxSpace");
+        //there is a cache yet. try to find actual cache:
+        var ids = this.allIds.split(",");
+        var acturl = window.location.href;
+        var nid = null;
+        if(typeof initial_note!="undefined")nid=initial_note.nid;
+        for(var x=0;x<ids.length;x++){
+            var cacheurl = this.localstorage.getItem(ids[x]+"url");
+            var cachenid = this.localstorage.getItem(ids[x]+"nid");
+            if((nid!=null && cachenid === nid) || (nid === null && cacheurl === acturl)){
+                this.id=ids[x];
+                break;
+            }
+        }
+        if(this.id){
+            //we found a cache so load cache:
+            //this.loadFromCacheToObject();
+        }else{
+            //we did not find a cache for current note so open one:
+            this.id = "sl"+(ids.length+1);
+            this.allIds +=  ","+this.id;
+            this.localstorage.setItem("allIds",this.allIds);
+        }
+        //set this cache activeTime so it would not be deleted by garbage-cleaning:
+        this.localstorage.setItem(this.id+"lastActiveTime",Math.floor(new Date()/this.activeTimeAccuracy));
+        //clean the garbage now:
+        this.cleanGarbage();
+    }
+}
+
+SlidenoteCache.prototype.calculateMaxSpace = function(){
+    return 5200000; //hardcoded maxspace for now, maybe calculating later?
+}
+
+SlidenoteCache.prototype.calculateFreeSpace = function(){
+    var total = this.maxSpace - 50000; //lets have a buffer of 50.000 chars free for any changes in md-code happening and overhead. just in case image-insert causes to be too much...
+    for(var x=0;x<this.localstorage.length;x++){
+            total-=this.localstorage.key(x).length;
+            total-=this.localstorage.getItem(this.localstorage.key(x)).length;
+    }
+    return total;
+    //return 5000000; //Todo: calculate real free space
+}
+
+SlidenoteCache.prototype.fitsIntoSpace = function(key,value){
+    let oldlength = this.localstorage.getItem(key);
+    if(oldlength)oldlength=oldlength.length;else oldlength=0;
+    valuelength = 0;
+    if(value!=undefined){valuelength=""+value;valuelength=valuelength.length};
+    if(this.calculateFreeSpace() > valuelength - oldlength);
+    return true;//Todo: calculate if it fits inside
+}
+
+SlidenoteCache.prototype.setItem = function(key, value){
+    //test if freeSpace is ok:
+    var rkey = this.id+key;
+    if(this.fitsIntoSpace(rkey,value)){
+        this.localstorage.setItem(rkey,value);
+        //should i here set the time or let it the program do by itself? if here it happens often but is it bad?
+        this.localstorage.setItem(this.id+"lastActiveTime",Math.floor(new Date()/this.activeTimeAccuracy)); //only by minute, we dont care the second here
+    }else{
+        //there is not enough space - help!!!
+    }
+}
+
+SlidenoteCache.prototype.getItem = function(key){
+    return this.localstorage.getItem(this.id+key);
+}
+
+SlidenoteCache.prototype.deleteCache = function(id){
+    for(var x=0;x<this.cacheItems.length;x++){
+        this.localstorage.removeItem(this.id+this.cacheItems[x]);
+    }
+    var allids = this.allIds.split(",");
+    for(var x=0;x<allids.length;x++)if(allids[x]===id)allids.splice(x,1);
+    this.allIds = allids.join(",");
+    this.localstorage.setItem(allIds,this.allIds);
+}
+
+SlidenoteCache.prototype.cleanGarbage = function(){
+    var ids = this.allIds.split(",");
+    for(var x=0;x<ids.length;x++){
+        var id=ids[x];
+        var saved = this.localstorage.getItem(id+"saved");
+        var isempty = (this.localstorage.getItem(id+"cryptnote")===null);
+        var timesincelastactive = Math.floor(new Date()/this.activeTimeAccurancy) - this.localstorage.getItem(id+"lastActiveTime");
+        if((saved==="true"||isempty) && timesincelastactive> (90000000/this.activeTimeAccurancy))this.deleteCache(id);
+    }
+}
+
+
+
 function slidenoteGuardian(slidenote){
   this.slidenote = slidenote;
   this.cmsConfig = document.getElementById("cmsconfig");
@@ -67,7 +193,8 @@ function slidenoteGuardian(slidenote){
   this.encImageString; //last encrypted String from cms or local storage with base64-images
   this.iv; //the initialisation-vector to use - we could get rid of it?
   this.ivlength = 12; //the length of the initialisation vector used for encryption
-  this.localstorage = window.localStorage; //set local storage
+  this.localstorage = new SlidenoteCache();//window.localStorage; //set local storage
+  this.localstorage.init();
   /*in local-storage there can be saved ONE slidenote only. items:
   * cryptnote: encrypted slidenote
   * cryptimagestring: encrypted string with base64-images
