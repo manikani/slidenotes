@@ -191,6 +191,7 @@ newtheme.gotoPos = function(position){
   slidenote.textarea.selectionEnd = position;
   slidenote.textarea.selectionStart = position;
   slidenote.textarea.focus();
+  slidenote.parseneu();
 }
 
 
