@@ -3257,7 +3257,26 @@ ExtensionManager.prototype.afterLoadingThemes = function(){
 	if(this.failedThemes.length>0)console.log("Failed to load "+this.failedThemes.length+" Themes:"+failedthemes);
 	//this.slidenote.parseneu();
 	for(var x=0;x<this.hooksAllThemesLoaded.length;x++)this.hooksAllThemesLoaded[x]();
+	//this.enableKeyboardShortcuts()
+	slidenote.appendFile("script","keyboardshortcuts.js");
 }
+/*
+ExtensionManager.prototype.keyboardshortcuts = {
+	toolbararrow : function(e){
+		if(e.key === "ArrowUp" && this.previousElementSibling && this.previousElementSibling.tagName==="BUTTON"){
+			this.previousElementSibling.focus();
+		}else if(e.key === "ArrowDown" && this.nextElementSibling){
+			this.nextElementSibling.focus();
+		}
+	}
+}
+
+ExtensionManager.prototype.enableKeyboardShortcuts = function(){
+	var toolbarbuttons = document.getElementById("texteditorbuttons").getElementsByTagName("button");
+	for(var x=0;x<toolbarbuttons.length;x++)toolbarbuttons[x].onkeyup = this.keyboardshortcuts.toolbararrow;
+
+
+} */
 
 /*getThemeByName returns the Theme found by name:
 */
@@ -3396,6 +3415,9 @@ ExtensionManager.prototype.changeThemeStatus = function(themenr, status){
 	}
 	//this.themes[themenr].active = status;
 	this.themes[themenr].changeThemeStatus(status);
+	var toolbox = document.getElementById("texteditorbuttons");
+	var toolboxbuttons = toolbox.getElementsByTagName("button");
+
 	if(this.themes[themenr].editorbuttons!=null){
 		if(status){
 			for(var x=0;x<this.themes[themenr].editorbuttons.length;x++){
@@ -3416,9 +3438,10 @@ ExtensionManager.prototype.changeThemeStatus = function(themenr, status){
 					newhtmlbutton.onclick =
 						slidenote.extensions.themes[themenr].editorbuttons[x].insertfunction;
 				}
-
+				//add keyboardsupport:
+				//newhtmlbutton.onkeyup = slidenote.extensions.keyboardshortcuts.toolbararrow;
 				//document.getElementById("standardinsertmenu").appendChild(newhtmlbutton);
-				document.getElementById("texteditorbuttons").appendChild(newhtmlbutton);
+				toolbox.appendChild(newhtmlbutton);
 			}
 		}else{
 			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
@@ -3437,6 +3460,46 @@ ExtensionManager.prototype.changeGlobalOption = function(themenr,optionnr, value
 	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+value);
 }
 
+ExtensionManager.prototype.buildOptionsMenu = function(){
+	if(this.optionmenu===undefined)this.optionmenu = document.getElementById("optionmenu");
+	var optionmenu = this.optionmenu;
+		//get all themes:
+		var themelist = document.getElementById("optionmenupresentationdesign");
+		themelist.innerHTML = "";
+		var themeul = document.createElement("ul");
+		var themes = slidenote.extensions.themes;
+		var themedesctext = "";
+		for(var tx=0;tx<themes.length;tx++){
+			if(themes[tx].themetype ==="css"){
+				//var acttext = '<input type="radio" name="design" onchange="slidenote.extensions.changeThemeStatus('+tx+',this.checked)"';
+				var themeli = document.createElement("li");
+				var themeinput = document.createElement("input");
+				themeinput.type = "radio";
+				themeinput.name = "design";
+				themeinput.number = tx;
+				//themeinput.onchange = function(){slidenote.extensions.changeThemeStatus(this.number,this.checked)};
+				if(themes[tx].active)	themeinput.checked = true; else themeinput.checked=false;
+				var themelabel = document.createElement("label");
+				themelabel.innerText = themes[tx].classname;
+				themeli.appendChild(themeinput);
+				themeli.appendChild(themelabel);
+				themeul.appendChild(themeli);
+				if(themes[tx].active)themedesctext = themes[tx].description;
+				themeinput.description = themes[tx].description;
+				themeinput.onchange = function(){
+					slidenote.extensions.changeThemeStatus(this.number,this.checked);
+					if(this.checked)document.getElementById("themedescription").innerText=this.description;
+					slidenoteguardian.saveConfig("local");
+
+				}
+			}
+		}
+		themelist.appendChild(themeul);
+		var themedescription = document.getElementById("themedescription");
+		themedescription.innerText = themedesctext;
+		optionmenu.classList.add("active");
+
+}
 
 /*neuer aufbau für die steuerung und ablauf usw. des programms:
 */
@@ -3655,8 +3718,8 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			this.parseneu();//on Enter you should always parse anew
 			this.scroll();
 		}else if(key.indexOf("Arrow")>-1){
-			if(document.getElementById("editorchoice").value!="focus")
-			setTimeout("slidenote.parser.generateSidebar({start:null,end:null,cursorchange:true})",10);
+			//if(document.getElementById("editorchoice").value!="focus")
+			//setTimeout("slidenote.parser.generateSidebar({start:null,end:null,cursorchange:true})",10);
 		}else if(key.indexOf("Page")>-1){
 			this.parser.map.lastcursorpos = this.textarea.selectionEnd;
 			event.preventDefault();

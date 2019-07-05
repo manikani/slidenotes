@@ -52,41 +52,7 @@ function initeditor(){
 				if(optionmenu.classList.contains("active")){
 					optionmenu.classList.remove("active");
 				}else{
-					//get all themes:
-					var themelist = document.getElementById("optionmenupresentationdesign");
-					themelist.innerHTML = "";
-					var themeul = document.createElement("ul");
-					var themes = slidenote.extensions.themes;
-					var themedesctext = "";
-					for(var tx=0;tx<themes.length;tx++){
-						if(themes[tx].themetype ==="css"){
-							//var acttext = '<input type="radio" name="design" onchange="slidenote.extensions.changeThemeStatus('+tx+',this.checked)"';
-							var themeli = document.createElement("li");
-							var themeinput = document.createElement("input");
-							themeinput.type = "radio";
-							themeinput.name = "design";
-							themeinput.number = tx;
-							//themeinput.onchange = function(){slidenote.extensions.changeThemeStatus(this.number,this.checked)};
-							if(themes[tx].active)	themeinput.checked = true; else themeinput.checked=false;
-							var themelabel = document.createElement("label");
-							themelabel.innerText = themes[tx].classname;
-							themeli.appendChild(themeinput);
-							themeli.appendChild(themelabel);
-							themeul.appendChild(themeli);
-							if(themes[tx].active)themedesctext = themes[tx].description;
-							themeinput.description = themes[tx].description;
-							themeinput.onchange = function(){
-								slidenote.extensions.changeThemeStatus(this.number,this.checked);
-								if(this.checked)document.getElementById("themedescription").innerText=this.description;
-								slidenoteguardian.saveConfig("local");
-
-							}
-						}
-					}
-					themelist.appendChild(themeul);
-					var themedescription = document.getElementById("themedescription");
-					themedescription.innerText = themedesctext;
-					optionmenu.classList.add("active");
+					slidenote.extensions.buildOptionsMenu();
 				}
 			});
 			document.getElementById("nightmodetoggle").addEventListener("click",function(e){

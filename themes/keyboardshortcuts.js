@@ -19,6 +19,7 @@ keyboardshortcuts.shortcut = function(name, element, key, shortcutfunc){
     this.keys = [];
     this.multipleChoiceKeys = [];
     console.log("shortcut keyelement:"+typeof key);
+    console.log(key);
     if(typeof key === "string"){
         this.keys = [key]; //sole key-element
     }else if(key.constructor === Array){
@@ -27,14 +28,14 @@ keyboardshortcuts.shortcut = function(name, element, key, shortcutfunc){
         if(key.key)this.keys = [key.key]; //sole key in key-object
         if(key.keys)this.keys = key.keys; //array of pressed keys
         if(key.multipleChoiceKeys)this.multipleChoiceKeys = key.multipleChoiceKeys;
-        if(key.metakey)this.metakey = key.metakey; //if global-metakey should be pressed
+        if(key.metakey!=undefined)this.metakey = key.metakey; //if global-metakey should be pressed
     }
     this.activate = shortcutfunc; //"on shortcut entered do this"
     this.active = true; //not active shortcuts will not be used
 }
 
 keyboardshortcuts.addShortcut = function(shortcut){
-    this.allkeys.push(shortcut); 
+    this.allkeys.push(shortcut);
     //if(shortcut.keys.includes("Control"))this.ctrlkeys.push(shortcut); //not used, can be gone i think and added on later if we really need it
     //TODO: secondkey
     var element = shortcut.element;
@@ -59,7 +60,7 @@ keyboardshortcuts.shortcutByName = function(shortcutname){
         if(this.allkeys[x].name===shortcutname){shortcut=this.allkeys[x];break;}
         console.log(this.allkeys[x].name + "->\n"+shortcutname+"<-");
     }
-   return shortcut; 
+   return shortcut;
 }
 
 keyboardshortcuts.buildOptionsMenu = function(){
@@ -115,15 +116,98 @@ keyboardshortcuts.buildOptionsMenu = function(){
 keyboardshortcuts.init = function(){
     //add basic shortcuts:
     this.addShortcut(new keyboardshortcuts.shortcut("Toggle Presentation","textarea", "Escape", function(){slidenote.parseneu();slidenote.presentation.showpresentation();}));
-    this.addShortcut(new this.shortcut("select element", "textarea","m",function(){ 
+    //select element - just for testuse:
+    this.addShortcut(new this.shortcut("select element", "textarea","m",function(){
         var el = slidenote.parser.CarretOnElement();
-        if(el){ slidenote.textarea.selectionStart=el.posinall;
-            if(el.brotherelement)slidenote.textarea.selectionEnd=el.brotherelement.posinall+el.brotherelement.mdcode.length;
-            if(el.brotherelement===undefined)slidenote.textarea.selectionEnd = slidenote.parser.map.lineend[el.line];
+        var selstart;
+        var selend;
+        if(el && el.parentelement){
+          selstart = el.parentelement.posinall;
+          selend = slidenote.parser.map.lineend[el.parentelement.lastline];
+        }else if(el){ selstart=el.posinall;
+            if(el.brotherelement)selend=el.brotherelement.posinall+el.brotherelement.mdcode.length;
+            if(el.brotherelement===undefined){
+              selend = slidenote.parser.map.lineend[el.line];
+            }
+            if(el.typ === "image")selend=selstart+el.mdcode.length;
+            if(el.tag==="linkend"){
+              selstart = el.brotherelement.posinall;
+              selend = el.posinall+el.mdcode.length;
+            }
         }
-    })); 
+        if(selstart && selend){
+          slidenote.textarea.selectionStart = selstart;
+          slidenote.textarea.selectionEnd = selend;
+        }
+    }));
+    //jump to next/last element:
+    this.addShortcut(new this.shortcut("jump to element","textarea",{multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:true},function(e){
+      var actel = slidenote.parser.CarretOnElement();
+      var actline = slidenote.parser.lineAtPosition(slidenote.textarea.selectionEnd);
+      if(e.key==="ArrowDown"){
+        if(actel && actel.parentelement)actline=actel.parentelement.lastline+1;
+        var elines = slidenote.parser.map.insertedhtmlinline;
+        if(actline>elines.length)return;
+        for(var x=actline;x<elines.length;x++){
+          var found=false;
+          for(var y=0;y<elines[x].length;y++){
+            var el=elines[x][y];
+            if((el.typ==="start" || el.typ==="image")&&el!=actel && (!actel || el.posinall>actel.posinall)){
+              actel=el;
+              found=true;
+              break;
+            }
+          }
+          if(found)break;
+        }
+      }else{
+        if(actel && actel.parentelement)actline=actel.parentelement.line-1;
+        var elines = slidenote.parser.map.insertedhtmlinline;
+        if(actline<0)actline=0;
+        for(var x=actline;x>=0;x--){
+          var found=false;
+          for(var y=elines[x].length-1;y>=0;y--){
+            var el=elines[x][y];
+            if((el.typ==="start" || el.typ==="image")&&el!=actel && (!actel || el.posinall<actel.posinall)){
+              actel=el;
+              found=true;
+              break;
+            }
+          }
+          if(found)break;
+        }
+      }
+
+      if(actel){
+        var pos = actel.posinall;
+        slidenote.textarea.selectionEnd = pos;
+        slidenote.textarea.selectionStart=pos;
+        var carret = document.getElementById("carret");
+        if(carret)carret.parentNode.removeChild(carret);
+        slidenote.parser.renderNewCursorInCodeeditor();
+        slidenote.textarea.blur();
+        slidenote.textarea.focus();
+      }
+    }));
+    //automatic closure in simple tags:
+    this.addShortcut(new this.shortcut("automatic closure on selection", "textarea",{multipleChoiceKeys:["*","~","`"],metakey:true},function(e){
+      var selstart = slidenote.textarea.selectionStart;
+      var selend = slidenote.textarea.selectionEnd;
+      //if(selstart===selend)return; //only on selection
+      var txt = slidenote.textarea.value;
+      txt = txt.substring(0,selstart)+e.key+
+            txt.substring(selstart,selend)+e.key+
+            txt.substring(selend);
+      slidenote.textarea.value=txt;
+      slidenote.textarea.selectionStart = selstart+1;
+      slidenote.textarea.selectionEnd = selend+1;
+      slidenote.textarea.blur();
+      slidenote.textarea.focus();
+      slidenote.parseneu();
+    }));
+    //insertmenu:
     this.addShortcut(new this.shortcut("open insertmenu", "textarea", "ContextMenu", function(){
-        slidenote.presentation.showInsertMenu(); 
+        slidenote.presentation.showInsertMenu();
         var b=document.getElementById("insertarea").getElementsByTagName("button");
         if(b && b[0])b[0].focus();
     }));
@@ -139,6 +223,38 @@ keyboardshortcuts.init = function(){
         console.log("move to button no"+bnr);
     }));
     this.addShortcut(new this.shortcut("escape insertmenu","insertmenu",{key:"Escape",metakey:false},function(e){slidenote.textarea.focus();}));
+
+    //toolbar:
+    this.addShortcut(new this.shortcut("open toolbar", "textarea", " ", function(e){
+      var toolbar = document.getElementById("texteditorbuttons");
+      toolbar.getElementsByTagName("button")[0].focus();
+    }));
+    this.addShortcut(new this.shortcut("arrownavigate toolbar", "toolbar", {multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:false}, function(e){
+      var toolbar = document.getElementById("texteditorbuttons");
+      var toolbarbuttons = toolbar.getElementsByTagName("button");
+      var actnr = 0;
+      for(var x=0;x<toolbarbuttons.length;x++)if(toolbarbuttons[x]===document.activeElement)actnr=x;
+      if(e.key==="ArrowUp")actnr--;else actnr++;
+      if(actnr<0)actnr=toolbarbuttons.length-1;
+      if(actnr>=toolbarbuttons.length)actnr=0;
+      toolbarbuttons[actnr].focus();
+      console.log("move to button no "+actnr);
+    }));
+    this.addShortcut(new this.shortcut("escape toolbar","toolbar",{key:"Escape",metakey:false},function(e){slidenote.textarea.focus();}));
+
+    //optionsmenu:
+    this.addShortcut(new this.shortcut("open options", "textarea", "o",function(e){
+      var optionmenu = document.getElementById("optionmenu");
+      if(optionmenu.classList.contains("active")){
+        //focus on optionmenu-element... not implemented yet
+      }else{
+        slidenote.extensions.buildOptionsMenu();
+      }
+    }));
+    this.addShortcut(new this.shortcut("escape optionsmenu","options",{key:"Escape",metakey:false},function(e){
+      slidenote.textarea.focus();
+      slidenote.extensions.optionmenu.classList.remove("active");
+    }));
     /*
     this.addShortcut(new this.shortcut("arrownavigate insertmenu","insertmenu",["ArrowDown"],false,function(){
         var insmen = document.getElementById("insertarea");
@@ -149,11 +265,27 @@ keyboardshortcuts.init = function(){
         if(bnr>=buttons.length)bnr=0;
         buttons[bnr].focus();
     }));*/
-    
+
 }
 keyboardshortcuts.pressKey = function(e){
     if(e.key==="undefined")e.key=getKeyOfKeyCode(e.keyCode); //webkit-bug
     this.pressedkeys[e.key]=true;
+    if(e.ctrlKey && e.srcElement===slidenote.textarea){
+      //prevent default from the following, hardcoded for speed:
+      if(e.key==="ArrowUp"|| e.key==="ArrowDown" ||
+        "tTpPeErRlLSsOo`".indexOf(e.key)>=0){
+        e.preventDefault();
+        //e.stopPropagation();
+      }
+    }
+}
+keyboardshortcuts.preventDefaultOnKeypress = function(e){
+  if(e.ctrlKey && e.srcElement===slidenote.textarea){
+    //prevent default from the following, hardcoded for speed:
+    if("tTpPeErRlLSsOo`".indexOf(e.key)>=0){
+      e.preventDefault();
+    }
+  }
 }
 keyboardshortcuts.releaseKey = function(e){
     if(e.key==="undefined")e.key=getKeyOfKeyCode(e.keyCode); //webkit-bug
@@ -163,7 +295,7 @@ keyboardshortcuts.releaseKey = function(e){
 keyboardshortcuts.shortcutFound = function(event, shortcut){
     if(shortcut.metakey && !this.pressedkeys[this.metakey])return false;
     for(var x=0;x<shortcut.keys.length;x++)if(!this.pressedkeys[shortcut.keys[x]])return false;
-    if(!shortcut.multipleChoiceKeys ||shortcut.multipleChoiceKeys.length===0)return true; 
+    if(!shortcut.multipleChoiceKeys ||shortcut.multipleChoiceKeys.length===0)return true;
     for(var x=0;x<shortcut.multipleChoiceKeys.length;x++)if(this.pressedkeys[shortcut.multipleChoiceKeys[x]])return true;
     return false;
 }
@@ -172,8 +304,9 @@ keyboardshortcuts.reactOn = function(e, element){
     if(e.key==="undefined")e.key=getKeyOfKeyCode(e.keyCode); //webkit-bug
     if(this[element]!=undefined){
         var preventDefault=false;
-        for(var x=0;x<this[element].length;x++)if(this[element][x].active && this.shortcutFound(e,this[element][x])){
-            this[element][x].activate(e);
+        var list = this[element];
+        for(var x=0;x<list.length;x++)if(list[x].active && this.shortcutFound(e,list[x])){
+            list[x].activate(e);
             preventDefault=true;
         }
         if(preventDefault)e.preventDefault();
@@ -184,7 +317,11 @@ keyboardshortcuts.reactOn = function(e, element){
 keyboardshortcuts.attachShortcuts = function(){
     window.addEventListener("keydown",function(e){slidenote.keyboardshortcuts.pressKey(e);});
     slidenote.textarea.addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e, "textarea");});
+    slidenote.textarea.addEventListener("keypress",function(e){slidenote.keyboardshortcuts.preventDefaultOnKeypress(e, "textarea");});
     document.getElementById("insertarea").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e, "insertmenu");console.log("shortcut insmenu");console.log(e);});
+    document.getElementById("texteditorbuttons").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"toolbar");console.log("shortcut toolbar");console.log(e);});
+    document.getElementById("optionmenu").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"options");console.log("shortcut options");console.log(e);});
+
 //    window.addEventListener("keyup", function(e){slidenote.keyboardshortcuts.reactOn(e,"globals");});
     window.addEventListener("keyup", function(e){slidenote.keyboardshortcuts.releaseKey(e);});
 }
