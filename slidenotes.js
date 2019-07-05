@@ -1078,6 +1078,15 @@ emdparser.prototype.setDropDownMenu = function (){
 	//if(newtop<0)newtop=3;
 	nicesymbol.style.top = newtop +"px";
 	nicesymbol.style.position="absolute";
+	var celement = slidenote.parser.CarretOnElement();
+	var nicelabel = document.getElementById("nicesidebarsymbollabel");
+	if(celement && celement.label){
+		nicelabel.innerText = celement.label;
+	}else if(celement && celement.dataobject){
+		nicelabel.innerText = celement.dataobject.type;
+	}else{
+		nicelabel.innerText = "";
+	}
 	//console.log("nicesymbol:"+nicesymbol.style.top+"carretsymbol:"+carretsymbol.offsetTop);
 	//nicesymbol.innerHTML='&nbsp;<a href="javascript:slidenote.presentation.showInsertMenu();"<img src="images/buttons/droptilde.png"></a>&nbsp;<img src="images/buttons/cursorline.png">';
 }

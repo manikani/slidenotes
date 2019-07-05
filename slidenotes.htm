@@ -40,7 +40,16 @@ function initeditor(){
 			//autofocus tonfocus="initeditor(this.value);
 			texted.onscroll=function(){slidenote.scroll(texted);};
 			texted.onclick = function(){console.log("parseneu forced by click"+this.selectionEnd);slidenote.parseneu();};
-
+			texted.addEventListener("focus",function(){
+				var carret = document.getElementById("carret");
+				if(carret)carret.classList.remove("unfocused");
+			});
+			texted.addEventListener("focusout",function(){
+				var carret = document.getElementById("carret");
+				if(carret)carret.classList.add("unfocused");
+				console.log("onblur show carret");
+				console.log(carret);
+			});
 			document.getElementById("importbutton").addEventListener("click",function(){document.getElementById("importfile").click()});
 			document.getElementById("exportbutton").addEventListener("click",function(){
 				var menu=document.getElementById("exportoptions");

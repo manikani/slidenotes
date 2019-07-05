@@ -302,7 +302,7 @@ function parsetesting(){
 		</div>
 		<div id="sidebarcontainer">
 			<div id="sidebar"></div>
-			<div id="nicesidebarsymbol"><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="/sites/all/libraries/slidenotes/images/buttons/droptilde.png"></a><img src="/sites/all/libraries/slidenotes/images/buttons/cursorline.png"></div>
+			<div id="nicesidebarsymbol"><span id="nicesidebarsymbollabel"></span><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="/sites/all/libraries/slidenotes/images/buttons/droptilde.png"></a><img src="/sites/all/libraries/slidenotes/images/buttons/cursorline.png"></div>
 			<div id="insertarea">
 				<span> <label><span id="insertmenulabel">INSERT</span>   <img src="/sites/all/libraries/slidenotes/images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="/sites/all/libraries/slidenotes/images/buttons/cursorline.png"></span>
 
