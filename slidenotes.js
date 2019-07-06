@@ -599,10 +599,14 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 //sort the array:
 	 changes.sort(function(a,b){
 		 if(a.typ==="cursor"&&b.typ==="end" &&
-		  	a.posinall-b.posinall==0){
-			 return 1;
-		 }else
-		 return a.posinall - b.posinall;
+		  					a.posinall-b.posinall==0){
+			  return 1;
+		 }else if(a.typ==="end" && b.typ==="cursor" &&
+	 					a.posinall-b.posinall===0){
+				return -1;
+		 }else{
+		 		return a.posinall - b.posinall;
+	 	 }
 	 });
 	 console.log(changes);
 	 //do the changes from behind to beginning:
@@ -719,9 +723,12 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 		if(a.typ==="cursor"&&b.typ==="end" &&
 			 a.posinall-b.posinall==0){
 			return 1;
+		}else if(a.typ==="end" && b.typ==="cursor"
+			&& a.posinall-b.posinall===0){
+			return -1;
 		}else
 		return a.pos-b.pos});
-
+	console.log(changes);
 	for(var x=changes.length-1;x>=0;x--){
 		var actchange = changes[x];
 		if(actchange.typ==="<"){
