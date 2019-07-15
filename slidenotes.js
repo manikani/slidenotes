@@ -2642,19 +2642,21 @@ pagegenerator.prototype.afterStyle = function(){
 
 //nextPage: "blättert um" zur nächsten Seite der Präsentation durch Anhängen der ".active" CSS-Klasse an das nächste Element
 pagegenerator.prototype.nextPage = function(){
-	this.pagedivs[this.aktpage].classList.remove("active");
-	this.aktpage ++;
-	if(this.aktpage>=this.pages.length)this.aktpage --; //bei letzter angekommen mache nichts
-	this.pagedivs[this.aktpage].classList.add("active");
+	//this.pagedivs[this.aktpage].classList.remove("active");
+	//this.aktpage ++;
+	//if(this.aktpage>=this.pages.length)this.aktpage --; //bei letzter angekommen mache nichts
+	//this.pagedivs[this.aktpage].classList.add("active");
 		//direkte ansteuerung:
 	//this.presentation.innerHTML = this.htmlstart+this.pages[this.aktpage]+this.htmlend;
+	this.showPage(this.aktpage+1);
 }
 //lastPage: "blättert zurück"
 pagegenerator.prototype.lastPage = function(){
-	this.pagedivs[this.aktpage].classList.remove("active");
-	this.aktpage--;
-	if(this.aktpage<0)this.aktpage=0;
-	this.pagedivs[this.aktpage].classList.add("active");
+	//this.pagedivs[this.aktpage].classList.remove("active");
+	//this.aktpage--;
+	//if(this.aktpage<0)this.aktpage=0;
+	//this.pagedivs[this.aktpage].classList.add("active");
+	this.showPage(this.aktpage-1);
 }
 //showPage(pagenummer): blättert zur seite pagenummer
 pagegenerator.prototype.showPage = function(page){
@@ -2662,6 +2664,9 @@ pagegenerator.prototype.showPage = function(page){
 	if(page>=this.pages.length)page= this.pages.length-1;
 	if(page<0)page=0;
 	this.aktpage = page;
+	var slidenr = page;
+	slidenr++;
+	document.location.hash = "slide"+slidenr;
 	console.log("aktpage:"+this.aktpage+" pagedivslength:"+this.pagedivs.length+" page:"+page);
 	this.pagedivs[page].classList.add("active");
 }
@@ -2948,10 +2953,11 @@ pagegenerator.prototype.showpresentation = function(forExport){
 		document.getElementsByTagName("body")[0].appendChild(loadingscreen);
 	}
 
-
 	var cursorpos = slidenote.textarea.selectionEnd;
 	//this.cursorposBeforePresentation = cursorpos;
 	if(!fullscreen){
+		//history-hack:
+		document.location.hash = "editor";
 		//this.init();
 		loadingscreen.classList.add("active");
 		fullscreen=true;
@@ -2988,6 +2994,8 @@ pagegenerator.prototype.showpresentation = function(forExport){
 		document.body.style.overflow = "hidden";
 	} else{
 		fullscreen=false;
+		//history-hack:
+		document.location.hash = "editor";
 		praesesrahmen.tabIndex = undefined; //undo tabable so it cant get accessed by accident/screenreader
 		if(this.generatedPages){
 			for(var gpx=0;gpx<this.generatedPages.length;gpx++){
@@ -3580,6 +3588,27 @@ function slidenotes(texteditor, texteditorerrorlayer, htmlerrorpage, presentatio
 	//markdowneditor-sachen:
 	this.lasttyping = new Date().getTime();
 	this.lastpressedkey = "";
+
+	setTimeout("slidenote.initHistoryHack()",100);
+}
+
+slidenotes.prototype.initHistoryHack = function(){
+	//history-hack:
+	window.onpopstate = function(){
+		//console.log("onpopstate:"+document.location.hash);
+		if(document.location.hash==="#editor" && fullscreen){
+			slidenote.presentation.showpresentation();
+		}
+	};
+	window.onhashchange = function(event){
+		if(location.hash==="#editor")return;
+		var hashnr = location.hash.split("#slide")[1];
+		//console.log("hash:"+location.hash+"nr:"+hashnr);
+		hashnr--;
+		if(hashnr && (hashnr-slidenote.presentation.aktpage<0||hashnr-slidenote.presentation.aktpage>0)&&fullscreen){
+			slidenote.presentation.showPage(hashnr);
+	}};
+
 }
 
 slidenotes.prototype.choseEditor = function(editor){
