@@ -244,8 +244,13 @@ newtheme.insert = function(selection){
     if(posofheadseparator<posofchartbegin ||posofheadseparator===-1)posofheadseparator=slidenote.textarea.value.indexOf(this.syntaxContainer.headseparator,selectionend);
     if((posofheadseparator>posofchartend||posofheadseparator===-1)&&selection!="example"){
       //no headseparator: just add one:
-      injection+="\n"+this.syntaxContainer.headseparator;
+      injection+="\n"+this.syntaxContainer.headseparator+"\n";
       diff-=this.syntaxContainer.headseparator.length+1;
+      if(selectionend-selectionstart===0){
+        //if no headseperator found and nothing selected move to top of chart
+        selectionstart = slidenote.textarea.value.indexOf("\n",posofchartbegin)+1;
+        selectionend = selectionstart;
+      }
     }else{
       if(posofheadseparator<selectionend&&selection!="example"){
         //headseparator found before selection: move to headseparator
@@ -289,6 +294,8 @@ newtheme.insert = function(selection){
   var scrtop = slidenote.textarea.scrollTop;
   slidenote.textarea.value = slidenote.textarea.value.substring(0,selectionstart)+injection+slidenote.textarea.value.substring(selectionstart);
   diff+= injection.length;
+  if(injection.substring(injection.length-1)==="\n")diff--;
+  console.log(">>>"+injection.substring(injection.length-1)+"<<<");
   slidenote.textarea.focus();
   slidenote.textarea.selectionStart = selectionstart + diff;
   slidenote.textarea.selectionEnd = selectionend + diff;
