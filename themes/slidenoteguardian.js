@@ -1825,6 +1825,9 @@ slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
     tablebutton.innerText = "add as new table";
     buttonwrapper.appendChild(chartbutton);
     buttonwrapper.appendChild(tablebutton);
+    buttonwrapper.removeChild(replacebutton);
+    mdcodeblocktitle.innerHTML="Import Data from CSV-File";
+    importbutton.innerHTML = "insert at current carret position";
 
   }
   promptwrapper.appendChild(prompt);
