@@ -17,6 +17,47 @@ newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/table.png" t
 ,"```table","```");
 slidenote.datatypes.push({type:"table",mdcode:false,theme:newtheme});
 
+newtheme.hasInsertMenu = true;
+newtheme.insertMenuArea = function(dataobject){
+  var result = document.createElement("div");
+  result.classList.add("chartistinsertmenu")
+  var insertcsvbutton = document.createElement("button");
+  insertcsvbutton.classList.add("menuitem");
+  insertcsvbutton.innerText = "import csv";
+  insertcsvbutton.title = "import data from a local .csv file";
+  var insertcsvinput = document.createElement("input");
+  insertcsvinput.type = "file";
+  insertcsvinput.accept = ".csv,.txt";
+  insertcsvinput.classList.add("screenreader-only");
+  insertcsvinput.id = "importcsvinput";
+  insertcsvinput.tabIndex = "-1";
+  insertcsvinput.onchange = function(e){
+    let file = this.files[0];
+    let name = file.name;
+    if(name.substring(name.length-3)!="csv" && name.substring(name.length-3)!="txt")return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      let selstart = slidenote.textarea.selectionStart;
+      let selend = slidenote.textarea.selectionEnd;
+      let txt = slidenote.textarea.value;
+      let instext = reader.result;
+      txt = txt.substring(0,selstart)+instext+txt.substring(selend);
+      slidenote.textarea.value=txt;
+      slidenote.textarea.selectionEnd = selstart + instext.length;
+      slidenote.parseneu();
+      slidenote.textarea.blur();
+      slidenote.textarea.focus();
+    }
+    reader.readAsText(file);
+  }
+  insertcsvbutton.onclick = function(){
+    document.getElementById("importcsvinput").click();
+  }
+  result.appendChild(insertcsvbutton);
+  result.appendChild(insertcsvinput);
+  return result;
+}
+
 newtheme.styleThemeSpecials = function(){
   var datadivs = slidenote.presentationdiv.getElementsByTagName("section");
   for(var datax=0;datax<slidenote.parser.dataobjects.length;datax++){

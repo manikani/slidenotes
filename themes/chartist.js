@@ -176,6 +176,35 @@ newtheme.insertMenuArea = function(dataobject){
     datasetlabel.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("datasetlabel")});
     buttonarea.appendChild(datasetlabel);
   }
+  var insertcsvbutton = document.createElement("button");
+  insertcsvbutton.classList.add("menuitem");
+  insertcsvbutton.innerText = "import csv";
+  insertcsvbutton.title = "import data from a local .csv file";
+  var insertcsvinput = document.createElement("input");
+  insertcsvinput.type = "file";
+  insertcsvinput.accept = ".csv,.txt";
+  insertcsvinput.classList.add("screenreader-only");
+  insertcsvinput.id = "importcsvinput";
+  insertcsvinput.tabIndex = "-1";
+  insertcsvinput.onchange = function(e){
+    let file = this.files[0];
+    let name = file.name;
+    if(name.substring(name.length-3)!="csv" && name.substring(name.length-3)!="txt")return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      slidenote.extensions.getThemeByName("chartist").importCsv(reader.result);
+    }
+    reader.readAsText(file);
+  }
+  insertcsvbutton.onclick = function(){
+    document.getElementById("importcsvinput").click();
+  }
+
+  buttonarea.appendChild(insertcsvbutton);
+  insertcsvbutton.appendChild(insertcsvinput);
+
+
+
   var summary = document.createElement("button");
   summary.classList.add("menuitem");
   summary.innerText="Summary";
@@ -221,6 +250,48 @@ newtheme.updatecharts = function(){
   for(var x=0;x<this.charts.length;x++){
     this.charts[x].update();
   }
+}
+
+newtheme.importCsv = function(csv){
+  console.log("import csv");
+  var selstart = slidenote.textarea.selectionStart;
+  var selend = slidenote.textarea.selectionEnd;
+  let posofchartbegin = slidenote.textarea.value.lastIndexOf("```chart",selstart);
+  posofchartbegin = slidenote.textarea.value.indexOf("\n",posofchartbegin)+1;
+  let posofchartend = slidenote.textarea.value.indexOf("\n```",selend);
+  let posofseparator = slidenote.textarea.value.indexOf(this.syntaxContainer.headseparator,posofchartbegin);
+  console.log("chartbegin:"+posofchartbegin)
+  if(posofseparator>posofchartend || posofseparator===-1){
+    //no separator found, insert in selstart
+    if(csv.substring(csv.length-1)==="\n"&&slidenote.textarea.value.substring(selend,selend+1)==="\n"){
+      csv=csv.substring(0,csv.length-1);
+    }
+    let txt = slidenote.textarea.value;
+    txt = txt.substring(0,selstart)+csv+txt.substring(selend);
+    slidenote.textarea.value = txt;
+    diff = csv.length - (selend - selstart);
+    slidenote.textarea.selectionStart = selstart;
+    slidenote.textarea.selectionEnd = selstart + diff;
+  }else{
+    //separator found, so insert after separator:
+    posofseparator = slidenote.textarea.value.indexOf("\n",posofseparator+this.syntaxContainer.headseparator.length-1)+1;
+    let enter = "";
+    if(csv.substring(csv.length-1)!="\n"&&slidenote.textarea.value.substring(posofseparator,posofseparator+1)!="\n")enter="\n";
+    if(csv.substring(csv.length-1)==="\n"&&slidenote.textarea.value.substring(posofseparator,posofseparator+1)==="\n"){
+      csv=csv.substring(0,csv.length-1);
+    }
+
+    console.log(slidenote.textarea.value.substring(posofseparator,posofseparator+4)+"<<<");
+    let txt = slidenote.textarea.value;
+    txt = txt.substring(0,posofseparator)+csv+enter+txt.substring(posofseparator);
+    slidenote.textarea.value = txt;
+    slidenote.textarea.selectionStart = posofseparator;
+    slidenote.textarea.selectionEnd = posofseparator + csv.length;
+  }
+  slidenote.parseneu();
+  console.log("parseneu after import of csv");
+  slidenote.textarea.blur();
+  setTimeout("slidenote.textarea.focus()",100);
 }
 
 newtheme.insert = function(selection){
