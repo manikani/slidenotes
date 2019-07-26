@@ -46,9 +46,13 @@ jsfile.onload = loadChartistPlugins;
 document.getElementsByTagName("head")[0].appendChild(jsfile);*/
 //newtheme.loadingFiles = new Array();
 slidenote.extensions.loadingThemes.push({name:"chartist-placeholder"});
-slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins
-newtheme.addEditorbutton('<img src="'+slidenote.basepath+'themes/chartist/chartbutton.png" alt="Chart" title="Chart">','```chart'); //only for comparison right now
-slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme}); //TODO: change chartsvg to chart
+slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins;
+var buttonhtml = '<img src="'+slidenote.basepath+'themes/chartist/chartbutton.png" alt="Chart" title="Chart">';
+buttonhtml += '<span class="buttonmdcode">```</span>';
+buttonhtml += '<span class="buttonmdtext">chart</span>';
+buttonhtml += '<span class="buttonmdcode">```</span>';
+newtheme.addEditorbutton(buttonhtml,'```chart');
+slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme});
 
 
 //internal vars:
@@ -66,52 +70,121 @@ newtheme.insertMenuArea = function(dataobject){
   var result = document.createElement("div");
   result.classList.add("chartistinsertmenu")
 
+  var previewbutton = document.createElement("button");
+  previewbutton.classList.add("chartist-preview-button");
+  previewbutton.classList.add("menuitem");
+  var previewimg = new Image();
+  previewimg.src=slidenote.basepath+"themes/chartist/"+subtype+"button.png";
+  var previewtext = document.createElement("div");
+  previewtext.classList.add("chartist-preview-text");
+  previewtext.innerText = subtype;
+  previewbutton.appendChild(previewimg);
+  previewbutton.appendChild(previewtext);
+
   var charttypes = ["line", "arealine", "bar", "horizontalbar", "stackbar", "horizontalstackbar", "pie", "halfpie"];
+  previewbutton.charttypes = charttypes.join(",");
   var chartbarea = document.createElement("ul");
   for(var ct=0;ct<charttypes.length;ct++){
     var ctype = charttypes[ct];
-    var button = document.createElement("li");
+    var li = document.createElement("li");
+    var button = document.createElement("a");
     //button.classList.add("chartistbutton")
     button.charttype = ctype;
     button.addEventListener("click",function(){
       slidenote.extensions.getThemeByName("chartist").changeChartType(this.charttype);
+      document.getElementsByClassName("chartist-preview-button")[0].classList.remove("active");
+      slidenote.presentation.showInsertMenu();
+      document.getElementById("extrainsertmenu").getElementsByTagName("button")[0].focus();
     });
-    if(subtype===ctype)button.classList.add("active");
+    if(subtype===ctype){
+      previewbutton.actnr=ct;
+      button.classList.add("active");
+    }
     var buttonimg = new Image();
     buttonimg.src=slidenote.basepath+"themes/chartist/"+ctype+"button.png";
     button.appendChild(buttonimg);
-    chartbarea.appendChild(button);
+    li.appendChild(button);
+    chartbarea.appendChild(li);
   }
 
   chartbarea.classList.add("chartist-chartbuttonarea");
-  result.appendChild(chartbarea);
+  /*chartbarea.onkeyup = function(e){
+    var buttons = this.getElementsByTagName("button");
+    var x=0;
+    for(x=0;x<buttons.length;x++)if(buttons[x]===document.activeElement)break;
+
+    if(e.key==="ArrowUp"){
+    x--; if(x<0)x=buttons.length-1;
+    }else if(e.key==="ArrowDown"){
+    x++;  if(x>=buttons.length)x=0;
+    }
+    if(e.key==="ArrowUp"||e.key==="ArrowDown"){
+      buttons[x].focus();
+    }
+    if(e.key==="Escape"){
+      document.getElementsByClassName("chartist-preview-button")[0].classList.remove("active");
+    }
+
+  }*/
+  /*  keycodes[37]="ArrowLeft";
+    keycodes[38]="ArrowUp";
+    keycodes[39]="ArrowRight";
+    keycodes[40]="ArrowDown";*/
+  previewbutton.appendChild(chartbarea);
+  previewbutton.onkeyup = function(e){
+    var list = this.charttypes.split(",");
+    var nr = this.actnr;
+    if(e.key==="ArrowLeft"||e.keyCode===37){
+      nr--; if(nr<0)nr=list.length-1;
+    }else if(e.key==="ArrowRight"||e.keyCode===39){
+      nr++; if(nr>=list.length)nr=0;
+    }
+    if(e.key==="ArrowLeft"||e.key==="ArrowRight"||e.keyCode===37||e.keyCode===39){
+      slidenote.extensions.getThemeByName("chartist").changeChartType(list[nr]);
+      slidenote.presentation.showInsertMenu();
+      document.getElementById("extrainsertmenu").getElementsByTagName("button")[0].focus();
+    }
+  }
+  previewbutton.onclick = function(e){
+    this.classList.add("active");
+    var buttons = this.getElementsByTagName("button");
+    if(buttons.length>0)buttons[0].focus();
+    e.preventDefault();
+  }
+  result.appendChild(previewbutton);
+  //result.appendChild(chartbarea);
 
   var buttonarea = document.createElement("div");
   if(type!="pie"){
     var xaxisbutton = document.createElement("button");
+    xaxisbutton.classList.add("menuitem");
     xaxisbutton.innerText = "Label X-Axis";
     xaxisbutton.title = "A Label shown under the X-Axis of the Graph";
     xaxisbutton.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("xaxislabel")});
     buttonarea.appendChild(xaxisbutton);
 
     var yaxisbutton = document.createElement("button");
+    yaxisbutton.classList.add("menuitem");
     yaxisbutton.innerText = "Label Y-Axis";
     yaxisbutton.title = "A Label shown at the Side of the Y-Axis of the Graph";
     yaxisbutton.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("yaxislabel")});
     buttonarea.appendChild(yaxisbutton);
     var datasetlabel = document.createElement("button");
+    datasetlabel.classList.add("menuitem");
     datasetlabel.innerText = "Label Dataset";
     datasetlabel.title = "A Label shown above the Graph shown which color uses which Data";
     datasetlabel.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("datasetlabel")});
     buttonarea.appendChild(datasetlabel);
   }
   var summary = document.createElement("button");
+  summary.classList.add("menuitem");
   summary.innerText="Summary";
   summary.title = "A Summary of your graph for Screenreaders"
   summary.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("summary")});
   buttonarea.appendChild(summary);
 
   var example = document.createElement("button");
+  example.classList.add("menuitem");
   example.innerText = "Insert Example";
   example.addEventListener("click",function(){slidenote.extensions.getThemeByName("chartist").insert("example")});
   buttonarea.appendChild(example);

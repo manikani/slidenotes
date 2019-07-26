@@ -13,8 +13,11 @@ newtheme.helpText = function(dataobject){
           "Listcontent inside ||hidden||bullet will be used as Bulletpoints."
   return result;
 }
-
-newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/hidden.png" title="Hidden Element">', "```hidden","```");
+var buttonhtml = '<img src="'+slidenote.imagespath+'buttons/hidden.png" title="Hidden Element">';
+buttonhtml += '<span class="buttonmdcode">```</span>';
+buttonhtml += '<span class="buttonmdtext">hidden</span>';
+buttonhtml += '<span class="buttonmdcode">```</span>';
+newtheme.addEditorbutton(buttonhtml, "```hidden","```");
 slidenote.datatypes.push({type:"hidden", mdcode:true, theme:newtheme});
 
 

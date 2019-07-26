@@ -33,8 +33,8 @@ newtheme.styleThemeSpecials = function(){
       console.log("katex:"+rawdata+"<<eol");
       console.log(rawdata);
       console.log(datadivs[datax]);
-      //katex.render(rawdata, newdiv, {throwOnError:false});
-      katex.render(rawdata,newdiv);
+      katex.render(rawdata, newdiv, {throwOnError:false});
+      //katex.render(rawdata,newdiv);
       datadiv.appendChild(newdiv);
     }
   }

@@ -1,0 +1,225 @@
+/*basis-theme "luminoso"*/
+/*jegliche css-deklaration muss mit klasse .luminoso starten */
+
+/* hintergrund wird pro ppage festgelegt, nicht nur einmal fürs theme. sollte in zukunft geändert werden, aber momentan ists noch so. 
+ppage ist der jeweilige presentation-slide. 
+generelle sachen, wie bspw. schriftfarben, schriften etc. in die hauptdeklaration, abweichungen dann in den weiteren. 
+ich leg dir hier ein muster vor, in das du deine sachen eintragen kannst. halt es einfach und semantisch, dann sollte nicht viel schief gehen.*/
+
+.luminoso, .luminoso .ppage {
+	background: #f4f4f4;
+	color: black;
+}
+
+/*code affects both: inlinecode and codeblock*/
+
+.luminoso code { 
+	background: lightblue;
+	color: black;
+	padding: 2px;
+}
+
+
+/*codeblock affects only codeblocks*/
+.luminoso code.codeblock{
+    /*hier mal ein beispiel für positionierung mit hilfe von grid*/
+    align-self:center;
+    justify-self:center;
+}
+
+.luminoso h1,.luminoso h2,.luminoso h3{
+
+}
+
+.luminoso h1{
+
+}
+
+.luminoso h2{
+
+}
+
+.luminoso h3{
+
+}
+
+.luminoso p{
+
+}
+
+.luminoso b{
+
+}
+
+.luminoso i{
+
+}
+
+.luminoso strike{
+
+}
+
+.luminoso ul, .luminoso ol{
+
+}
+
+.luminoso ul{
+
+}
+
+.luminoso ol{
+
+}
+
+.luminoso li{
+
+}
+
+/*sub-lists (unterpunkte/verschachtelung der listen)*/
+
+.luminoso ul ul, .luminoso ol ul{
+
+}
+
+.luminoso ol ul, .luminoso ol ol{
+
+}
+
+/* charts:*/
+
+/* alle charts sind in einer section mit klasse chart*/
+.luminoso section.chart{
+
+}
+
+/*pie-charts:*/
+.luminoso section.chart-pie{
+
+}
+
+/*bar-charts*/
+.luminoso section.chart-bar{
+
+}
+
+/*line-charts*/
+.luminoso section.chart-line{
+
+}
+
+/*alle labels einer chart - wenn nur für bestimmte charts gewollt, muster von oben erweitern, also bspw. .luminoso .chart-bar .ct-label. hier die größen der schrift und farben für die labels generell anpassen */
+.luminoso .ct-label{
+
+}
+
+/*x-achsen-label*/
+.luminoso .chart-x-axis-label{
+
+}
+
+/*y-achsen-label*/
+.luminoso .chart-y-axis-label{
+
+}
+
+/*dataset-label, was oben drüber steht und bspw. jahreszahl beinhaltet:*/
+.luminoso .chart-datasetlabel{
+
+}
+
+/*die box davon:*/
+.luminoso .chart-datasetlabel-box{
+
+}
+/*datasetlabel und ihre boxen können auch einzeln angesprochen werden und sind von 0 an durchnummeriert. erstes datasetlabel heißt .chart-datasetlabel-0 */
+
+
+/*farben: ich fasse die zusammen um einheitlichkeit herzustellen. jeder block umfasst immer äußere und innere farbe. das schema kann weiter erweitert werden, aber ich belasse es erstmal bei 5 farben. nicht deklarierte farben nimmt er die standard-farben die er schon hat. die ersten 5 farben sollten auf die präsentation zugeschnitten sein. jede farbe ist als "ct-series-a" bis "ct-series-z" paar.*/
+
+.luminoso .ct-series-a .ct-point, .luminoso .ct-series-a .ct-line, .luminoso .ct-series-a .ct-bar, .luminoso .ct-series-a .ct-slice-donut {
+  stroke: #d70206; 
+}
+
+.luminoso .ct-series-a .ct-slice-pie, .luminoso .ct-series-a .ct-slice-donut-solid, .luminoso .ct-series-a .ct-area {
+  fill: #d70206; 
+}
+
+.luminoso .ct-series-b .ct-point, .luminoso .ct-series-b .ct-line, .luminoso .ct-series-b .ct-bar, .luminoso .ct-series-b .ct-slice-donut {
+  stroke: #f05b4f; 
+}
+
+.luminoso .ct-series-b .ct-slice-pie, .luminoso .ct-series-b .ct-slice-donut-solid, .luminoso .ct-series-b .ct-area {
+  fill: #f05b4f; 
+}
+
+.luminoso .ct-series-c .ct-point, .luminoso .ct-series-c .ct-line, .luminoso .ct-series-c .ct-bar, .luminoso .ct-series-c .ct-slice-donut {
+  stroke: #f4c63d; 
+}
+
+.luminoso .ct-series-c .ct-slice-pie, .luminoso .ct-series-c .ct-slice-donut-solid, .luminoso .ct-series-c .ct-area {
+  fill: #f4c63d; 
+}
+
+.luminoso .ct-series-d .ct-point, .luminoso .ct-series-d .ct-line, .luminoso .ct-series-d .ct-bar, .luminoso .ct-series-d .ct-slice-donut {
+  stroke: #d17905; 
+}
+
+.luminoso .ct-series-d .ct-slice-pie, .luminoso .ct-series-d .ct-slice-donut-solid, .luminoso .ct-series-d .ct-area {
+  fill: #d17905; 
+}
+
+.luminoso .ct-series-e .ct-point, .luminoso .ct-series-e .ct-line, .luminoso .ct-series-e .ct-bar, .luminoso .ct-series-e .ct-slice-donut {
+  stroke: #453d3f; 
+}
+
+.luminoso .ct-series-e .ct-slice-pie, .luminoso .ct-series-e .ct-slice-donut-solid, .luminoso .ct-series-e .ct-area {
+  fill: #453d3f; 
+}
+
+
+/*ende von charts*/
+
+/*tables stehen in einer klassenlosen section. wenn du also .luminoso section bearbeitest hat das auch effekt auf deren container. ansonsten steuer tabellen direkt an über*/
+
+.luminoso table{
+
+}
+
+.luminoso thead{
+
+}
+
+.luminoso tbody{
+
+}
+
+.luminoso tr{
+
+}
+
+.luminoso td{
+
+}
+
+/* latex - elemente sind in einer section mit klasse klatex*/
+.luminoso section.klatex{
+
+}
+
+/* layout-elemente sind sections mit section-klasse. sie beinhalten weitere elemente*/
+
+.luminoso section.section{
+
+}
+
+/*layout-element auf linker seite, nimmt ca. ein drittel der linken seite ein*/
+.luminoso section.section.left{
+    
+}
+
+/*layout-element auf rechter seite, nimmt die hälfte des platzes ein, wenn nicht zwei weitere layout-sections "in reihe" stehen, dann nimmt er ein drittel*/
+.luminoso section.section.right{
+
+}
+
+

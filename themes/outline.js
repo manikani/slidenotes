@@ -43,9 +43,9 @@ newtheme.changeThemeStatus = function(status){
 newtheme.generateOutlineBlock = function(){
   var outlineblock = document.createElement("div");
   outlineblock.id="outlineblock";
-  var img = new Image();
-  img.src=slidenote.imagespath+"buttons/outline.png";
-  outlineblock.appendChild(img);
+  //var img = new Image();
+  //img.src=slidenote.imagespath+"buttons/outline.png";
+  //outlineblock.appendChild(img);
   var title = document.createElement("div");
   title.id="outlineBlockTitle";
   title.innerText="OUTLINE";
@@ -83,7 +83,11 @@ newtheme.generateOutlineBlock = function(){
     if(oldmenu)oldmenu.parentElement.removeChild(oldmenu);
     else slidenote.extensions.getThemeByName("outline").generateOutlineMenu();
   });
-  document.getElementById("editorblock").appendChild(outlineblock);
+  var newoutletdiv = document.getElementById("outlet");
+  if(newoutletdiv){
+    newoutletdiv.innerHTML = "";
+    newoutletdiv.appendChild(outlineblock);
+  }else  document.getElementById("editorblock").appendChild(outlineblock);
 }
 
 newtheme.fillOutlineBlock = function(text, selection){

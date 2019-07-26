@@ -736,7 +736,7 @@ text.ct-pointlabel.ct-label.ct-label-stackbar {
 }
 
 /*editor: insertmenu*/
-ul.chartist-chartbuttonarea {
+/*ul.chartist-chartbuttonarea {
     border: 1px solid;
     border-radius: 10px;
     width: 2em;
@@ -772,4 +772,52 @@ ul.chartist-chartbuttonarea:hover {
     position: absolute;
     width:90%;
     margin-right:3px;
+}*/
+/*new design*/
+ul.chartist-chartbuttonarea {
+    display: none;
+}
+
+#insertarea #extrainsertmenu .chartistinsertmenu button.chartist-preview-button {
+    height: 5em;
+    text-align: center;
+    margin-bottom: 5px;
+    border: 1px solid lightblue;
+    padding: 5px;
+}
+
+.chartist-preview-button img {
+    height: 75%;
+}
+.chartist-preview-button.active ul.chartist-chartbuttonarea {
+    display: grid;
+    grid-template-columns: 20px;
+    grid-template-rows: 1fr;
+    width: 120px;
+    position: relative;
+    top: -75px;
+    background: rgba(255,255,255,0.6);
+    height: 150px;
+    overflow-y: scroll;
+    padding: 0;
+    list-style: none;
+    z-index: 15;
+    border:1px solid;
+    border-radius:10px;
+    box-shadow:1px 1px 5px 5px lightgrey;
+}
+
+#insertarea button.chartist-preview-button .chartist-chartbuttonarea a {
+    width: 5em;
+    height: 3em;
+    background: white;
+    border: 1px solid black;
+    text-align: center;
+    padding: 0;
+    margin: 5px 25px;
+    display: block;
+}
+
+.chartist-chartbuttonarea li {
+    width: 100%;
 }

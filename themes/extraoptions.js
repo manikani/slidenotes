@@ -4,8 +4,8 @@ newtheme.options=new Array();
 newtheme.options[0]= {name:"Sidebar",value:true};
 newtheme.options[1]= {name:"Editorbuttons", value:true};
 newtheme.options[1].onchange = function(){
-  if(this.value)document.getElementById("texteditorbuttons").style.display="unset";
-    else document.getElementById("texteditorbuttons").style.display = "none";
+  //if(this.value)document.getElementById("texteditorbuttons").style.display="unset";
+  //  else document.getElementById("texteditorbuttons").style.display = "none";
 }
 
 

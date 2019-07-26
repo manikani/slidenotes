@@ -287,13 +287,25 @@ newtheme.init = function(){
   //add imagebutton to texteditorbuttons
   var texteditorbuttons = document.getElementById("texteditorbuttons");
   var button = document.createElement("BUTTON");
-  var buttontext = new Image();
-  buttontext.src=slidenote.imagespath+"buttons/image.png";
-  buttontext.title = "Image";
+  var buttonimage = new Image();
+  buttonimage.src=slidenote.imagespath+"buttons/image.png";
+  buttonimage.title = "Image";
   //var buttontext = document.createTextNode("Image");
   var fileInput = document.getElementById('fileInput');
   var fileDisplayArea = document.getElementById('filePreview');
-  button.appendChild(buttontext);
+  button.appendChild(buttonimage);
+  var buttonpretext = document.createElement("span");
+  buttonpretext.classList.add("buttonmdcode");
+  buttonpretext.innerText = "![](";
+  var buttonintext = document.createElement("span");
+  buttonintext.classList.add("buttonmdtext");
+  buttonintext.innerText="image";
+  var buttonendtext = document.createElement("span");
+  buttonendtext.classList.add("buttonmdcode");
+  buttonendtext.innerText=")";
+  button.appendChild(buttonpretext);
+  button.appendChild(buttonintext);
+  button.appendChild(buttonendtext);
   button.onclick = function(event){
     slidenote.base64images.preselectedname = null;
     var el = slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
@@ -316,7 +328,10 @@ newtheme.init = function(){
 
     document.getElementById('imagesblock').classList.add('visible');
   };
-  texteditorbuttons.appendChild(button);
+  //texteditorbuttons.appendChild(button);
+  var li=document.createElement("li");
+  li.appendChild(button);
+  document.getElementById("toolbarbuttons").appendChild(li);
 
   console.log(fileInput);
   fileInput.addEventListener('change', function(e) {

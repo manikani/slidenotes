@@ -68,7 +68,10 @@ newtheme.changeSectionType = function(type){
   slidenote.textarea.focus();
 }
 
-newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/layout.png" title="layout/section">',"```layout","```");
+newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/layout.png" title="layout/section">'+
+  '<span class="buttonmdcode">```</span>'+
+  '<span class="buttonmdtext">layout</span>'+
+  '<span class="buttonmdcode">```</span>',"```layout","```");
 
 slidenote.datatypes.push({type:"layout", mdcode:true, theme:newtheme});
 slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:newtheme};

@@ -11,9 +11,18 @@ newtheme.init = function(){
   scrollTop : slidenote.textarea.scrollTop});
 */  //initialise buttons:
   this.active = true;
+  var backb = document.getElementById("historyBackButton");
+  var forwb = document.getElementById("historyForwardButton");
+  if(backb && forwb){
+    backb.onclick = function(){slidenote.extensions.getThemeByName("history").goBack()};
+    forwb.onclick = function(){slidenote.extensions.getThemeByName("history").goForward()};
+    this.backButton = backb;
+    this.forwardButton = forwb;
+    return;
+  }
   var buttondiv = document.createElement("div");
-  var backb = document.createElement("button");
-  var forwb = document.createElement("button");
+  backb = document.createElement("button");
+  forwb = document.createElement("button");
   backb.onclick = function(){slidenote.extensions.getThemeByName("history").goBack()};
   forwb.onclick = function(){slidenote.extensions.getThemeByName("history").goForward()};
   backb.id="historyBackButton";

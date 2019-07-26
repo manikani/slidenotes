@@ -8,6 +8,12 @@ var keyboardshortcuts = {
     textarea:[], //all shortcuts attached to textarea
     options:[], //all shortcuts attached to optionsmenu
     globals:[], //all shortcuts attached globaly
+    menuload:[], //all shortcuts attached to load slidenotesmenu
+    menucloud:[], //all shortcuts attached to cloud-menuload
+    menupublish:[],//all shortcuts on publish-menu
+    menuimportexport:[],//all shortcuts on import/export menu
+    menuoptionspresentation:[],//all shortcuts presentation-options-menu
+    menuoptionseditor:[],//all shortcuts editor-options-menu
     pressedkeys:{}, //element that holds all pressed keys at the time - used to check if shortcut is found
     metakey: "Control" //global metakey to check against
 }
@@ -45,6 +51,13 @@ keyboardshortcuts.addShortcut = function(shortcut){
     if(element==="textarea")this.textarea.push(shortcut);
     if(element==="options")this.options.push(shortcut);
     if(element==="global")this.globals.push(shortcut);
+    if(element==="menuload")this.menuload.push(shortcut);
+    if(element==="menucloud")this.menucloud.push(shortcut);
+    if(element==="menupublish")this.menupublish.push(shortcut);
+    if(element==="menuimportexport")this.menuimportexport.push(shortcut);
+    if(element==="menuoptionseditor")this.menuoptionseditor.push(shortcut);
+    if(element==="menuoptionspresentation")this.menuoptionspresentation.push(shortcut);
+
 }
 
 keyboardshortcuts.toggleShortcut = function(shortcutname, state){
@@ -226,10 +239,11 @@ keyboardshortcuts.init = function(){
 
     //toolbar:
     this.addShortcut(new this.shortcut("open toolbar", "textarea", " ", function(e){
-      var toolbar = document.getElementById("texteditorbuttons");
-      toolbar.getElementsByTagName("button")[0].focus();
+      var toolbar = document.getElementById("toolbar");
+      if(!toolbar.classList.contains("active"))toolbar.classList.add("active");
+      setTimeout("document.getElementById('toolbar').getElementsByTagName('button')[0].focus()",20);
     }));
-    this.addShortcut(new this.shortcut("arrownavigate toolbar", "toolbar", {multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:false}, function(e){
+    /*this.addShortcut(new this.shortcut("arrownavigate toolbar", "toolbar", {multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:false}, function(e){
       var toolbar = document.getElementById("texteditorbuttons");
       var toolbarbuttons = toolbar.getElementsByTagName("button");
       var actnr = 0;
@@ -241,7 +255,7 @@ keyboardshortcuts.init = function(){
       console.log("move to button no "+actnr);
     }));
     this.addShortcut(new this.shortcut("escape toolbar","toolbar",{key:"Escape",metakey:false},function(e){slidenote.textarea.focus();}));
-
+*/
     //optionsmenu:
     this.addShortcut(new this.shortcut("open options", "textarea", "o",function(e){
       var optionmenu = document.getElementById("optionmenu");
@@ -265,6 +279,38 @@ keyboardshortcuts.init = function(){
         if(bnr>=buttons.length)bnr=0;
         buttons[bnr].focus();
     }));*/
+    //general arrow-keys on menus:
+    var arrownav = function(e){
+      //we presume that "this" is the calling object: wrong!
+      console.log(e);
+      var element = e.currentTarget;
+      var buttons = element.getElementsByClassName("menuitem");
+      if(buttons.length<1)buttons = element.getElementsByTagName("button");
+      if(buttons.length<1)return;
+      var actpos = 0;
+      var actel = document.activeElement;
+      for(var x=0;x<buttons.length;x++){
+        actpos=x; if(actel===buttons[x])break;
+      }
+      if(e.key==="ArrowUp")actpos--;
+      if(e.key==="ArrowDown")actpos++;
+      if(actpos>=buttons.length)actpos=0;
+      if(actpos<0)actpos=buttons.length-1;
+      buttons[actpos].focus();
+    }
+    var standardmenus = slidenote.menumanager.standardmenus;
+    if(standardmenus===undefined)return;
+    for(var x=0;x<standardmenus.length;x++){
+      var menuname = standardmenus[x];
+      this.addShortcut(new this.shortcut("arrownavigate "+menuname,
+        menuname,
+        {multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:false},
+        arrownav));
+      this.addShortcut(new this.shortcut("arrownavigate "+menuname,
+          menuname,
+          {key:["Escape"],metakey:false},
+          function(e){slidenote.textarea.focus();}));
+    }
 
 }
 keyboardshortcuts.pressKey = function(e){
@@ -319,8 +365,16 @@ keyboardshortcuts.attachShortcuts = function(){
     slidenote.textarea.addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e, "textarea");});
     slidenote.textarea.addEventListener("keypress",function(e){slidenote.keyboardshortcuts.preventDefaultOnKeypress(e, "textarea");});
     document.getElementById("insertarea").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e, "insertmenu");console.log("shortcut insmenu");console.log(e);});
-    document.getElementById("texteditorbuttons").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"toolbar");console.log("shortcut toolbar");console.log(e);});
-    document.getElementById("optionmenu").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"options");console.log("shortcut options");console.log(e);});
+    //document.getElementById("texteditorbuttons").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"toolbar");console.log("shortcut toolbar");console.log(e);});
+    document.getElementById("menuload").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"menuload")});
+    document.getElementById("menucloud").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"menucloud")});
+    document.getElementById("menupublish").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"menupublish")});
+    document.getElementById("menuimportexport").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"menuimportexport")});
+    document.getElementById("menuoptionseditor").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"menuoptionseditor")});
+    document.getElementById("menuoptionspresentation").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"menuoptionspresentation")});
+    document.getElementById("toolbar").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"toolbar")});
+
+    //document.getElementById("optionmenu").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"options");console.log("shortcut options");console.log(e);});
 
 //    window.addEventListener("keyup", function(e){slidenote.keyboardshortcuts.reactOn(e,"globals");});
     window.addEventListener("keyup", function(e){slidenote.keyboardshortcuts.releaseKey(e);});

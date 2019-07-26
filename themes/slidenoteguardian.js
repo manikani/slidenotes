@@ -218,6 +218,11 @@ function slidenoteGuardian(slidenote){
     var savestatus = document.getElementById("savestatus");
     savestatus.src = slidenote.imagespath+"buttons/clouderror.png";
     savestatus.title = "no connection with the cloud";
+    var cloudstatus = document.getElementById("cloudstatus");
+    if(cloudstatus){
+      cloudstatus.innerText = "no connection";
+      cloudstatus.classList.add("error");
+    }
   }
   //can we start the init here? why not?
   //this.init(); not, because slidenoteguardian is not initialised yet :(
@@ -386,15 +391,19 @@ slidenoteGuardian.prototype.init = function(){
                              sync:""}
   });
   this.jsfilesForExport = [];
+  if(this.hascmsconnection)this.loadSlidenotesList();
   this.initialised = true;
 }
 
-slidenoteGuardian.prototype.loadFromRest = async function(filepath){
+slidenoteGuardian.prototype.loadFromRest = async function(filepath, responseHandler){
   var oReq = new XMLHttpRequest();
+  if(responseHandler)oReq.addEventListener("load",responseHandler);else
   oReq.addEventListener("load", function(){
     slidenoteguardian.loadedFromRest(this.response);
   });
   oReq.open("GET", filepath);
+  oReq.setRequestHeader("CONTENT-TYPE","application/json");
+  oReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
   oReq.send();
 }
 
@@ -402,6 +411,53 @@ slidenoteGuardian.prototype.loadedFromRest = function(jsonstring){
   var loadedObject = JSON.parse(jsonstring);
   this.loadedObject = loadedObject;
   console.log(loadedObject);
+}
+
+slidenoteGuardian.prototype.importSlidenotesList = function(response){
+  if(!response.status===200)return;
+  var xmlDoc = response.responseXML;
+  slidenoteguardian.loadedXmlDoc = xmlDoc;
+  var items = xmlDoc.getElementsByTagName("item");
+  var loadedSlidenotes = new Array();
+  for(var x=0;x<items.length;x++){
+      var title = items[x].getElementsByTagName("title")[0];
+      var link = items[x].getElementsByTagName("link")[0];
+      loadedSlidenotes.push({title:title.innerHTML,url:link.innerHTML});
+  }
+  slidenoteguardian.loadedSlidenotes = loadedSlidenotes;
+}
+slidenoteGuardian.prototype.loadSlidenotesList = function(){
+  this.loadFromRest("/myslidenotes",function(){
+    slidenoteguardian.importSlidenotesList(this);
+  });
+}
+
+slidenoteGuardian.prototype.importPresentationList = function(response){
+    var xmlDoc=response.responseXML;
+    slidenoteguardian.loadedXmlDocP = xmlDoc;
+    var items = xmlDoc.getElementsByTagName("item");
+    var nid = slidenoteguardian.restObject.nid;
+    var loadedPresentations = new Array();
+    for(var x=0;x<items.length;x++){
+        var title = items[x].getElementsByTagName("title")[0].innerHTML;
+        var link = items[x].getElementsByTagName("link")[0].innerHTML;
+        var pubDate = items[x].getElementsByTagName("pubDate")[0].innerHTML;
+        var commentstring = items[x].getElementsByTagName("description")[0].innerHTML;
+        var nodeid = items[x].getElementsByTagName("dc:creator")[0].innerHTML;
+        nodeid = nodeid*1;
+        if(nodeid===nid){
+            loadedPresentations.push({
+                title:title, url:link, date:pubDate,
+                commentstring:commentstring, slidenote:nodeid
+            });
+        }
+    }
+    slidenoteguardian.loadedPresentations = loadedPresentations;
+}
+slidenoteGuardian.prototype.loadSlidenotesList = function(){
+  this.loadFromRest("/mypresentations",function(){
+    slidenoteguardian.importPresentationList(this);
+  });
 }
 
 slidenoteGuardian.prototype.getAllPlugins = function(){
@@ -1288,19 +1344,19 @@ slidenoteGuardian.prototype.decrypt = async function(buffer, iv){
   this.password = await this.passwordPrompt(pwtext, "decrypt");
   let keyguardian = await this.createKey(iv);
   console.log("decoding starts");
-  let encstatus = document.getElementById("encstatus");
+  //let encstatus = document.getElementById("encstatus");
   try{
     this.plainTextBuffer = await this.crypto.subtle.decrypt(keyguardian.alg, keyguardian.key, buffer);
   } catch(e){
     console.log(e);
     console.log("decryption has failed!");
     this.password = null; //reset password as it has no meaning
-    encstatus.src=slidenote.imagespath+"schloss-rot.png";
-    encstatus.title = "failed to decrypt note - wrong password";
+    //encstatus.src=slidenote.imagespath+"schloss-rot.png";
+    //encstatus.title = "failed to decrypt note - wrong password";
     return "decryption has failed";
   }
-  encstatus.src=slidenote.imagespath+"schloss-gruen.png";
-  encstatus.title = "encryption works as expected - your data is secure";
+  //encstatus.src=slidenote.imagespath+"schloss-gruen.png";
+  //encstatus.title = "encryption works as expected - your data is secure";
   console.log("decoding has ended");
 
   return new TextDecoder().decode(this.plainTextBuffer); //TODO: error-handling

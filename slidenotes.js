@@ -312,7 +312,7 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 var changes = new Array(); //saves the changes we have to do
 	 var imagesinline = new Array(); //array with array of images-changes
 	 //create cursor-change:
-	 var cursorposinall = slidenote.textarea.selectionEnd;
+	 var cursorposinall = slidenote.textarea.selectionStart;
 	 //var linediff = this.lineAtPosition(cursorposinall);
 	 //cursorposinall -=linediff; //\n counts in cursorpos
 	 var cursorline = this.lineAtPosition(cursorposinall);
@@ -1081,19 +1081,51 @@ emdparser.prototype.setDropDownMenu = function (){
 	//var newtop = carretsymbol.offsetTop + sidebar.offsetTop;
 	var carret = document.getElementById("carret");
 	if(!nicesymbol || !sidebar || !carret)return;
+	//look out for attached menu:
+	var insertmenu = document.getElementById("insertarea");
+	if(insertmenu && insertmenu.style.visibility==="visible"){
+		setTimeout("slidenote.presentation.showInsertMenu(); document.getElementById('insertarea').getElementsByTagName('button')[0].focus();",1);
+		insertmenu.style.visibility==="hidden";
+	}
+
 	var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
-	//if(newtop<0)newtop=3;
+	newtop -=3;
+	newtop -= slidenote.textarea.scrollTop;
+	nicesymbol.classList.remove("out")
+	nicesymbol.style.opacity=null;
+	if(newtop<slidenote.textarea.offsetTop-20){
+		var diff = slidenote.textarea.offsetTop - 20 - newtop;
+		diff = diff / 1000;
+		if(diff>1)diff=1;
+		diff=1-diff;
+		nicesymbol.style.opacity = diff;
+		newtop=slidenote.textarea.offsetTop-20;
+		nicesymbol.classList.add("out");
+
+	}else if(newtop>slidenote.textarea.offsetHeight + slidenote.textarea.offsetTop - (nicesymbol.offsetHeight/2)){
+		newtop = slidenote.textarea.offsetHeight + slidenote.textarea.offsetTop - (nicesymbol.offsetHeight/2);
+		nicesymbol.classList.add("out");
+	}
+
 	nicesymbol.style.top = newtop +"px";
+	//hack für safari:
+	var sidebar = document.getElementById("sidebar");
+	nicesymbol.style.left = sidebar.offsetLeft + "px";
+
 	nicesymbol.style.position="absolute";
 	var celement = slidenote.parser.CarretOnElement();
 	var nicelabel = document.getElementById("nicesidebarsymbollabel");
+	var nicecontainer = document.getElementById("nicesidebarsymbolcontainer");
+	if(nicecontainer)nicecontainer.style.visibility = "visible";
 	if(celement && celement.label){
 		nicelabel.innerText = celement.label;
 	}else if(celement && celement.dataobject){
 		nicelabel.innerText = celement.dataobject.type;
 	}else{
+		if(nicecontainer)nicecontainer.style.visibility = "hidden";
 		nicelabel.innerText = "";
 	}
+
 	//console.log("nicesymbol:"+nicesymbol.style.top+"carretsymbol:"+carretsymbol.offsetTop);
 	//nicesymbol.innerHTML='&nbsp;<a href="javascript:slidenote.presentation.showInsertMenu();"<img src="images/buttons/droptilde.png"></a>&nbsp;<img src="images/buttons/cursorline.png">';
 }
@@ -2856,9 +2888,11 @@ pagegenerator.prototype.showInsertMenu = function(){
 
 	}else{
 		insertmenu.classList.remove("insertmenu-extra");
-		document.getElementById("insertmenulabel").innerText = "INSERT";
-		document.getElementById("extrainsertmenu").innerHTML = "nothing";
+		//document.getElementById("insertmenulabel").innerText = "INSERT";
+		//document.getElementById("extrainsertmenu").innerHTML = "nothing";
 	}
+	//safari-hack:
+	insertmenu.style.left = document.getElementById("sidebar").offsetLeft + "px";
 
 	console.log("show insertMenu");
 	insertmenu.style.visibility = "visible";
@@ -2874,32 +2908,40 @@ pagegenerator.prototype.showInsertMenu = function(){
 		var topmax = slidenote.textarea.offsetHeight - insertmenu.offsetHeight;
 		if(top>topmax){
 			top-=insertmenu.offsetHeight;
-			var cursorlinesymboltop = insertmenu.offsetHeight -9;
-			cursorlinesymbol.style.top = cursorlinesymboltop+"px";
+			//var cursorlinesymboltop = insertmenu.offsetHeight -9;
+			//cursorlinesymbol.style.top = cursorlinesymboltop+"px";
 			//insertmenu.getElementsByTagName("IMG")[1].style.display="none";
 		} else{
 			//insertmenu.getElementsByTagName("IMG")[1].style.display="unset";
-			cursorlinesymbol.style.top = "-7px";
+			//cursorlinesymbol.style.top = "-7px";
 		}
 		insertmenu.style.top = top+"px";
 	}else{
-		var top = symbol.offsetTop + (symbol.offsetHeight/2);
+		var top = symbol.offsetTop + (symbol.offsetHeight);
 		var topmax = slidenote.textarea.offsetHeight - insertmenu.offsetHeight;
 		if(top>topmax){
 			top-=insertmenu.offsetHeight;
-			var cursorlinesymboltop = insertmenu.offsetHeight -9;
-			cursorlinesymbol.style.top = cursorlinesymboltop+"px";
-		} else{ cursorlinesymbol.style.top ="-7px";}
+			top-=(symbol.offsetHeight/2);
+			insertmenu.classList.add("top");
+
+			//var cursorlinesymboltop = insertmenu.offsetHeight -9;
+			//cursorlinesymbol.style.top = cursorlinesymboltop+"px";
+		} else{
+			insertmenu.classList.remove("top");
+			//cursorlinesymbol.style.top ="-7px";
+		}
 		insertmenu.style.top = top+"px";
 
 	}
+	//slidenote.textarea.blur();
 	//slidenote.textarea.focus(); //get focus on slidenote again to regain cursor
 	document.getElementById("carret").classList.add("show");
 	//insertmenu.focus();
 	if(carretline)carretline.style.visibility="hidden";
-	symbol.style.visibility = "hidden";
+	//symbol.style.visibility = "hidden";
 
 	this.closeMenu = function(e){
+		console.log("closed insertmenu");
 		console.log(e);
 		slidenote.textarea.removeEventListener("click",slidenote.presentation.closeMenu);
 		slidenote.textarea.removeEventListener("keydown",slidenote.presentation.closeMenu);
@@ -2911,13 +2953,14 @@ pagegenerator.prototype.showInsertMenu = function(){
 			symbol.style.visibility = "visible";
 			insertmenu.tabIndex = undefined;
 			insertmenu.style.visibility = "hidden";
+			document.getElementById("extrainsertmenu").innerHTML = "";
 			var carretline = document.getElementsByClassName("carretline")[0]
 			if(carretline)carretline.style.visibility="visible";
 			slidenote.textarea.focus();
 		},200);
 
 	}
-		insertmenu.onclick = this.closeMenu;
+		//insertmenu.onclick = this.closeMenu;
 		slidenote.textarea.addEventListener("click", this.closeMenu);
 		slidenote.textarea.addEventListener("keydown",this.closeMenu);
 		slidenote.textarea.addEventListener("scroll",this.closeMenu);
@@ -3196,11 +3239,12 @@ ExtensionManager.prototype.loadBasicThemes = function(){
 	//this.loadTheme("contextfield");
 	this.loadTheme("blocks");
 	this.loadTheme("stickytitles", true);
-	this.loadTheme("procontra");
+	//this.loadTheme("procontra");
 	this.loadTheme("azul");
 	this.loadTheme("redalert");
-	this.loadTheme("tufte");
-	this.loadTheme("prototyp");
+	this.loadTheme("luminoso");
+	//this.loadTheme("tufte");
+	//this.loadTheme("prototyp");
 	this.loadTheme("highlight");
 	this.loadTheme("transition");
 	this.loadTheme("chartist");
@@ -3211,7 +3255,7 @@ ExtensionManager.prototype.loadBasicThemes = function(){
 	this.loadTheme("sections");
 	this.loadTheme("outline");
 	this.loadTheme("speaker",true);
-	this.loadTheme("sequencediagram", true);
+	//this.loadTheme("sequencediagram", true);
 	this.loadTheme("footnote",true);
 	}else{
 		console.log("extraoptions found");
@@ -3426,6 +3470,14 @@ ExtensionManager.prototype.hideThemes = function(){
 	console.log("parseneu forced after optionsclose");
 	slidenote.parseneu();
 }
+
+ExtensionManager.prototype.changeThemeStatusByClassname = function(classname,status){
+	for(var x=0;x<this.themes.length;x++)if(this.themes[x].classname===classname){
+		this.changeThemeStatus(x,status);
+		break;
+	}
+}
+
 //changeThemeStatus erwartet eine themenr und ändert das entsprechende theme
 ExtensionManager.prototype.changeThemeStatus = function(themenr, status){
 	if(this.themes[themenr].themetype=="css" && status){
@@ -3444,6 +3496,7 @@ ExtensionManager.prototype.changeThemeStatus = function(themenr, status){
 	this.themes[themenr].changeThemeStatus(status);
 	var toolbox = document.getElementById("texteditorbuttons");
 	var toolboxbuttons = toolbox.getElementsByTagName("button");
+	var toolboxlist = document.getElementById("toolbarbuttons");
 
 	if(this.themes[themenr].editorbuttons!=null){
 		if(status){
@@ -3453,6 +3506,7 @@ ExtensionManager.prototype.changeThemeStatus = function(themenr, status){
 				newhtmlbutton.type = "button";
 				newhtmlbutton.classList.add(this.themes[themenr].classname+"button");
 				newhtmlbutton.innerHTML = actbutton.innerhtml;
+
 				//var actbuttonfunction = "insertbutton('null','"+actbutton.mdstartcode+"','"+actbutton.mdendcode+"');";
 				newhtmlbutton.value = actbutton.mdstartcode;
 				//console.log("actbuttonfunction:"+actbuttonfunction);
@@ -3468,7 +3522,11 @@ ExtensionManager.prototype.changeThemeStatus = function(themenr, status){
 				//add keyboardsupport:
 				//newhtmlbutton.onkeyup = slidenote.extensions.keyboardshortcuts.toolbararrow;
 				//document.getElementById("standardinsertmenu").appendChild(newhtmlbutton);
-				toolbox.appendChild(newhtmlbutton);
+				if(toolboxlist){
+						var li = document.createElement("li");
+						li.appendChild(newhtmlbutton);
+						toolboxlist.appendChild(li);
+				}else toolbox.appendChild(newhtmlbutton);
 			}
 		}else{
 			var oldbuttons = document.getElementsByClassName(this.themes[themenr].classname+"button");
@@ -3485,6 +3543,15 @@ ExtensionManager.prototype.changeDesignOption = function(themenr,optionnr, value
 ExtensionManager.prototype.changeGlobalOption = function(themenr,optionnr, value){
 	this.themes[themenr].changeGlobalOption(optionnr, value);
 	console.log("themenr"+themenr+" "+this.themes[themenr].classname+" active geändert auf"+value);
+}
+
+ExtensionManager.prototype.CssThemes = function(){
+	var cssthemes = new Array();
+	for(var x=0;x<this.themes.length;x++){
+		if(this.themes[x].themetype==="css")cssthemes.push(this.themes[x]);
+	}
+	this.cssthemes = cssthemes;
+	return cssthemes;
 }
 
 ExtensionManager.prototype.buildOptionsMenu = function(){
@@ -3638,9 +3705,12 @@ slidenotes.prototype.choseEditor = function(editor){
 
 slidenotes.prototype.texteditorrahmensetzen = function(){
 	//setzt den rahmen vom errorlayer auf textarea-größe:
-	var texteditorrahmen = document.getElementById("texteditor");
+	var texteditorrahmen = this.textarea.parentElement;//document.getElementById("texteditor");
 	var eingabeblock = this.textarea;
 	var texteditorfehlerlayer = this.texteditorerrorlayer;
+	//check if textarea bigger than space available:
+	var maxspace = window.innerWidth - 30 - 521; //521 is hard-coded widths from neighbours, could change in future
+	if(eingabeblock.offsetWidth > maxspace)eingabeblock.style.width = maxspace + "px";
 	texteditorrahmen.style.width = eingabeblock.offsetWidth + "px";
 	texteditorrahmen.style.height = eingabeblock.clientHeight+"px";
 	texteditorfehlerlayer.style.width = (eingabeblock.offsetWidth-4) + "px";
@@ -3908,7 +3978,7 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 		}
 		if(key==="Escape"){
 			var imguploadscreen = document.getElementById("imagesblock");
-			if(imguploadscreen.classList.contains("visible")){
+			if(imguploadscreen && imguploadscreen.classList.contains("visible")){
 				imguploadscreen.classList.remove("visible");
 				this.textarea.selectionEnd = this.textarea.selectionEnd +1;
 				this.textarea.selectionStart = this.textarea.selectionEnd;
@@ -4112,7 +4182,8 @@ slidenotes.prototype.scroll = function(editor){
 	if(editor==this.textarea && this.texteditorerroractivated){
 		this.texteditorerrorlayer.scrollTop = editor.scrollTop;
 		var sidebartop = 0-editor.scrollTop;
-		document.getElementById("sidebar").style.top = sidebartop+"px";
+		var sidebardiv = document.getElementById("sidebar");
+		if(sidebardiv)sidebardiv.style.top = sidebartop+"px";
 		var nssym = document.getElementById("nicesidebarsymbol");
 		if(nssym && nssym.style.display!="none"){// && document.getElementsByClassName("carretline")[0]){
 			this.parser.setDropDownMenu();
