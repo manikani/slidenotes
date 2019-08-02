@@ -328,6 +328,28 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 	typ:'cursor'
 	 };
 	 changes.push(cursorchange);
+	 /*
+	 if(slidenote.textarea.selectionEnd-
+		 	slidenote.textarea.selectionStart!=0){
+		 //marc selection:
+		 var selstartob = {
+			 line:cursorline,
+			 posinall:cursorposinall,
+			 pos:cursorposinline,
+			 html:'<u class="selectioncarretmarker">',
+			 mdcode:'',
+			 typ:"cursor"
+		 };
+		 var cursorendline = this.lineAtPosition(slidenote.textarea.selectionEnd);
+		 var selendob = {
+			 line:cursorendline,
+			 posinall:slidenote.textarea.selectionEnd,
+			 pos:slidenote.textarea.selectionEnd - this.map.linestart[cursorendline],
+			 html:"</u>",
+			 mdcode:"",
+			 typ:"cursor"
+		 }
+	 }*/
 
 	 //looking for simple changes:
 	 var mdsimples = "***__~~<&`"; //< is also a simple change

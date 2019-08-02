@@ -51,13 +51,13 @@ SlidenoteCache.prototype.init = function(){
         this.maxSpace=this.localstorage.getItem("maxSpace");
         //there is a cache yet. try to find actual cache:
         var ids = this.allIds.split(",");
-        var acturl = window.location.href;
+        var acturl = window.location.pathname; //href;
         var nid = null;
         if(typeof initial_note!="undefined")nid=initial_note.nid;
         for(var x=0;x<ids.length;x++){
             var cacheurl = this.localstorage.getItem(ids[x]+"url");
             var cachenid = this.localstorage.getItem(ids[x]+"nid");
-            if((nid!=null && cachenid === nid) || (nid === null && cacheurl === acturl)){
+            if((nid!=null && cachenid === nid) || (nid === null && cacheurl && cacheurl.indexOf(acturl)>-1)){
                 this.id=ids[x];
                 break;
             }
@@ -960,7 +960,11 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
                       this.slidenote.base64images.allImagesAsString();
      encResult = await this.encryptForExport(exportstring);
   }else{
-    encResult = await this.encrypt(slidenotetext);
+    try{
+      encResult = await this.encrypt(slidenotetext);
+    }catch(err){
+      console.log(err);
+    }
   }
   let result = this.encBufferToString(encResult);
   //save Images:
@@ -1226,7 +1230,7 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   //loads Config from configarea or from local destination
   //destination is cms or local
   var savedConfigString;
-  this.getCMSFields();
+  //this.getCMSFields();
   if(destination==="cms")savedConfigString = this.cmsConfig.value;
   if(destination==="local")savedConfigString = this.localstorage.getItem('config');
   if(slidenote==null){
@@ -1242,16 +1246,6 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   //check if Theme allready added to themes, if not await:
   var addedthemes="";
   for(var x=0;x<slidenote.extensions.themes.length;x++)addedthemes+=slidenote.extensions.themes[x].classname;
-
-  for(var x=0;x<actthemenames.length;x++){
-    if(slidenote.themeobjekts.indexOf(actthemenames[x])==-1){
-      //slidenote.presentation.loadTheme(actthemenames[x]);
-      //is this really important? isnt this decided elsewhere? like in the cms?
-    }
-    if(addedthemes.indexOf(actthemenames[x])==-1){
-      //this is bullshit - i should not do that
-    }
-  }
 
   for(var x=0;x<slidenote.extensions.themes.length;x++){
     var act = slidenote.extensions.themes[x];
