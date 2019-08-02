@@ -561,7 +561,13 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 for(var er=0;er<this.perror.length;er++){
 		 if(this.perror[er].row!=lasterrorpos){
 			 lasterrorpos = this.perror[er].row;
-			 if(this.perror[er].errortext!="missing space after *"){
+			 if(this.perror[er].errortext!="missing space after *" &&
+		 			!(this.perror[er].row<cursorposinline &&
+						this.perror[er].rowend>cursorposinline &&
+						(this.perror[er].errortext==="missing endsymbol **" ||
+					   this.perror[er].errortext==="missing endsymbol ***" ||
+						 this.perror[er].errortext==="missing endsymbol __")
+					)){
 				 changes.push({
 					 line:this.perror[er].line,
 					 posinall:this.map.linestart[this.perror[er].line]+this.perror[er].row,
@@ -651,16 +657,16 @@ emdparser.prototype.renderCodeeditorBackground = function(){
  	//doppelsternchenfehler anzeigen lassen:
  	for(x=0;x<doppelsternchen.length;x++)lines[this.perror[doppelsternchen[x]].line]+='<span class="proposedsymbol">' + this.perror[doppelsternchen[x]].proposeEnding() + '</span>';
 	//adding pagenr to pagebreak:
-	for(x=0;x<this.map.pagestart.length;x++){
+	for(x=1;x<this.map.pagestart.length;x++){
 		var pline =this.map.pagestart[x].line-1;
 		if(pline<0)pline=0;
 		var pbpos = lines[pline].length;
-		if(pline>0 || this.lineswithhtml[pline]==="pagebreak")lines[pline]+='<span class="pagenr">    »»» new page #'+x+'</span>';
+		if(pline>0 || this.lineswithhtml[pline]==="pagebreak")lines[pline]+='<span class="pagenr">    »»» new slide #'+x+'</span>';
 		changes.push({
 			line:pline,
 			posinall:this.map.lineend[pline],//this.map.linestart[this.perror[er].line]+lines[this.perror[er].line].length,
 			pos:pbpos,
-			html:'<span class="pagenr">    »»» new page #'+x+'</span>',
+			html:'<span class="pagenr">    »»» new slide #'+x+'</span>',
 			mdcode:"",
 			typ:"pagenr",
 			tag:"pagebreak pagenr"
@@ -694,11 +700,12 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 };
 
 emdparser.prototype.renderNewCursorInCodeeditor = function(){
-	var cursorposinall = slidenote.textarea.selectionEnd;
+	var cursorposinall = slidenote.textarea.selectionStart;
+	var selstart = slidenote.textarea.selectionStart;
 	var cursorline = this.lineAtPosition(cursorposinall);
 	if(cursorline == 0){ //error in line0 - quickfix TODO: Why does it not work in line0?
-		slidenote.parseneu();
-		return;
+		//slidenote.parseneu();
+		//return;
 	}
 	var cursorposinline = cursorposinall - this.map.linestart[cursorline];
 	console.log("new cursor at line:"+cursorline+", posinall:"+cursorposinall+", pos:"+cursorposinline);
@@ -714,10 +721,51 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 	 typ:'cursor'
 	};
 	changes.push(cursorchange);
+  	var issel = false;
+	var ismlsel = false;
+	/*
+	var selectionstartline;
+	var selectionlinechanges = new Array();
+	var selectioncodeofline;
+	var oldselection = document.getElementById("selectioncarretmarker");
+	if(oldselection)oldselection.parentElement.removeChild(oldselection);
+	if(cursorposinall-selstart!=0){
+		//there is a selection:
+		issel=true;
+		var cursorendchange = {
+			line:cursorline,
+			posinall:cursorposinall,
+			pos:cursorposinline,
+			html:'</u>',
+			mdcode:'',
+			typ:'cursor'
+		}
+		changes.push(cursorendchange);
+		selectionstartline = this.lineAtPosition(selstart);
+		var cursorstartchange = {
+			line:selectionstartline,
+			posinall:selstart,
+			pos:selstart - this.map.linestart[selectionstartline],
+			html:'<u class="selectioncarretmarker">',
+			mdcode:'',
+			typ:'cursor'
+		};
+		if(selectionstartline!=cursorline){
+			//ismlsel=true;
+			selectionlinechanges.push(cursorstartchange);
+			selectioncodeofline = this.sourcecode.substring(this.map.linestart[selectionstartline],this.map.lineend[selectionstartline]);
+
+		}else{
+			changes.push(cursorstartchange);
+		}
+	}
+ */
 	for(var x=0;x<this.mdcodeeditorchanges.length;x++){
 		//add parsed changes of cursorline to actual changes
 		if(this.mdcodeeditorchanges[x].line===cursorline &&
 			 this.mdcodeeditorchanges[x].typ!='cursor')changes.push(this.mdcodeeditorchanges[x]);
+		if(issel && this.mdcodeeditorchanges[x].line===selectionstartline &&
+			this.mdcodeeditorchanges[x].typ!='cursor')selectionlinechanges.push(this.mdcodeeditorchanges[x]);
 	}
 	changes.sort(function(a,b){
 		if(a.typ==="cursor"&&b.typ==="end" &&
@@ -728,7 +776,18 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 			return -1;
 		}else
 		return a.pos-b.pos});
+	if(ismlsel)selectionlinechanges.sort(function(a,b){
+			if(a.typ==="cursor"&&b.typ==="end" &&
+				 a.posinall-b.posinall==0){
+				return 1;
+			}else if(a.typ==="end" && b.typ==="cursor"
+				&& a.posinall-b.posinall===0){
+				return -1;
+			}else
+			return a.pos-b.pos});
 	console.log(changes);
+	//console.log(selectionlinechanges);
+	//console.log(selectioncodeofline);
 	for(var x=changes.length-1;x>=0;x--){
 		var actchange = changes[x];
 		if(actchange.typ==="<"){
@@ -740,12 +799,25 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 				 codeofline = codeofline.substring(0,actchange.pos) +
 													 actchange.html +
 													 codeofline.substring(actchange.pos);
-
+		}
+	}
+	if(ismlsel)for(var x=selectionlinechanges.length-1;x>=0;x--){
+		var actchange = selectionlinechanges[x];
+		if(actchange.typ==="<"){
+			selectioncodeofline = selectioncodeofline.substring(0,actchange.pos) +
+														 actchange.html +
+														 selectioncodeofline.substring(actchange.pos+1);
+		}else {
+		 // if(actchange.typ ==="start"){
+				 selectioncodeofline = selectioncodeofline.substring(0,actchange.pos) +
+													 actchange.html +
+													 selectioncodeofline.substring(actchange.pos);
 		}
 	}
 	//console.log(changes);
 	var backgroundlines = document.getElementsByClassName("backgroundline");
-	if(backgroundlines.length>=cursorline)backgroundlines[cursorline].innerHTML=codeofline;
+	if(backgroundlines.length>cursorline)backgroundlines[cursorline].innerHTML=codeofline;
+	if(ismlsel && selectionstartline<backgroundlines.length)backgroundlines[selectionstartline].innerHTML = selectioncodeofline;
 	//console.log("backgroundline neu:"+codeofline);
 	//console.log(backgroundlines[cursorline]);
 	//console.log(slidenote.textarea.clientWidth + " : "+slidenote.texteditorerrorlayer.clientWidth)
@@ -1084,8 +1156,8 @@ emdparser.prototype.setDropDownMenu = function (){
 	//look out for attached menu:
 	var insertmenu = document.getElementById("insertarea");
 	if(insertmenu && insertmenu.style.visibility==="visible"){
-		setTimeout("slidenote.presentation.showInsertMenu(); document.getElementById('insertarea').getElementsByTagName('button')[0].focus();",1);
-		insertmenu.style.visibility==="hidden";
+		//setTimeout("slidenote.presentation.showInsertMenu(); document.getElementById('insertarea').getElementsByTagName('button')[0].focus();",1);
+		//insertmenu.style.visibility==="hidden";
 	}
 
 	var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
@@ -1135,7 +1207,7 @@ emdparser.prototype.setDropDownMenu = function (){
  * usefull for many things in the md-Code-Editor
  * returns null if there is no element
 */
-emdparser.prototype.CarretOnElement = function(carrethardpos){
+emdparser.prototype.CarretOnElement = function(carrethardpos, secondcall){
 	var element;
 	var carretpos = carrethardpos;
 	if(carretpos===undefined || carretpos ===null)carretpos = slidenote.textarea.selectionEnd;
@@ -1151,6 +1223,11 @@ emdparser.prototype.CarretOnElement = function(carrethardpos){
 		if(actel.typ==="start" && actel.brotherelement)actelend = actel.brotherelement.posinall+actel.brotherelement.mdcode.length;
 		if(actel.typ==="end")actelend = 0; //do nothing on end-elements
 		if(actel.html ==="<section>"){actelstart--;actelend++;}
+		if(actel.typ==="end" && actel.brotherelement &&
+			actel.brotherelement.dataobject){
+				actelstart = actel.brotherelement.posinall;
+				actelend = actel.posinall+actel.mdcode.length;
+				actel = actel.brotherelement;};
 
 		if(actelstart<=carretpos && actelend >= carretpos){
 			//element getroffen:
@@ -1192,10 +1269,32 @@ emdparser.prototype.CarretOnElement = function(carrethardpos){
 			}}
 
 		}
-
+		var otherlinetype;
+		if(this.map.lineswithmdcodeinsidedatablock)otherlinetype = this.map.lineswithmdcodeinsidedatablock[line];
+		if(element ==null && otherlinetype==="layout"){
+			var lline = line;
+			for(lline = line;lline>=0;lline--){
+				var eil = this.map.insertedhtmlinline[lline];
+				var eilfound=false;
+				for(var eilx=0;eilx<eil.length;eilx++){
+					if(eil[eilx].dataobject && eil[eilx].dataobject.type==="layout"){
+						element=eil[eilx];
+						eilfound=true;
+						break;
+					}
+				}
+				if(eilfound)break;
+			}
+		}
 
 	}
 	console.log(element);
+	if(element && slidenote.textarea.selectionEnd-slidenote.textarea.selectionStart!=0 && !secondcall){
+		var secondelement = this.CarretOnElement(slidenote.textarea.selectionStart,true);
+		if(secondelement && secondelement.parentelement && element.parentelement &&
+				element.parentelement===secondelement.parentelement)return element;
+		if(secondelement!=element)return null;
+	}
 	return element;
 }
 /*	* replace: hilfsmethode um nicht zu regexen(text,symbol,newsymbol)
@@ -1937,14 +2036,17 @@ emdparser.prototype.parseMap = function(){
 								var codeblock = {
 									line:x, head:lines[x], endline:codeende
 								}
-			          this.map.addElement({
-			            line:x,pos:0,html:'<code class="codeblock">',mdcode:origlines[x],typ:"start",
-			            tag:"codestart", endline:codeende, label:"code"
-			          });
-			          this.map.addElement({
-			            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"start",
-			            tag:"codeende", label:"code"
-			          });
+								var codebegin = {
+									line:x,pos:0,html:'<code class="codeblock">',mdcode:origlines[x],typ:"start",
+									tag:"codestart", endline:codeende, label:"code"
+								};
+								var codeend = {
+			            line:codeende, pos:0, html:"</code>", mdcode:lines[codeende], typ:"end",
+			            tag:"codeende", label:"code", brotherelement:codebegin
+			          };
+								codebegin.brotherelement = codeend;
+								this.map.addElement(codebegin);
+			          this.map.addElement(codeend);
 								this.map.codeblocks.push(codeblock);
 			          for(var cx = x;cx<=codeende;cx++){
 									this.map.codeblocklines.push({codeblock:codeblock, origtext:origlines[cx], line:cx}); //numeral list of all codelines in editor
@@ -2947,7 +3049,8 @@ pagegenerator.prototype.showInsertMenu = function(){
 		slidenote.textarea.removeEventListener("keydown",slidenote.presentation.closeMenu);
 		slidenote.textarea.removeEventListener("scroll",slidenote.presentation.closeMenu);
 		setTimeout(function (){
-			document.getElementById("carret").classList.remove("show");
+			var cursor = document.getElementById("carret");
+			if(cursor)cursor.classList.remove("show");
 			var insertmenu = document.getElementById("insertarea");
 			var symbol = document.getElementById("nicesidebarsymbol");
 			symbol.style.visibility = "visible";
@@ -3812,7 +3915,7 @@ slidenotes.prototype.parseAfterPause = function(){
 	console.log("keypressstack:"+this.keypressstack);
 	if(this.keypressstack>0)return;
 	console.log("keypresstack = 0, check if you have to parse:"+document.getElementById("carret").innerHTML);
-	if(document.getElementById("carret").innerHTML.length>0)slidenote.parseneu();
+	if(document.getElementById("carret").innerHTML.length>1)slidenote.parseneu();
 }
 
 slidenotes.prototype.keypressdown = function(event, inputobject){
@@ -3827,7 +3930,38 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			//key=String.fromCharCode(event.keyCode);
 			//key=event.keyCode;
 			key = getKeyOfKeyCode(event.keyCode);
+			event.key = key;
 	}
+	//automatic closure:
+	if(slidenote.keyboardshortcuts){
+		if(slidenote.textarea.selectionEnd-slidenote.textarea.selectionStart!=0){
+			slidenote.keyboardshortcuts.tmpSelection = slidenote.textarea.value.substring(slidenote.textarea.selectionStart,slidenote.textarea.selectionEnd);
+		}else{
+			slidenote.keyboardshortcuts.tmpSelection = "";
+		}
+		var abort = slidenote.keyboardshortcuts.closeAutomagic(event);
+		if(abort==="break"){
+			console.log("parseneu forced by closeautomagic");
+			setTimeout("slidenote.parseneu()",10);
+			return;
+		}
+	}
+	/*
+	var automatic_closure = false;
+	if(automatic_closure){
+		if(key==="*" || key==="_"){
+			var selend = slidenote.textarea.selectionEnd;
+			var selstart = slidenote.textarea.selectionStart;
+			var txt = slidenote.textarea.value;
+			if(txt.substring(selstart-1,selstart)!="\n"){
+				event.preventDefault();
+					txt = txt.substring(0,selstart)+key+txt.substring(selstart,selend)+key+txt.substring(selend);
+					slidenote.textarea.value=txt;
+					slidenote.textarea.selectionEnd = selend+1;
+					slidenote.textarea.selectionStart = selstart+1;
+			}
+		}
+	}*/
 	//mdcode-editor-part:
 	if(this.texteditorerroractivated){
 		//var renderkeys = "*_#"
@@ -3889,14 +4023,17 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 		if(key.indexOf("Arrow")>-1 || key==="Home" || key==="End"){
 			console.log("home, end or arrow pressed");
 			var actcursor=document.getElementById("carret");
-			if(actcursor.innerHTML.length>0 && actcursor.innerHTML ==="&zwj;"){
-				console.log("parseneu forced after arrowkey" + actcursor.innerHTML);
+			if(actcursor==null || (actcursor && actcursor.innerHTML.length>1 && actcursor.innerHTML !="&zwj;")){
+				console.log("parseneu forced after arrowkey");
 				console.log(actcursor)
 				this.parseneu();
 				this.scroll();
 			}else{
 				console.log("parse only new cursor after arrowkey");
-				actcursor.parentNode.removeChild(actcursor);
+				var cursorparent = actcursor.parentElement;
+				cursorparent.removeChild(actcursor);
+				console.log(">>>"+cursorparent.innerHTML+"<<<"+cursorparent.innerHTML.length);
+				if(cursorparent.innerHTML.length===0)cursorparent.innerHTML="&zwj;";
 				this.parser.renderNewCursorInCodeeditor();
 			}
 			return;
@@ -4084,7 +4221,7 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 	}else if(emdzeichen=="%code"){
 		var selectedtext = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
 		if(selectedtext.indexOf("\n")>-1 ||
-				(textarea.value.substring(textarea.selectionStart-1, textarea.selectionEnd+1)==="\n\n")){
+				(textarea.value.substring(textarea.selectionStart-1, textarea.selectionEnd)==="\n")){
 			emdstart="\n```code\n";
 			emdend="\n```\n";
 		}else{

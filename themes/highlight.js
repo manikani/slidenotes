@@ -100,6 +100,7 @@ slidenote.datatypes.elementOfType("code").theme = newtheme;
 newtheme.highlighteditor = function(){
 	var codes = document.getElementsByClassName("code");
 	for(var cx=0;cx<codes.length;cx++){
+		if(codes[cx].classList.contains("backgroundline"))
 		if(codes[cx].innerHTML.length>5){
 			hljs.highlightBlock(codes[cx]);
 			codes[cx].classList.remove("hljs");

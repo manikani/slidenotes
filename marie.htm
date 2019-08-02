@@ -5,6 +5,7 @@
 <title>Slidenote-Editor</title>
 <link rel="stylesheet" href="marie.css">
 <link rel="stylesheet" href="themes/slidenoteguardian.css">
+<link rel="stylesheet" href="themes/keyboardshortcuts.css">
 <script language="javascript" src="slidenotes.js"></script>
 <script language="javascript" src="themes/slidenoteguardian.js"></script>
 <script>
@@ -190,8 +191,8 @@ menumanager.init = function(){
         }
         if(menus[x]!="toolbar"){
             menu.classList.add("autohidemenu");
-            menu.onblur = function(){console.log("test onblur");this.classList.remove("active");};
-            menu.onfocusout = function(){console.log("test onfocusout");this.classList.remove("active");};
+            //menu.onblur = function(){console.log("test onblur");this.classList.remove("active");};
+            //menu.onfocusout = function(){console.log("test onfocusout");this.classList.remove("active");};
         }
     }
     document.getElementsByTagName("textarea")[0].addEventListener("focus",function(event){
@@ -265,12 +266,115 @@ function initeditor(){
     			texted.addEventListener("focus",function(){
     				var carret = document.getElementById("carret");
     				if(carret)carret.classList.remove("unfocused");
+            var sel = document.getElementsByClassName("selectioncarretmarker");
+            if(sel.length===0)return;
+            for(var x=sel.length-1;x>=0;x--){
+              //sel[x].parentElement.removeChild(sel[x]);
+              //sel[x].classList.add("hiddenselectioncarretmarker");
+              var seltxt = sel[x].parentElement.innerHTML;
+              //console.log(seltxt);
+              seltxt = seltxt.replace('<u class="selectioncarretmarker">','');
+              seltxt = seltxt.replace('</u>','');
+              //console.log("ergebnis:"+seltxt);
+              sel[x].parentElement.innerHTML = seltxt;
+              //sel[x].classList.remove("selectioncarretmarker");
+            }
+            //slidenote.parseneu();
+
     			});
     			texted.addEventListener("focusout",function(){
     				var carret = document.getElementById("carret");
     				if(carret)carret.classList.add("unfocused");
-    				console.log("onblur show carret");
-    				console.log(carret);
+    				//console.log("onblur show carret");
+    				//console.log(carret);
+            //adding selection-marking:
+            var selstart = slidenote.textarea.selectionStart;
+            var selend = slidenote.textarea.selectionEnd;
+            if(selend-selstart!=0){
+              var startline = slidenote.parser.lineAtPosition(selstart);
+              var endline = slidenote.parser.lineAtPosition(selend);
+              var bglines = document.getElementsByClassName("backgroundline");
+              var startpos = selstart - slidenote.parser.map.linestart[startline];
+              var endpos = selend - slidenote.parser.map.linestart[endline];
+              //set end: (first end because of changes later on)
+              /*var changesinline = slidenote.parser.mdcodeeditorchanges[endline];
+              var inspos = endpos;
+              for(var x=0;x<changesinline.length;x++){
+                if(startpos>=changesinline[x].pos){
+                  inspos+=changesinline[x].html.length;
+                  if(changesinline[x].typ==="<")inspos--;
+                }
+              }
+              var txt = bglines[endline].innerHTML;
+              txt = txt.substring(0,inspos)+'<u class="selectioncarretmarker">'+txt.substring(inspos);
+              bglines[endline].innerHTML = txt;
+              */
+              //helper function: do all changes:
+              function applychanges(changes, text){
+                var txt=text;
+                for(var x=0;x<changes.length;x++){
+                  txt = txt.substring(0,changes[x].pos)+changes[x].html+txt.substring(changes[x].pos);
+                }
+                return txt;
+              }
+              //set start:
+              var changesinline = new Array();
+              var changesinendline = new Array();
+              for(var x=0;x<slidenote.parser.mdcodeeditorchanges.length;x++){
+                if(slidenote.parser.mdcodeeditorchanges[x].typ==="cursor")continue;
+                if(slidenote.parser.mdcodeeditorchanges[x].line===startline)changesinline.push(slidenote.parser.mdcodeeditorchanges[x]);
+                if(slidenote.parser.mdcodeeditorchanges[x].line===endline)changesinendline.push(slidenote.parser.mdcodeeditorchanges[x]);
+              }
+              var inspos = startpos;
+              for(var x=0;x<changesinline.length;x++){
+                if(startpos>changesinline[x].pos){
+                  inspos+=changesinline[x].html.length;
+                  if(changesinline[x].typ==="<")inspos--;
+                }
+              }
+              var txt = bglines[startline].innerHTML;
+              if(slidenote.parser.lineswithhtml[startline]==="code")txt = applychanges(changesinline,slidenote.parser.sourcecode.split("\n")[startline]);
+              txt = txt.substring(0,inspos)+'<u class="selectioncarretmarker">'+txt.substring(inspos);
+              var starthtml = txt;
+              txt=bglines[endline].innerHTML;
+              if(slidenote.parser.lineswithhtml[endline]==="code")txt = applychanges(changesinline,slidenote.parser.sourcecode.split("\n")[endline]);
+              var inspos2 = endpos;
+              for(var x=0;x<changesinendline.length;x++){
+                var ch = changesinendline[x];
+                if(endpos>ch.pos){
+                  inspos2+=ch.html.length;
+                  if(ch.typ==="<")inspos2--;
+                }
+              }
+              if(startline===endline){
+                var carretstart = txt.indexOf('<span id="carret"');
+                var carretend = txt.indexOf('</span>',carretstart)+'</span>'.length;
+                var carretlength = carretend - carretstart;
+                if(carretstart===-1)carretlength=0;
+                inspos2+=carretlength;
+              }
+              txt = txt.substring(0,inspos2)+"</u>"+txt.substring(inspos2);
+              if(startline===endline)txt = txt.substring(0,inspos)+'<u class="selectioncarretmarker">'+txt.substring(inspos);
+              var endhtml = txt;
+              if(startline!=endline){
+                starthtml+="</u>";
+                bglines[startline].innerHTML = starthtml;
+                endhtml = '<u class="selectioncarretmarker">'+endhtml;
+              }
+              bglines[endline].innerHTML = endhtml;
+              //bglines[startline].innerHTML = txt;
+              //set in-between:
+              if(startline!=endline){
+                for(var x=startline+1;x<endline;x++){
+                  if(bglines[x].classList.contains("pagebreak")){
+                    var pbtxt = bglines[x].innerHTML;
+                    pbtxt = '<u class="selectioncarretmarker">---</u>' + pbtxt.substring(3);
+                    bglines[x].innerHTML = pbtxt;
+                  }else bglines[x].innerHTML = '<u class="selectioncarretmarker">'+bglines[x].innerHTML+'</u>';
+                }
+              }
+
+            }
     			});
           document.getElementById("importbutton").addEventListener("click",function(){document.getElementById("importfile").click()});
           console.log("slidenote-object created");
@@ -309,11 +413,11 @@ function insertbutton(code){
         <div class="screenreader-only">Toolbar</div>
         <ul id="toolbarbuttons">
 			<li><button onclick="insertbutton('---')" title="new slide"><span class="buttonmdcode">---</span> new slide</button></li>
-			<li><button onclick="insertbutton('%head1')" title="Title"><img src="images/buttons/h1.png" alt="Title"><span class="buttonmdcode">#</span> headline</button></li>
+			<li><button onclick="insertbutton('%head1')" title="title"><img src="images/buttons/h1.png" alt="Title"><span class="buttonmdcode">#</span> headline</button></li>
 			<li><button onclick="insertbutton('*')" title="italic"><img src="images/buttons/italic.png" alt="italic"><span class="buttonmdcode">*</span>italic<span class="buttonmdcode">*</span></button></li>
 			<li><button onclick="insertbutton('**')" title="bold"><img src="images/buttons/bold.png" alt="bold"><span class="buttonmdcode">**</span>bold<span class="buttonmdcode">**</span></button></li>
 			<li><button onclick="insertbutton('~~')" title="crossed"><img src="images/buttons/stroke.png" alt="stroke"><span class="buttonmdcode">~~</span>deleted<span class="buttonmdcode">~~</span></button></li>
-			<li><button onclick="insertbutton('%list')" title="unordered List"><img src="images/buttons/ul.png" alt="list"><span class="buttonmdcode">- </span>list</button></li>
+			<li><button onclick="insertbutton('%list')" title="unordered list"><img src="images/buttons/ul.png" alt="list"><span class="buttonmdcode">- </span>list</button></li>
 			<li><button onclick="insertbutton('%nrlist')" title="ordered list"><img src="images/buttons/ol.png" alt="ordered list"><span class="buttonmdcode">1. </span>ordered list</button></li>
 			<li><button onclick="insertbutton('%quote')" title="quote"><img src="images/buttons/quote.png" alt="quote"><span class="buttonmdcode">&gt; </span>quote</button></li>
 			<li><button onclick="insertbutton('%footnote')" title="footnote"><img src="images/buttons/quote.png" alt="footnote"><span class="buttonmdcode">[^*]</span> footnote</button></li>
@@ -412,6 +516,8 @@ end test-data-->
 				</select>
                 <!--</button>-->
 		</div>
+        <div class="separator">---</div>
+        <button onclick="slidenote.extensions.showThemes()">Advanced Options</button>
         <div class="separator">slidenotes.io service</div>
         <ul>
 				<li><a href="#" class="menuitem">tutorials</a></li>

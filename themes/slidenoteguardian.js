@@ -1276,6 +1276,13 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
     toggler.classList.add("on");
     document.getElementById("slidenotediv").classList.add("nightmode");
   }
+  //keyboardshortcuts:
+  if(slidenote.keyboardshortcuts && savedConfigString.indexOf("@@keyboardmap")>-1){
+    var kbsc = savedConfigString.substring(
+                savedConfigString.indexOf("@@keyboardmap@@")+"@@keyboardmap@@".length,
+                savedConfigString.indexOf("@@keyboardmapend@@"));
+    slidenote.keyboardshortcuts.loadConfigString(kbsc);
+  }
   //load Themes-Config:
   var savedConfigStrings = new Array();
   for(var x=0;x<themes.length;x++){
@@ -1314,6 +1321,11 @@ slidenoteGuardian.prototype.saveConfig = function(destination){
   console.log("save nightmode:"+nightm);
   stringToSave+=nightm;
   stringToSave+="€$";
+  stringToSave+="@@keyboardmap@@";
+  if(slidenote.keyboardshortcuts){
+    stringToSave+= slidenote.keyboardshortcuts.configString();
+  }
+  stringToSave+="@@keyboardmapend@@";
 
   for(var x=0;x<themes.length;x++){
 	    var actConfigString = themes[x].saveConfigString();
