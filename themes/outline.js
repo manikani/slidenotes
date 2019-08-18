@@ -78,11 +78,12 @@ newtheme.generateOutlineBlock = function(){
   speakl.innerText = " SPEAKING TIME";
   speakdiv.appendChild(speakl);
   outlineblock.appendChild(speakdiv);
+  /*
   outlineblock.addEventListener("click",function(){
     var oldmenu = document.getElementById("outlineMenu");
     if(oldmenu)oldmenu.parentElement.removeChild(oldmenu);
     else slidenote.extensions.getThemeByName("outline").generateOutlineMenu();
-  });
+  });*/
   var newoutletdiv = document.getElementById("outlet");
   if(newoutletdiv){
     newoutletdiv.innerHTML = "";

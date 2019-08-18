@@ -32,6 +32,7 @@ menumanager.buildSlidenoteList = function(){
     if(!slidenoteguardian || !slidenoteguardian.hascmsconnection)return;
     var menudiv = this.menuByName("menuload");
     var menu = document.getElementById("notelist");
+    var menuparent = menu.parentElement;
     menu.innerHTML= "";
     var list = slidenoteguardian.loadedSlidenotes;
     for(var x=0;x<list.length;x++){
@@ -42,7 +43,7 @@ menumanager.buildSlidenoteList = function(){
         var lod = document.createElement("button");
         del.classList.add("circle");
         var delimg = new Image();
-        delimg.src = "images/buttons/-.png";
+        delimg.src = slidenote.imagespath + "/buttons/-.png";
         delimg.alt = "delete slidenote >>>"+title+"";
         del.appendChild(delimg);
         del.targeturl = url+"/delete";
@@ -467,7 +468,7 @@ end test-data-->
         </ul>
     </div></div>
     <div id="menuload"><div class="arrow_box">
-        <button id="newnote"><img src="images/buttons/+.png">new slidenote</button>
+        <button id="newnote" onclick="slidenoteguardian.createNewSlidenote()"><img src="images/buttons/+.png">+++new slidenote+++</button>
         <ul id="notelist">
             <li><button class="circle"><img src="images/buttons/-.png" alt="delete slidenote new note"></button><button class="loadnotebutton actnotebutton">new note</button></li>
             <li><button class="circle"><img src="images/buttons/-.png"></button><button class="loadnotebutton ">dinosaurs today</button></li>
