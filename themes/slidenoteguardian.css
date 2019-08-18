@@ -1,23 +1,27 @@
 #slidenoteGuardianPasswortPrompt {
-  background: rgba(0,50,255,0.75);
+  /*background: rgba(0,50,255,0.75);*/
   height:100%;
   left:0;
   position: fixed;
   top:0;
   width: 100%;
   z-index: 10000;
-  padding:40%;
+  /*padding:40%;*/
   text-align: center;
+  display:grid;
+  justify-content: center;
+  align-content: center;
 }
+
 #slidenoteGuardianPasswortPrompt > div {
-    background: black;
-    color:white;
-    padding: 15px;
-    width: 60%;
-    height:80%;
-    position: fixed;
-    top: 10%;
-    left:20%;
+}
+div#slidenoteGuardianPasswordPromptTemplate {
+    border-radius: 50%;
+    box-shadow: 0 0 14px -5px;
+    padding: 112px;
+    background: white;
+    width:400px;
+    height:400px;
 }
 
 #slidenoteGuardianPasswortPrompt > div div{

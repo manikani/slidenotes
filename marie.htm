@@ -396,8 +396,45 @@ function insertbutton(code){
 </head><body onload="testinit()">
 <div id="slidenotediv">
 <div id="slidenoteeditor">
-        <button id="cloud"><img id="savestatus" src="images/buttons/cloud.svg"></button>
-        <button id="loadnote"><div><span id="slidenotetitle">new note</span><img src="images/buttons/new-note.svg"></div></button>
+        <button id="cloud">
+        <!--  <img id="savestatus" src="images/buttons/cloud.svg"> -->
+
+         <div id="cloud-box">
+            <svg viewBox="0 0 34 19" class="cloud-box-element">
+        			    <g transform="matrix(1,0,0,1,0.000534427,0.000239369)">
+        			        <g transform="matrix(1,0,0,1,-1656.12,-83.708)">
+        			            <g class="cloud-shape" transform="matrix(1,0,0,1,1660,82.969)">
+        			                <path d="M15.02,0.781C22.037,1.413 22.594,8.451 22.594,8.451C24.925,7.775 27.439,8.739 28.72,10.8C30.925,14.373 29.854,16.472 27.12,17.8C24.386,19.128 3.931,19.343 -0.732,17.8C-5.395,16.257 -4.563,8.77 -0.256,6.491C4.051,4.212 6.208,6.839 6.208,6.839C6.208,6.839 8,0.148 15.02,0.781Z"/>
+        			            </g>
+        			        </g>
+        			    </g>
+          	</svg>
+
+          	<!-- nur das div hier beinhält das loading icon -->
+          	<div id="cloud-syncing" class="cloud-box-element">
+          				<svg viewBox="0 0 34 19">
+          					<circle class="loader-path" cx="16" cy="10" r="3.8" fill="none"/>
+          				</svg>
+          	</div>
+              <!-- nur das div hier beinhält den Haken -->
+          	<div id="cloud-ok"class="cloud-box-element">
+          				<svg viewBox="0 0 34 19">
+          					<path id="check-path" d="M10,10 l3,3 l8,-5" />
+          				</svg>
+          			</div>
+              <!-- nur das div hier beinhält das x -->
+          	<div id="cloud-error" class="cloud-box-element">
+          				<svg viewBox="0 0 34 19">
+          					<path id="x-path1" d="M13,14 l8,-7" />
+          					<path id="x-path2" d="M13,7 l8,7" />
+          				</svg>
+          	</div>
+            <div id="cloud-undefined" class="cloud-box-element">
+                  <div>°</div>
+            </div>
+          </div>
+        </button>
+        <button id="loadnote"><div><span id="slidenotetitle">new note</span><img src="images/buttons/loadnotebackground.png"></div></button>
         <button id="outlet">95 Words, 12 Pages,<br> 120 Seconds to read...</button>
     <div id="editorblock">
         <div id="texteditorerrorlayer"></div>
@@ -430,9 +467,67 @@ function insertbutton(code){
     </div></div>
     <div id="imagegallery">imagegallery</div>
     <div id="optionarea">
-        <button id="optionsbutton"><img src="images/buttons/options.svg"><br>options</button>
-        <button id="publishbutton"><img src="images/buttons/publish.svg"><br>publish</button>
-        <button id="importexportbutton"><img src="images/buttons/import-export.svg"><br>import&<br>export</button>
+      <button id="importexportbutton">
+        <!--<img src="images/buttons/import-export.svg"><br>import&<br>export-->
+        <!-- file button-->
+        <svg viewBox="0 0 31 31" xml:space="preserve">
+          <g transform="matrix(1,0,0,1,-192.32,-3812.03)">
+            <g transform="matrix(1,0,0,1,0,3479)">
+              <g class="meta-button-backgr" transform="matrix(1,0,0,1,-34.2322,0.233)">
+                <g class="meta-button-backgr" transform="matrix(1,0,0,1,226.552,332.789)">
+                  <circle cx="15.5" cy="15.5" r="15.5"/>
+                </g>
+                <g class="meta-button-inside" transform="matrix(0.448942,0,0,-0.448942,94.5296,535.038)">
+                  <path d="M340.322,402.811C341.319,402.885 341.614,403.002 342.161,403.233C344.107,404.057 345.431,406.041 345.485,408.21L345.485,430.752C345.413,433.623 342.98,436.086 340.079,436.157L323.145,436.157C320.266,436.086 317.811,433.646 317.738,430.752L317.738,408.21C317.914,401.244 330.5,402.508 340.322,402.811ZM323.186,406.145C322.091,406.173 321.166,407.043 321.082,408.143C320.891,415.699 320.891,423.262 321.082,430.818C321.162,431.873 322.022,432.733 323.077,432.813C328.765,432.957 334.458,432.957 340.146,432.813C341.198,432.733 342.061,431.88 342.142,430.818C342.333,423.262 342.333,415.699 342.142,408.143C342.061,407.088 341.202,406.228 340.146,406.148C334.494,406.005 328.839,406.145 323.186,406.145Z"/>
+                </g>
+                <g transform="matrix(0.465576,0,0,0.448942,86.2266,161.917)">
+                  <path d="M342.144,408.33C342.144,407.124 341.2,406.145 340.038,406.145L323.186,406.145C322.023,406.145 321.079,407.124 321.079,408.33L321.079,430.632C321.079,431.837 322.023,432.816 323.186,432.816L340.038,432.816C341.2,432.816 342.144,431.837 342.144,430.632L342.144,408.33Z"/>
+                </g>
+                <g class="meta-button-inside" transform="matrix(1,0,0,1,23.6993,-3492.53)">
+                  <path d="M222.971,3847.89C222.938,3849.18 221.845,3850.28 220.544,3850.31L212.941,3850.31C211.65,3850.28 210.547,3849.18 210.514,3847.89L210.514,3837.66C210.547,3836.36 211.65,3835.26 212.941,3835.23L220.544,3835.23C221.845,3835.26 222.938,3836.36 222.971,3837.66L222.971,3847.89ZM221.534,3842.77C221.534,3841.09 221.512,3839.41 221.47,3837.74C221.434,3837.26 221.048,3836.88 220.574,3836.84C218.037,3836.78 215.498,3836.84 212.96,3836.84C212.468,3836.85 212.053,3837.24 212.015,3837.74C211.973,3839.41 211.951,3841.09 211.951,3842.77C211.951,3844.45 211.973,3846.13 212.015,3847.81C212.053,3848.3 212.468,3848.69 212.96,3848.7C215.498,3848.7 218.037,3848.77 220.574,3848.7C221.048,3848.67 221.434,3848.28 221.47,3847.81C221.512,3846.13 221.534,3844.45 221.534,3842.77Z"/>
+                </g>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <br>file
+      </button>
+      <button id="publishbutton">
+        <!--<img src="images/buttons/publish.svg">-->
+        <!-- PUBLISH BUTTON -->
+        <svg viewBox="0 0 31 31" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+          <g transform="matrix(1,0,0,1,-235.853,-3812.03)">
+            <g transform="matrix(1,0,0,1,0,3479)">
+              <g transform="matrix(1,0,0,1,-1459.15,247.022)">
+                <g class="meta-button-backgr" transform="matrix(1,0,0,1,1695,86)">
+                  <circle cx="15.5" cy="15.5" r="15.5"/>
+                </g>
+                <g class="meta-button-inside"transform="matrix(1,0,0,1,1459.15,-3726.03)">
+                  <path d="M252.751,3822.61C252.733,3822.48 252.724,3822.35 252.724,3822.21C252.724,3820.61 254.028,3819.3 255.635,3819.3C257.241,3819.3 258.546,3820.61 258.546,3822.21C258.546,3823.82 257.241,3825.12 255.635,3825.12C254.716,3825.12 253.895,3824.7 253.362,3824.03C251.402,3825.19 249.401,3826.29 247.412,3827.4C247.552,3827.76 247.629,3828.16 247.629,3828.57C247.629,3828.73 247.618,3828.88 247.597,3829.03C249.51,3830.09 251.39,3831.22 253.283,3832.32C253.812,3831.59 254.669,3831.12 255.635,3831.12C257.241,3831.12 258.546,3832.42 258.546,3834.03C258.546,3835.64 257.241,3836.94 255.635,3836.94C254.028,3836.94 252.724,3835.64 252.724,3834.03C252.724,3833.94 252.728,3833.86 252.735,3833.77C250.806,3832.72 248.915,3831.59 247.015,3830.48C246.42,3831.31 245.449,3831.85 244.354,3831.85C242.546,3831.85 241.079,3830.38 241.079,3828.57C241.079,3826.77 242.546,3825.3 244.354,3825.3C245.189,3825.3 245.952,3825.61 246.53,3826.13C248.58,3824.91 250.675,3823.78 252.751,3822.61Z"/>
+                </g>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <br>publish
+      </button>
+        <button id="optionsbutton">
+          <!--<img src="images/buttons/options.svg">-->
+          <!-- OPTIONS BUTTON -->
+          <svg viewBox="0 0 31 31" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+              <g transform="matrix(1,0,0,1,-296.175,-3812.62)">
+                  <g transform="matrix(1,0,0,1,0,3479)">
+                          <g class="meta-button-backgr" transform="matrix(1,0,0,1,296.175,333.617)">
+                              <circle cx="15.5" cy="15.5" r="15.5"/>
+                          </g>
+                          <g class="meta-button-inside" transform="matrix(1,0,0,1,0,-3479)">
+                              <path d="M311.588,3820.8C315.458,3820.8 318.6,3823.95 318.6,3827.82C318.6,3831.69 315.458,3834.83 311.588,3834.83C307.718,3834.83 304.576,3831.69 304.576,3827.82C304.576,3823.95 307.718,3820.8 311.588,3820.8ZM311.588,3822.82C314.346,3822.82 316.585,3825.06 316.585,3827.82C316.585,3830.57 314.346,3832.81 311.588,3832.81C308.83,3832.81 306.591,3830.57 306.591,3827.82C306.591,3825.06 308.83,3822.82 311.588,3822.82Z"/>
+                          </g>
+                  </g>
+              </g>
+           </svg>
+          <br>options
+        </button>
     </div>
     <div id="sidebarcontainer">
         <div id="sidebar"></div>
@@ -482,14 +577,14 @@ end test-data-->
         <ul id="publishedlist">
 <!-- some test-data to see structure: -->
             <li>
-                <button class="circle"><img src="images/buttons/-.png" alt="delete presentation"></button>
-                <button class="loadnotebutton">mon 06-11-19 11:49</button>
-                <button class="copylink"><img src="images/buttons/publish.svg" alt="copy link of presentation..."><br>copy link</button>
+              <button class="loadnotebutton">mon 06-11-19 11:49</button>
+                <button class="circle"><img src="images/buttons/-.png" alt="delete presentation"> delete</button>
+                <button class="copylink"><img src="images/buttons/publish.svg" alt="copy link of presentation...">copy link</button>
             </li>
             <li>
-                <button class="circle"><img src="images/buttons/-.png" alt="delete presentation"></button>
-                <button class="loadnotebutton">mon 06-11-19 11:00</button>
-                <button class="copylink"><img src="images/buttons/publish.svg" alt="copy link of presentation..."><br>copy link</button>
+              <button class="loadnotebutton">mon 06-11-19 11:00</button>
+                <button class="circle"><img src="images/buttons/-.png" alt="delete presentation">delete</button>
+                <button class="copylink"><img src="images/buttons/publish.svg" alt="copy link of presentation...">copy link</button>
             </li>
         </ul>
     </div></div>
@@ -537,14 +632,37 @@ end test-data-->
 		</ul>
     </div></div>
 <!-- only stuff for making shadows and such:-->
+    <!-- old stuff(cornerleft)
     <div id="cornerleft"></div>
     <div id="topleft"></div>
+    <img id="cornerleftimage" src="images/cornerleftimage.png">
     <div id="topmiddle"></div>
-    <div id="topright"></div>
+    <div id="noteareaempty"><img src="images/borderleft.png"></div>
     <div id="cornerright"></div>
-    <div id="noteareaempty"></div>
+-->
+  <div id="topright"><svg viewBox="0 0 40 40" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+			    <g transform="matrix(1,0,0,1,-1190.49,-3479)">
+			        <g transform="matrix(1,0,0,1,0,3479)">
+			            <g transform="matrix(1,0,0,1,0,-3479)">
+			                <path class="rightcorner" filter="url(#rightcorner-shadow" d="M1230.49,3519L1230.41,3519C1229.09,3497.58 1211.92,3480.41 1190.49,3479.09L1190.49,3479L1230.49,3479L1230.49,3519Z"/>
+			                <path class="rightcorner" d="M1230.49,3519L1230.41,3519C1229.09,3497.58 1211.92,3480.41 1190.49,3479.09L1190.49,3479L1230.49,3479L1230.49,3519Z"/>
+			            </g>
+			        </g>
+			    </g>
+			    <defs>
+			    	<filter id="rightcorner-shadow">
+			    		<feOffset result="offOut" in="SourceAlpha" dx="-1" dy="0" />
+      					<feGaussianBlur result="blurOut" in="offOut" stdDeviation="4" />
+      					<feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+      					<feComponentTransfer>
+    						<feFuncA type="linear" slope="0.3"/>
+  						</feComponentTransfer>
+        			</filter>
+			    </defs>
+			</svg></div>
     <div id="shadowelleft"></div>
     <div id="shadowelright"></div>
+    <div id="rahmenright"></div>
 </div><!--end of slidenoteeditor-div-->
 	<div id="praesentationrahmen">
 		<div id="praesentation"></div>
@@ -583,6 +701,11 @@ end test-data-->
   </div>
 
 </div><!-- end of slidenotediv-->
+<div id="slidenoteloadingscreenwrapper">
+  <div id="slidenoteeditorloadingscreen">
+    <img id="loadingcircle" src="images/loadingscreen.png">
+  </div>
+</div>
 <div id="slidenoteGuardianPasswordPromptStore">
 <div id="slidenoteGuardianPasswordPromptTemplate">
 	<div id="slidenoteGuardianPasswordPromptNotetitle">TITLE</div>
