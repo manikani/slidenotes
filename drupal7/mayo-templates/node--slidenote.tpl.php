@@ -79,307 +79,224 @@
  */
 ?>
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?> clearfix"<?php print $attributes; ?>>
+<!--loading cms-infos: -->
 <script language="javascript">
 var initial_note = {
 title: '<?php print $title;?>',
 nid: <?php print $node->nid;?>,
 encnote:'<?php if(isset($field_encryptednote[0]))print($field_encryptednote[0]['value']);?>',
 encimg:'<?php if(isset($field_encimages[0]))print($field_encimages[0]['value']);?>', //old! delete in future update!
-encimages:[<?php if(isset($field_encimg))foreach($field_encimg as $actimg){print('"'.str_replace("\n","",$actimg['value']).'",')};?>], //new one
+encimages:[<?php if(isset($field_encimg))foreach($field_encimg as $actimg)print('"'.str_replace("\n","",$actimg['value']).'",');?>], //new one
 encimgmeta:'<?php if(isset($field_imagemeta[0]))print($field_imagemeta[0]['value']);?>',
 notehash:'<?php if(isset($field_notehash[0]))print($field_notehash[0]['value']);?>',
 imagehash:'<?php if(isset($field_imageshash[0]))print($field_imageshash[0]['value']);?>',
 author: {id:<?php print($uid);?>} 
 }
 </script>
+<!-- disabling loaded drupal-elements temporarily till deleted elsewhere -->
+<script language="javascript">
+function removeDrupalElements(){
+var links = document.getElementsByTagName("link");
+for(var x=links.length-1;x>=0;x--){
+    if(links[x].href.indexOf("mayo")>-1)links[x].parentElement.removeChild(links[x]);
+}
+
+var scripts = document.getElementsByTagName("script");
+for(var x=scripts.length-1;x>=0;x--){
+    if(scripts[x].src.indexOf("jquery")>-1)scripts[x].parentElement.removeChild(scripts[x]);;
+}
+
+var styles = document.getElementsByTagName("style");
+    for(var x=styles.length-1;x>=0;x--){
+        styles[x].parentElement.removeChild(styles[x]);
+    }
+var slidenotediv = document.getElementById("slidenotediv");
+var body = document.getElementsByTagName("body")[0];
+for(var x=0;x<body.children.length;x++)body.children[x].style.display = "none";
+body.appendChild(slidenotediv);
+}
+
+</script>
 
 <script language="javascript" src="/sites/all/libraries/slidenotes/slidenotes.js"></script>
 <script language="javascript" src="/sites/all/libraries/slidenotes/themes/slidenoteguardian.js"></script>
-<script language="javascript"><!--
-var slidenote;
-var slidenoteguardian;
-var presentation; //TODO: sollte noch entfernt werden. nur noch slidenote-objekt global
-var editorinit=false; //wird nicht mehr gebraucht?
-
-function initeditor(){
-	console.log("initeditor:"+editorinit + "slidenote:"+(slidenote==null));
-	//console.log(slidenote);
-	if(slidenote==null){
-		var texted = 		document.getElementById("quelltext");
-		var texterr =		 document.getElementById("texteditorerrorlayer");
-		var errordet =	 document.getElementById("fehlercode");
-		var slideshow = 	document.getElementById("praesentation");
-		if(texted==null||texterr==null||errordet==null||slideshow==null){
-			//etwas fehlt noch...
-			console.log("etwas fehlt noch")
-			setTimeout("initeditor()",500); //gib ihm noch Zeit
-		} else{
-			var basepath = basepath="/sites/all/libraries/slidenotes/";			
-			slidenote = new slidenotes(texted, texterr, errordet, slideshow, basepath );
-			slidenote.appendFile("css","../layout.css");
-			slidenote.appendFile("css","slidenoteguardian.css");
-			slidenote.basepath="/sites/all/libraries/slidenotes/";
-			slidenote.imagespath="/sites/all/libraries/slidenotes/images/";			
-			
-			presentation = slidenote.presentation;
-			//texted.onresize = slidenote.parseneu;
-			texted.onresize= function(){slidenote.parseneu();};
-			texted.onkeydown= function(event){
-				slidenote.keypressdown(event, texted);
-			};
-
-			texted.onkeyup=function(event){slidenote.keypressup(event, texted);};
-			texted.onpaste=function(){setTimeout('slidenote.parseneu()',150)};
-			texted.oncut=function(){setTimeout('slidenote.parseneu()',150)};
-			//autofocus tonfocus="initeditor(this.value);
-			texted.onscroll=function(){slidenote.scroll(texted);};
-			texted.onclick = function(){console.log("parseneu forced by click"+this.selectionEnd);slidenote.parseneu();};
-
-			document.getElementById("importbutton").addEventListener("click",function(){document.getElementById("importfile").click()});
-			document.getElementById("exportbutton").addEventListener("click",function(){
-				var menu=document.getElementById("exportoptions");
-				if(menu.classList.contains("active"))menu.classList.remove("active");else menu.classList.add("active");
-			});
-			document.getElementById("exportoptions").addEventListener("click", function(){this.classList.remove("active")});
-			document.getElementById("editoroptionbuttonbutton").addEventListener("click",function(e){
-				var optionmenu = document.getElementById("optionmenu");
-				if(optionmenu.classList.contains("active")){
-					optionmenu.classList.remove("active");
-				}else{
-					//get all themes:
-					var themelist = document.getElementById("optionmenupresentationdesign");
-					themelist.innerHTML = "";
-					var themeul = document.createElement("ul");
-					var themes = slidenote.extensions.themes;
-					var themedesctext = "";
-					for(var tx=0;tx<themes.length;tx++){
-						if(themes[tx].themetype ==="css"){
-							var themeli = document.createElement("li");
-							var themeinput = document.createElement("input");
-							themeinput.type = "radio";
-							themeinput.name = "design";
-							themeinput.number = tx;
-							if(themes[tx].active)	themeinput.checked = true; else themeinput.checked=false;
-							var themelabel = document.createElement("label");
-							themelabel.innerText = themes[tx].classname;
-							themeli.appendChild(themeinput);
-							themeli.appendChild(themelabel);
-							themeul.appendChild(themeli);
-							if(themes[tx].active)themedesctext = themes[tx].description;
-							themeinput.description = themes[tx].description;
-							themeinput.onchange = function(){
-								slidenote.extensions.changeThemeStatus(this.number,this.checked);
-								if(this.checked)document.getElementById("themedescription").innerText=this.description;
-								slidenoteguardian.saveConfig("local");
-
-							}
-						}
-					}
-					themelist.appendChild(themeul);
-					var themedescription = document.getElementById("themedescription");
-					themedescription.innerText = themedesctext;
-					optionmenu.classList.add("active");
-				}
-			});
-			document.getElementById("nightmodetoggle").addEventListener("click",function(e){
-				var toggler=document.getElementById("nightmodetoggle");
-				if(toggler.classList.contains("off")){
-					toggler.classList.remove("off");
-					toggler.classList.add("on");
-					document.getElementById("slidenotediv").classList.add("nightmode");
-		    }else{
-					toggler.classList.remove("on");
-					toggler.classList.add("off");
-					document.getElementById("slidenotediv").classList.remove("nightmode");
-	      }
-				//save config after changing to nightmode:
-				if(slidenoteguardian){
-					slidenoteguardian.saveConfig("local");
-				}
-			});
-
-			//texted.addEventListener("focusout",function(){console.log("parseneu forced by focus-out");slidenote.parseneu();});
-			slidenote.parseneu();
-			console.log("slidenotes geladen");
-			console.log(slidenote);
-
-			document.getElementById("praesentationrahmen").onkeyup = function(event){
-				//Keyboardsteuerung der Slideshow:
-				var key=""+event.key;
-				console.log("keycode of pressed key:"+key);
-				if(key==="Escape")slidenote.presentation.showpresentation();
-				if(key==="ArrowRight" || key===" ")presentation.nextPage();
-				if(key==="ArrowLeft")presentation.lastPage();
-				if(key==="0" ||key==="1" ||key==="2" ||key==="3" ||key==="4" ||key==="5" ||key==="6" ||key==="7" ||key==="8" ||key==="9" ){
-					if(presentation.lastpressednrkey==undefined)presentation.lastpressednrkey="";
-					presentation.lastpressednrkey+=key;
-				}
-				if(key==="Enter"){
-					presentation.lastpressednrkey--;
-					console.log(presentation.lastpressednrkey);
-					presentation.showPage(presentation.lastpressednrkey);
-					presentation.lastpressednrkey="";
-				}
-			};
-			slidenoteguardian = new slidenoteGuardian(slidenote);
-		}
-	}
-
-}
-function insertbutton(code){
-	if(slidenote!=null)slidenote.insertbutton(code);
-}
-
-function parsetesting(){
-	var parsetext = slidenote.textarea.value;
-	parsetest = false;
-	console.log("parse mit parsenachzeilen");
-	slidenote.parseneu();
-	parsetest = true;
-	console.log("parse mit parsemap");
-	slidenote.parseneu();
-	console.log("parsetest multiply textarea-value by 5");
-	for(var x=0;x<5;x++)slidenote.textarea.value += parsetext;
-	parsetest = false;
-	console.log("parse mit parsenachzeilen");
-	slidenote.parseneu();
-	parsetest = true;
-	console.log("parse mit parsemap");
-	slidenote.parseneu();
-	console.log("parsetest multiply textarea-value by 10");
-	for(var x=0;x<5;x++)slidenote.textarea.value += parsetext;
-	parsetest = false;
-	console.log("parse mit parsenachzeilen");
-	slidenote.parseneu();
-	parsetest = true;
-	console.log("parse mit parsemap");
-	slidenote.parseneu();
 
 
-}
-
---></script>
-</head>
-<body onload="initeditor()">
 <div id="slidenotediv">
-	<div id="editorblock">
-		<div id="editorheader">
-			<button><a href="/user"><img src="/sites/all/libraries/slidenotes/images/buttons/home.png">HOME</a></button>
-			<button id="importbutton"><img src="/sites/all/libraries/slidenotes/images/buttons/import.png">IMPORT<input type="file" id="importfile"></button>
-			<img id="encstatus" src="/sites/all/libraries/slidenotes/images/schloss-grau.png" alt="initial state">
-			<span id="notetitle"><?php print $title ?></span>
-			<button id="exportbutton">EXPORT<img src="/sites/all/libraries/slidenotes/images/buttons/export.png"></button>
-			<button id="savebutton">SAVE<img id="savestatus" src="/sites/all/libraries/slidenotes/images/buttons/cloudsaved.png"></button>
-		</div>
-		<div id="exportoptions">
-			<ul>
-				<li>BACKUP OF CODE:</li>
-				<li><button onclick="slidenoteguardian.saveNote('filesystem')">encrypted .slidenote</button></li>
-				<li><button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md textfile</button></li>
-				<li>PUBLISH PRESENTATION:</li>
-				<li><button onclick="slidenoteguardian.exportPresentationToCMS()">Publish to slidenote.io</button></li>
-				<li><button onclick="slidenoteguardian.exportPresentationLocal(true);">Save as encrypted .html</button></li>
-				<li><button onclick="slidenoteguardian.exportPresentationLocal(false);">Save as unencrypted .html</button></li>
-			</ul>
-		</div>
-		<div id="editoroptionbutton"><button id="editoroptionbuttonbutton">Options <img src="/sites/all/libraries/slidenotes/images/buttons/optioni.png"></button></div>
-		<div id="texteditorbuttons">
-			<!--<input type="button" onclick="cursorspantest()" value="cursorspantest">-->
-			<!--<button onclick="insertbutton('---')" >new Page</button>-->
-			<button onclick="insertbutton('%head1')" ><img src="/sites/all/libraries/slidenotes/images/buttons/h1.png"></button>
-			<button onclick="insertbutton('%head2')" ><img src="/sites/all/libraries/slidenotes/images/buttons/h2.png"></button>
-			<button onclick="insertbutton('%head3')" ><img src="/sites/all/libraries/slidenotes/images/buttons/h3.png"></button>
-			<button onclick="insertbutton('%list')" ><img src="/sites/all/libraries/slidenotes/images/buttons/ul.png"></button>
-			<button onclick="insertbutton('%nrlist')" ><img src="/sites/all/libraries/slidenotes/images/buttons/ol.png"></button>
-			<button onclick="insertbutton('%quote')" ><img src="/sites/all/libraries/slidenotes/images/buttons/quote.png"></button>
-			<button onclick="insertbutton('%comment')" ><img src="/sites/all/libraries/slidenotes/images/buttons/comment.png"></button>
-			<button onclick="insertbutton('**')" ><img src="/sites/all/libraries/slidenotes/images/buttons/bold.png"></button>
-			<button onclick="insertbutton('*')" ><img src="/sites/all/libraries/slidenotes/images/buttons/italic.png"></button>
-			<button onclick="insertbutton('~~')" ><img src="/sites/all/libraries/slidenotes/images/buttons/stroke.png"></button>
-			<button onclick="insertbutton('%code')" ><img src="/sites/all/libraries/slidenotes/images/buttons/code.png"></button>
-			<button onclick="insertbutton('%link')" ><img src="/sites/all/libraries/slidenotes/images/buttons/link.png"></button>
-			<!--<button type="button" class="imagebutton" onclick="document.getElementById('imagesblock').classList.add('visible')">image</button>-->
-		</div>
-		<div id="sidebarcontainer">
-			<div id="sidebar"></div>
-			<div id="nicesidebarsymbol"><span id="nicesidebarsymbollabel"></span><a href="javascript:slidenote.presentation.showInsertMenu();"><img src="/sites/all/libraries/slidenotes/images/buttons/droptilde.png"></a><img src="/sites/all/libraries/slidenotes/images/buttons/cursorline.png"></div>
-			<div id="insertarea">
-				<span> <label><span id="insertmenulabel">INSERT</span>   <img src="/sites/all/libraries/slidenotes/images/buttons/droptilde.png"></label><img id="cursorlinesymbol" src="/sites/all/libraries/slidenotes/images/buttons/cursorline.png"></span>
+<div id="slidenoteeditor">
+        <button id="cloud"><img id="savestatus" src="/sites/all/libraries/slidenotes/images/buttons/cloud.svg"></button>
+        <button id="loadnote"><div><span id="slidenotetitle"><?php print $title ?></span><img src="/sites/all/libraries/slidenotes/images/buttons/loadnotebackground.png"></div></button>
+        <button id="outlet">95 Words, 12 Pages,<br> 120 Seconds to read...</button>
+    <div id="editorblock">
+        <div id="texteditorerrorlayer"></div>
+		<textarea spellcheck="false" id="quelltext" onload="" autofocus         onfocus="setTimeout('initeditor()',100);"></textarea>
 
-				<div id="standardinsertmenu">
-					<button class="newpagebutton" onclick="insertbutton('---')" >new Page</button>
+    </div>
+    <div id="buttonarearight">
+        <button class="fluidbutton" id="toolbarbutton"><img src="/sites/all/libraries/slidenotes/images/buttons/toolbar.png" alt="Toolbar"></button>
+        <button class="fluidbutton" id="imagegallerybutton"><img src="/sites/all/libraries/slidenotes/images/buttons/imagegallery.png" alt="imagegallery"></button>
+        <button class="fluidbutton" id="historyBackButton"><img src="/sites/all/libraries/slidenotes/images/buttons/undo.png" alt="undo"></button>
+        <button class="fluidbutton" id="historyForwardButton"><img src="/sites/all/libraries/slidenotes/images/buttons/redo.png" alt="redo"></button>
+    </div>
+    <div id="toolbar"><div class="arrow_box" id="texteditorbuttons">
+        <div class="screenreader-only">Toolbar</div>
+        <ul id="toolbarbuttons">
+			<li><button onclick="insertbutton('---')" title="new slide"><span class="buttonmdcode">---</span> new slide</button></li>
+			<li><button onclick="insertbutton('%head1')" title="title"><img src="/sites/all/libraries/slidenotes/images/buttons/h1.png" alt="Title"><span class="buttonmdcode">#</span> headline</button></li>
+			<li><button onclick="insertbutton('*')" title="italic"><img src="/sites/all/libraries/slidenotes/images/buttons/italic.png" alt="italic"><span class="buttonmdcode">*</span>italic<span class="buttonmdcode">*</span></button></li>
+			<li><button onclick="insertbutton('**')" title="bold"><img src="/sites/all/libraries/slidenotes/images/buttons/bold.png" alt="bold"><span class="buttonmdcode">**</span>bold<span class="buttonmdcode">**</span></button></li>
+			<li><button onclick="insertbutton('~~')" title="crossed"><img src="/sites/all/libraries/slidenotes/images/buttons/stroke.png" alt="stroke"><span class="buttonmdcode">~~</span>deleted<span class="buttonmdcode">~~</span></button></li>
+			<li><button onclick="insertbutton('%list')" title="unordered list"><img src="/sites/all/libraries/slidenotes/images/buttons/ul.png" alt="list"><span class="buttonmdcode">- </span>list</button></li>
+			<li><button onclick="insertbutton('%nrlist')" title="ordered list"><img src="/sites/all/libraries/slidenotes/images/buttons/ol.png" alt="ordered list"><span class="buttonmdcode">1. </span>ordered list</button></li>
+			<li><button onclick="insertbutton('%quote')" title="quote"><img src="/sites/all/libraries/slidenotes/images/buttons/quote.png" alt="quote"><span class="buttonmdcode">&gt; </span>quote</button></li>
+			<li><button onclick="insertbutton('%footnote')" title="footnote"><img src="/sites/all/libraries/slidenotes/images/buttons/quote.png" alt="footnote"><span class="buttonmdcode">[^*]</span> footnote</button></li>
+			<li><button onclick="insertbutton('%comment')" title="comment"><img src="/sites/all/libraries/slidenotes/images/buttons/comment.png" alt="comment"><span class="buttonmdcode">//</span> comment</button></li>
+			<li><button onclick="insertbutton('%code')" title="code"><img src="/sites/all/libraries/slidenotes/images/buttons/code.png" alt="code"><span class="buttonmdcode">`</span>code<span class="buttonmdcode">`</span></button></li>
+			<li><button onclick="insertbutton('%link')" title="hyperlink"><img src="/sites/all/libraries/slidenotes/images/buttons/link.png" alt="link"><span class="buttonmdcode">[</span>link<span class="buttonmdcode">](url)</span></button></li>
+
+        </ul>
+    </div></div>
+    <div id="imagegallery">imagegallery</div>
+    <div id="optionarea">
+        <button id="optionsbutton"><img src="/sites/all/libraries/slidenotes/images/buttons/options.svg"><br>options</button>
+        <button id="publishbutton"><img src="/sites/all/libraries/slidenotes/images/buttons/publish.svg"><br>publish</button>
+        <button id="importexportbutton"><img src="/sites/all/libraries/slidenotes/images/buttons/import-export.svg"><br>import&<br>export</button>
+    </div>
+    <div id="sidebarcontainer">
+        <div id="sidebar"></div>
+        <div id="nicesidebarsymbol"><a id="nicesidebarsymbolcontainer" href="javascript:slidenote.presentation.showInsertMenu();"><span id="nicesidebarsymbollabel">list</span><img src="/sites/all/libraries/slidenotes/images/buttons/droptildeneu.png" alt="open Elements Menu"></a><img id="cursorlinearrow" src="/sites/all/libraries/slidenotes/images/buttons/cursorlineneu.png"></div>
+			<div id="insertarea">
+          <div id="insertmenulabel" class="screenreader-only"></div>
+			    <div id="standardinsertmenu">
+					<!--<button class="newpagebutton" onclick="insertbutton('---')" >new Page</button>-->
 				</div>
 				<div id="extrainsertmenu">
+<!-- some test-data:
+<button>- </button><button>+ </button><button>* </button><hr><button>1. </button><button>1.) </button><button>1) </button><button>a) </button><button>I) </button>
+end test-data-->
 				</div>
 			</div>
-			<!--<div style="">123456789012345</div>-->
 
-		</div>
-		<div id="texteditor" class="texteditor">
-			<div id="texteditorerrorlayer"></div>
-			<textarea spellcheck="false" id="quelltext" onload="" autofocus onfocus="setTimeout('initeditor()',100);"></textarea>
-			<div id="texteditorimagespreview"></div>
-		</div>
-		<div id="optionmenu">
-			<h3>PRESENTATION DESIGN</h3>
-			<div id="optionmenupresentationdesigncontainer">
-			<div id="optionmenupresentationdesign">
-				<ul>
-					<li><input type="radio" name="basictheme" value="pop"> POP</li>
-					<li><input type="radio" name="basictheme" value="pop"> TUFTE</li>
-					<li><input type="radio" name="basictheme" value="pop"> CONSOLE</li>
-				</ul>
-			</div>
-			<div id="themedescription"></div>
-		</div>
-
-			<div><select onchange="slidenote.extensions.getThemeByName('highlight').changeDesignOption(0,this.value)">
-				<option value="" hidden selected disabled>CODE HIGHLIGHTING</option>
-				<option value="agate">agate</option>
-				<option value="androidstudio">androidstudio</option>
-				<option value="arduino-light">arduino-light</option>
-				<option value="arta">arta</option>
-				<option value="ascetic">ascetic</option>
-				<option value="atelier-cave-dark">atelier-cave-dark</option>
-				<option value="atelier-cave-light">atelier-cave-light</option><option value="atelier-dune-dark">atelier-dune-dark</option><option value="atelier-dune-light">atelier-dune-light</option><option value="atelier-estuary-dark">atelier-estuary-dark</option><option value="atelier-estuary-light">atelier-estuary-light</option><option value="atelier-forest-dark">atelier-forest-dark</option><option value="atelier-forest-light">atelier-forest-light</option><option value="atelier-heath-dark">atelier-heath-dark</option><option value="atelier-heath-light">atelier-heath-light</option><option value="atelier-lakeside-dark">atelier-lakeside-dark</option><option value="atelier-lakeside-light">atelier-lakeside-light</option><option value="atelier-plateau-dark">atelier-plateau-dark</option><option value="atelier-plateau-light">atelier-plateau-light</option><option value="atelier-savanna-dark">atelier-savanna-dark</option><option value="atelier-savanna-light">atelier-savanna-light</option><option value="atelier-seaside-dark">atelier-seaside-dark</option><option value="atelier-seaside-light">atelier-seaside-light</option><option value="atelier-sulphurpool-dark">atelier-sulphurpool-dark</option><option value="atelier-sulphurpool-light">atelier-sulphurpool-light</option><option value="atom-one-dark">atom-one-dark</option><option value="atom-one-light">atom-one-light</option><option value="brown-paper">brown-paper</option><option value="codepen-embed">codepen-embed</option><option value="color-brewer">color-brewer</option><option value="darcula">darcula</option><option value="dark">dark</option><option value="darkula">darkula</option><option value="default">default</option><option value="docco">docco</option><option value="dracula">dracula</option><option value="far">far</option><option value="foundation">foundation</option><option value="github">github</option><option value="github-gist">github-gist</option><option value="googlecode">googlecode</option><option value="grayscale">grayscale</option><option value="gruvbox-dark">gruvbox-dark</option><option value="gruvbox-light">gruvbox-light</option><option value="hopscotch">hopscotch</option><option value="hybrid">hybrid</option><option value="idea">idea</option><option value="ir-black">ir-black</option><option value="kimbie.dark">kimbie.dark</option><option value="kimbie.light">kimbie.light</option><option value="magula">magula</option><option value="mono-blue">mono-blue</option><option value="monokai">monokai</option><option value="monokai-sublime">monokai-sublime</option><option value="obsidian">obsidian</option><option value="ocean">ocean</option><option value="paraiso-dark">paraiso-dark</option><option value="paraiso-light">paraiso-light</option><option value="pojoaque">pojoaque</option><option value="purebasic">purebasic</option><option value="qtcreator_dark">qtcreator_dark</option><option value="qtcreator_light">qtcreator_light</option><option value="railscasts">railscasts</option><option value="rainbow">rainbow</option><option value="routeros">routeros</option><option value="school-book">school-book</option><option value="solarized-dark">solarized-dark</option><option value="solarized-light">solarized-light</option><option value="sunburst">sunburst</option><option value="tomorrow">tomorrow</option><option value="tomorrow-night-blue">tomorrow-night-blue</option><option value="tomorrow-night-bright">tomorrow-night-bright</option><option value="tomorrow-night">tomorrow-night</option><option value="tomorrow-night-eighties">tomorrow-night-eighties</option><option value="vs2015">vs2015</option><option value="vs">vs</option><option value="xcode">xcode</option><option value="xt256">xt256</option><option value="zenburn">zenburn</option></select></div>
-			<h3>INTERFACE DESIGN</h3>
-			<div id="optionmenuinterfacedesign">
-				<select id="editorchoice" onchange="slidenote.choseEditor(this.value)">
+    </div>
+    <div id="playbuttonarea">
+        <button class="fluidbutton" id="presentationoptionsbutton"><img src="/sites/all/libraries/slidenotes/images/buttons/presentation-options.svg"></button>
+        <button class="fluidbutton" id="playbutton" onclick="slidenote.presentation.showpresentation()"><img src="/sites/all/libraries/slidenotes/images/buttons/play-button.svg"></button>
+    </div>
+<!-- the menus:-->
+    <div id="menucloud"><div class="arrow_box">
+        <div>cloud status:<span id="cloudstatus"></span></div>
+        <button id="savebutton">save to cloud now</button>
+        <button id="addrevision">add revision</button>
+        <div class="separator">revert to revision</div>
+        <ul id="revisionlist">
+<!-- just for testing purpose some elements -->
+            <li><button>mon 06-11-19 11:49</button></li>
+            <li><button>mon 06-11-19 11:49</button></li>
+            <li><button>mon 06-11-19 11:49</button></li>
+        </ul>
+    </div></div>
+    <div id="menuload"><div class="arrow_box">
+        <button id="newnote"><img src="/sites/all/libraries/slidenotes/images/buttons/+.png">new slidenote</button>
+        <ul id="notelist">
+            <li><button class="circle"><img src="/sites/all/libraries/slidenotes/images/buttons/-.png" alt="delete slidenote new note"></button><button class="loadnotebutton actnotebutton">new note</button></li>
+            <li><button class="circle"><img src="/sites/all/libraries/slidenotes/images/buttons/-.png"></button><button class="loadnotebutton ">dinosaurs today</button></li>
+            <li><button class="circle"><img src="/sites/all/libraries/slidenotes/images/buttons/-.png"></button><button class="loadnotebutton ">reading literature in the last century</button></li>
+        </ul>
+    </div></div>
+    <div id="menuoutlet"></div>
+    <div id="menupublish"><div class="arrow_box">
+        <button id="publishtocms">publish presentation to slidenotes.io</button>
+        <div class="separator">published to slidenotes.io</div>
+        <ul id="publishedlist">
+<!-- some test-data to see structure: -->
+            <li>
+                <button class="circle"><img src="/sites/all/libraries/slidenotes/images/buttons/-.png" alt="delete presentation"></button>
+                <button class="loadnotebutton">mon 06-11-19 11:49</button>
+                <button class="copylink"><img src="/sites/all/libraries/slidenotes/images/buttons/publish.svg" alt="copy link of presentation..."><br>copy link</button>
+            </li>
+            <li>
+                <button class="circle"><img src="/sites/all/libraries/slidenotes/images/buttons/-.png" alt="delete presentation"></button>
+                <button class="loadnotebutton">mon 06-11-19 11:00</button>
+                <button class="copylink"><img src="/sites/all/libraries/slidenotes/images/buttons/publish.svg" alt="copy link of presentation..."><br>copy link</button>
+            </li>
+        </ul>
+    </div></div>
+    <div id="menuimportexport"><div class="arrow_box">
+        <button id="importbutton"><div>import slidenote or MD-file</div><input type="file" id="importfile" accept=".slidenote,.txt,.md,.csv"></button>
+        <div class="separator">download slidenote as</div>
+        <button onclick="slidenoteguardian.saveNote('filesystem')">encrypted .slidenote file</button>
+        <button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md/.txt file</button>
+        <div class="separator">download presentation as</div>
+        <button onclick="slidenoteguardian.exportPresentationLocal(true);">encrypted .html file</button>
+        <button onclick="slidenoteguardian.exportPresentationLocal(false);">unencrypted .html file</button>
+    </div></div>
+    <div id="menuoptionseditor"><div class="arrow_box">
+        <a href="/user" class="menuitem">Account</a>
+        <a href='/user/logout' class="menuitem">log out</a>
+        <div class="separator">night shift</div>
+        <button id="nightmodetoggle" class="menuitem"><div>on</div><div>off</div></button>
+        <div class="separator">view mode</div>
+        <div id="optionmenuinterfacedesign">
+                <!--<button id="editorchoicebutton" class="menuitem">-->
+				<select id="editorchoice" class="menuitem"  onchange="slidenote.choseEditor(this.value)">
 					<option value="md-texteditor" selected>context-mode (default)</option>
 					<option value="focus">focus-mode</option>
 					<option value="raw-text">raw text</option>
 				</select>
-			</div>
-			<div>NIGHT MODE <a href="#" class="off" id="nightmodetoggle"><span>OFF</span>|<span>ON</span></a></div>
-			<div><a href="javascript:slidenote.extensions.showThemes()">Advanced Options ℹ</a></div>
-			<div><ul>
-				<li><a href="#">documentation</a></li>
-				<li><a href="#">bug reports</a></li>
-				<li><a href="#">community</a></li>
+                <!--</button>-->
+		</div>
+        <div class="separator">---</div>
+        <button onclick="slidenote.extensions.showThemes()">Advanced Options</button>
+        <div class="separator">slidenotes.io service</div>
+        <ul>
+				<li><a href="#" class="menuitem">tutorials</a></li>
+				<li><a href="#" class="menuitem">documentation</a></li>
+				<li><a href="#" class="menuitem">bug reports</a></li>
+				<li><a href="#" class="menuitem">community</a></li>
 			</ul>
-			</div>
-			<div>(c) slidenotes.io</div>
-		</div>
-		<div id="footer">
-			<button onclick="slidenote.presentation.showpresentation()"><img src="/sites/all/libraries/slidenotes/images/buttons/presentationtoggle.png"> PRESENTATION</button>
-		</div>
-		<div id="imagesblock">
-				<h1>Image Upload <button onclick="Javascript:document.getElementById('imagesblock').classList.remove('visible');">close</button></h1>
-			<div>
-				Select an local image file to upload, then click on image to use it in this slidenote
-				<input type="file" id="fileInput">
-			</div>
-			<div id="imageResizeOptions">
-				<input type="radio" name="imageResize" value="1024x768" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Background/Big (1024x768)</label>
-				<input type="radio" name="imageResize" value="400x300" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Medium (400x300)</label>
-				<input type="radio" name="imageResize" value="100x50" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Icon (100x50)</label>
-			</div>
-			<div id="filePreview"></div>
-			<h1>Files in Database (click on image to reuse)</h1>
-			<div id="fileOld"></div>
-		</div>
 
-	</div>
+    </div></div>
+    <div id="menuoptionspresentation"><div class="arrow_box_down">
+        <div class="separator">slide design</div>
+        <ul id="basicthemelist">
+					<li><div>prototype</div><input type="radio" name="basictheme" value="prototype"><div class="prototype"><div>WELCOME</div>TO SLIDENOTES</div></li>
+					<li><div>prototype</div><input type="radio" name="basictheme" value="pop"><div class="pop"><div>WELCOME</div> TO SLIDENOTES</div></li>
+                    <li><div>prototype</div><input type="radio" name="basictheme" value="coding"><div class="coding"><div>WELCOME</div> TO SLIDENOTES</div></li>
+		</ul>
+    </div></div>
+<!-- only stuff for making shadows and such:-->
+    <!-- old stuff(cornerleft)
+    <div id="cornerleft"></div>
+    <div id="topleft"></div>
+    <img id="cornerleftimage" src="/sites/all/libraries/slidenotes/images/cornerleftimage.png">
+    <div id="topmiddle"></div>
+    <div id="noteareaempty"><img src="/sites/all/libraries/slidenotes/images/borderleft.png"></div>
+    <div id="cornerright"></div>
+-->
+  <div id="topright"><svg viewBox="0 0 40 40" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+			    <g transform="matrix(1,0,0,1,-1190.49,-3479)">
+			        <g transform="matrix(1,0,0,1,0,3479)">
+			            <g transform="matrix(1,0,0,1,0,-3479)">
+			                <path class="rightcorner" filter="url(#rightcorner-shadow" d="M1230.49,3519L1230.41,3519C1229.09,3497.58 1211.92,3480.41 1190.49,3479.09L1190.49,3479L1230.49,3479L1230.49,3519Z"/>
+			                <path class="rightcorner" d="M1230.49,3519L1230.41,3519C1229.09,3497.58 1211.92,3480.41 1190.49,3479.09L1190.49,3479L1230.49,3479L1230.49,3519Z"/>
+			            </g>
+			        </g>
+			    </g>
+			    <defs>
+			    	<filter id="rightcorner-shadow">
+			    		<feOffset result="offOut" in="SourceAlpha" dx="-1" dy="0" />
+      					<feGaussianBlur result="blurOut" in="offOut" stdDeviation="4" />
+      					<feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+      					<feComponentTransfer>
+    						<feFuncA type="linear" slope="0.3"/>
+  						</feComponentTransfer>
+        			</filter>
+			    </defs>
+			</svg></div>
+    <div id="shadowelleft"></div>
+    <div id="shadowelright"></div>
+    <div id="rahmenright"></div>
+</div><!--end of slidenoteeditor-div-->
 	<div id="praesentationrahmen">
 		<div id="praesentation"></div>
 		<div class="praesentationsteuerung">
@@ -399,10 +316,28 @@ function parsetesting(){
 		<div id="globaloptionstab" class="optiontab"></div>
 		<div id="themeselectiontab" class="optiontab"></div>
 	</div>
-	<div id="fehlercoderahmen">
-		<div id="fehlercode"></div>
-		<input type="button" onclick="this.parentNode.classList.remove('active')" value="close">
-	</div>
+
+  <div id="imagesblock">
+      <h1>Image Upload <button onclick="Javascript:document.getElementById('imagesblock').classList.remove('visible');">close</button></h1>
+    <div>
+      Select an local image file to upload, then click on image to use it in this slidenote
+      <input type="file" id="fileInput">
+    </div>
+    <div id="imageResizeOptions">
+      <input type="radio" name="imageResize" value="1024x768" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Background/Big (1024x768)</label>
+      <input type="radio" name="imageResize" value="400x300" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Medium (400x300)</label>
+      <input type="radio" name="imageResize" value="100x50" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Icon (100x50)</label>
+    </div>
+    <div id="filePreview"></div>
+    <h1>Files in Database (click on image to reuse)</h1>
+    <div id="fileOld"></div>
+  </div>
+
+</div><!-- end of slidenotediv-->
+<div id="slidenoteloadingscreenwrapper">
+  <div id="slidenoteeditorloadingscreen">
+    <img id="loadingcircle" src="/sites/all/libraries/slidenotes/images/loadingscreen.png">
+  </div>
 </div>
 <div id="slidenoteGuardianPasswordPromptStore">
 <div id="slidenoteGuardianPasswordPromptTemplate">
@@ -421,6 +356,407 @@ function parsetesting(){
 
 </div>
 </div>
-
+<div id="slidenoteLoadingScreen">
+	<h1>Please wait while your presentation is generated...</h1>
+	<img src="/sites/all/libraries/slidenotes/images/wait-charlie-chaplin.gif" height="80%">
 </div>
+
+
+<!-- script von marie.htm: -->
+<script>
+var slidenoteguardian;
+var slidenote;
+
+//some test-things:
+function testinit(){
+  return;
+    slidenoteguardian.loadedSlidenotes = [{title:"new note",url:"/home/mochilera/Dokumente/jkop/design/marie/editor/marie.htm"},
+    {title:"test",url:"dev.slidenotes.io/slidenote/3"},
+    {title:"dinosaurier heute",url:"dev.slidenotes.io/slidenotes/dinosaurier"}];
+    slidenoteguardian.loadedPresentations = [{title:"test", date:"testdate",id:"10",slidenote:"3",url:"testurl"}];
+
+    menumanager.init();
+}
+
+var menumanager = {};
+menumanager.menus = new Array();
+menumanager.menuByName = function(name){
+    for(var x=0;x<this.menus.length;x++)if(this.menus[x].name===name)return this.menus[x];
+}
+menumanager.buildSlidenoteList = function(){
+    if(!slidenoteguardian || !slidenoteguardian.hascmsconnection)return;
+    var menudiv = this.menuByName("menuload");
+    var menu = document.getElementById("notelist");
+    menu.innerHTML= "";
+    var list = slidenoteguardian.loadedSlidenotes;
+    for(var x=0;x<list.length;x++){
+        var title = list[x].title;
+        var url = list[x].url;
+        var li=document.createElement("li");
+        var del = document.createElement("button");
+        var lod = document.createElement("button");
+        del.classList.add("circle");
+        var delimg = new Image();
+        delimg.src = slidenote.imagespath+"buttons/-.png";
+        delimg.alt = "delete slidenote >>>"+title+"";
+        del.appendChild(delimg);
+        del.targeturl = url+"/delete";
+        del.onclick = function(){
+            if(confirm("are you shure you want to delete selected slidenote?")){
+                location.href=this.targeturl;
+            };
+        }
+        lod.classList.add("loadnotebutton");
+        if(url.indexOf(location.pathname)>-1)lod.classList.add("actnotebutton");
+        lod.innerText = title;
+        lod.url = url;
+        lod.onclick = function(){
+            //put save-question here
+            location.href= this.url;
+        }
+        li.appendChild(del);
+        li.appendChild(lod);
+        menu.appendChild(li);
+    }
+
+}
+
+menumanager.buildPublishedMenu = function(){
+    var list = slidenoteguardian.loadedPresentations;
+    var menu = document.getElementById("publishedlist");
+    menu.innerHTML = "";
+    for(var x=0;x<list.length;x++){
+        var delurl = "/node/"+list[x].id+"/delete";
+        var title=list[x].title;
+        var url = list[x].url;
+        var li = document.createElement("li");
+        var del = document.createElement("button");
+        var lod = document.createElement("button");
+        del.classList.add("circle");
+        var delimg = new Image();
+        delimg.src = slidenote.imagespath+"buttons/-.png";
+        delimg.alt = "delete presentation >>>"+title+"";
+        del.appendChild(delimg);
+        del.targeturl = delurl;
+        del.onclick = function(){
+            if(confirm("are you shure you want to delete selected slidenote?")){
+                location.href=this.targeturl;
+            };
+        }
+        lod.innerText = list[x].date;
+        lod.targeturl = url;
+        lod.onclick = function(){
+            //TODO: put save question here
+            location.href=this.targeturl;
+        }
+        var cpl = document.createElement("button");
+        cpl.classList.add("copylink");
+        var cplimg = new Image();
+        cplimg.src = slidenote.imagespath+"buttons/publish.svg";
+        cplimg.alt = "copy link of presentation >>>"+title;
+        cpl.appendChild(cplimg);
+        var cpltext = document.createElement("div");
+        cpltext.innerText="copy link";
+        cpl.appendChild(cpltext);
+        cpl.value = url;
+        cpl.onclick = function(){
+            var text = this.value;
+            var input = document.createElement('input');
+            input.setAttribute('value', text);
+            document.body.appendChild(input);
+            input.select();
+            var result = document.execCommand('copy');
+            document.body.removeChild(input)
+            console.log("copied "+text+" to clipboard:"+result);
+        }
+        li.appendChild(del);
+        li.appendChild(lod);
+        li.appendChild(cpl);
+        menu.appendChild(li);
+    }
+}
+
+menumanager.buildPresentationMenu = function(){
+  var cssthemes = slidenote.extensions.CssThemes();
+  var list = document.getElementById("basicthemelist");
+  list.innerHTML = "";
+  for(var x=0;x<cssthemes.length;x++){
+    var li = document.createElement("li");
+    var title = document.createElement("div");
+    title.innerText = cssthemes[x].classname;
+    var radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "basictheme";
+    radio.value = cssthemes[x].classname;
+    if(cssthemes[x].active)radio.checked = true; else radio.checked=false;
+    var preview = document.createElement("div");
+    preview.classList.add("themepreview");
+    preview.classList.add(cssthemes[x].classname);
+    preview.innerHTML="<div>Welcome</div><p>to Slidenotes</p>";
+    title.title=cssthemes[x].description;
+    radio.title=cssthemes[x].description;
+    preview.title=cssthemes[x].description;
+    radio.onchange = function(){
+      slidenote.extensions.changeThemeStatusByClassname(this.value,this.checked);
+      slidenoteguardian.saveConfig("local");
+    }
+
+    li.appendChild(title);
+    li.appendChild(radio);
+    li.appendChild(preview);
+    list.appendChild(li);
+  }
+
+}
+
+menumanager.init = function(){
+    var menus = ["menuload","menucloud","menupublish","menuimportexport", "menuoptionseditor", "menuoptionspresentation","toolbar"];
+    this.standardmenus = menus;
+    var menubuttons = ["loadnote","cloud","publishbutton","importexportbutton", "optionsbutton","presentationoptionsbutton","toolbarbutton"];
+    for(var x=0;x<menus.length;x++){
+        var button = document.getElementById(menubuttons[x]);
+        var menu = document.getElementById(menus[x]);
+        this.menus.push({name:menus[x],menu:menu,button:button});
+        button.menu = menus[x];
+        menu.button = menubuttons[x];
+        if(menus[x]==="menuoptionspresentation")button.addEventListener("click",function(){
+          slidenote.menumanager.buildPresentationMenu();
+        });
+        button.onclick = function(){
+            var menus = document.getElementsByClassName("autohidemenu");
+            var menu  = document.getElementById(this.menu);
+            for(var x=0;x<menus.length;x++)if(menus[x]!=menu){
+                menus[x].classList.remove("active");
+                if(menus[x].button)
+                document.getElementById(menus[x].button).classList.remove("active");
+            }
+            if(menu===null||menu===undefined)return;
+            if(menu.classList.contains("active")){
+                menu.classList.remove("active");
+                this.classList.remove("active");
+
+            } else{
+                menu.classList.add("active");
+                this.classList.add("active");
+            }
+            var firstbutton = menu.getElementsByClassName("menuitem");
+            if(firstbutton.length<1)firstbutton = menu.getElementsByTagName("button");
+            if(firstbutton.length<1)return;
+            firstbutton[0].focus();
+        }
+        if(menus[x]!="toolbar"){
+            menu.classList.add("autohidemenu");
+            //menu.onblur = function(){console.log("test onblur");this.classList.remove("active");};
+            //menu.onfocusout = function(){console.log("test onfocusout");this.classList.remove("active");};
+        }
+    }
+    document.getElementsByTagName("textarea")[0].addEventListener("focus",function(event){
+        var menus = document.getElementsByClassName("autohidemenu");
+        for(var x=0;x<menus.length;x++){
+            menus[x].classList.remove("active");
+            if(menus[x].button)
+            document.getElementById(menus[x].button).classList.remove("active");
+        }
+    });
+    this.buildSlidenoteList();
+    var editorsel = document.getElementById("editorchoice");
+    editorsel.onkeydown = function(e){if(e.key==="ArrowUp"||e.key==="ArrowDown")e.preventDefault();};
+    editorsel.onkeypress = function(e){if(e.key==="ArrowUp"||e.key==="ArrowDown")e.preventDefault();};
+    editorsel.onkeyup = function(e){if(e.key==="ArrowUp"||e.key==="ArrowDown")e.preventDefault();};
+    //more buttons: night-mode toggle:
+    document.getElementById("nightmodetoggle").onclick = function(){
+        var sleditor = document.getElementById("slidenoteeditor");
+        var slbody = document.getElementsByTagName("body")[0];
+        if(sleditor.classList.contains("nightmode")){
+            sleditor.classList.remove("nightmode");
+            slbody.style.background = "unset";
+        }  else {
+          sleditor.classList.add("nightmode");
+          slbody.style.background="black";
+        }
+        if(slidenoteguardian){
+          slidenoteguardian.saveConfig("local");
+        }
+    }
+    //temporary here to have it available on monday, TODO: delete this part:
+    document.getElementById("praesentationrahmen").onkeyup = function(event){
+      //Keyboardsteuerung der Slideshow:
+      var key=""+event.key;
+      console.log("keycode of pressed key:"+key);
+      if(key==="Escape")slidenote.presentation.showpresentation();
+      if(key==="ArrowRight" || key===" ")presentation.nextPage();
+      if(key==="ArrowLeft")presentation.lastPage();
+      if(key==="0" ||key==="1" ||key==="2" ||key==="3" ||key==="4" ||key==="5" ||key==="6" ||key==="7" ||key==="8" ||key==="9" ){
+        if(presentation.lastpressednrkey==undefined)presentation.lastpressednrkey="";
+        presentation.lastpressednrkey+=key;
+      }
+      if(key==="Enter"){
+        presentation.lastpressednrkey--;
+        console.log(presentation.lastpressednrkey);
+        presentation.showPage(presentation.lastpressednrkey);
+        presentation.lastpressednrkey="";
+      }
+    };
+
+}
+
+function initeditor(){
+    //console.log("focus on editor");
+    if(slidenote==null){
+        var texted = 		document.getElementById("quelltext");
+		    var texterr =		 document.getElementById("texteditorerrorlayer");
+		    var slideshow = 	document.getElementById("praesentation");
+        if(texted===null||texterr==null||slideshow===null){
+            console.log("something is missing...");
+            setTimeout("initeditor()",500);
+            return;
+        }else{
+            var basepath ="/sites/all/libraries/slidenotes/";			
+			slidenote = new slidenotes(texted, texterr, null, slideshow, basepath );
+			slidenote.appendFile("css","../marie.css");
+			slidenote.appendFile("css","slidenoteguardian.css");
+			slidenote.basepath="/sites/all/libraries/slidenotes/";
+			slidenote.imagespath="/sites/all/libraries/slidenotes/images/";
+            removeDrupalElements();			
+
+            presentation = slidenote.presentation;
+			      texted.onresize= function(){slidenote.parseneu();};
+			      texted.onkeydown= function(event){
+				          slidenote.keypressdown(event, texted);
+			      };
+    			texted.onkeyup=function(event){slidenote.keypressup(event, texted);};
+    			texted.onpaste=function(){setTimeout('slidenote.parseneu()',150)};
+    			texted.oncut=function(){setTimeout('slidenote.parseneu()',150)};
+    			//autofocus tonfocus="initeditor(this.value);
+    			texted.onscroll=function(){slidenote.scroll(texted);};
+    			texted.onclick = function(){console.log("parseneu forced by click"+this.selectionEnd);slidenote.parseneu();};
+    			texted.addEventListener("focus",function(){
+    				var carret = document.getElementById("carret");
+    				if(carret)carret.classList.remove("unfocused");
+            var sel = document.getElementsByClassName("selectioncarretmarker");
+            if(sel.length===0)return;
+            for(var x=sel.length-1;x>=0;x--){
+              //sel[x].parentElement.removeChild(sel[x]);
+              //sel[x].classList.add("hiddenselectioncarretmarker");
+              var seltxt = sel[x].parentElement.innerHTML;
+              //console.log(seltxt);
+              seltxt = seltxt.replace('<u class="selectioncarretmarker">','');
+              seltxt = seltxt.replace('</u>','');
+              //console.log("ergebnis:"+seltxt);
+              sel[x].parentElement.innerHTML = seltxt;
+              //sel[x].classList.remove("selectioncarretmarker");
+            }
+            //slidenote.parseneu();
+
+    			});
+    			texted.addEventListener("focusout",function(){
+    				var carret = document.getElementById("carret");
+    				if(carret)carret.classList.add("unfocused");
+    				//console.log("onblur show carret");
+    				//console.log(carret);
+            //adding selection-marking:
+            var selstart = slidenote.textarea.selectionStart;
+            var selend = slidenote.textarea.selectionEnd;
+            if(selend-selstart!=0){
+              var startline = slidenote.parser.lineAtPosition(selstart);
+              var endline = slidenote.parser.lineAtPosition(selend);
+              var bglines = document.getElementsByClassName("backgroundline");
+              var startpos = selstart - slidenote.parser.map.linestart[startline];
+              var endpos = selend - slidenote.parser.map.linestart[endline];
+              //set end: (first end because of changes later on)
+              /*var changesinline = slidenote.parser.mdcodeeditorchanges[endline];
+              var inspos = endpos;
+              for(var x=0;x<changesinline.length;x++){
+                if(startpos>=changesinline[x].pos){
+                  inspos+=changesinline[x].html.length;
+                  if(changesinline[x].typ==="<")inspos--;
+                }
+              }
+              var txt = bglines[endline].innerHTML;
+              txt = txt.substring(0,inspos)+'<u class="selectioncarretmarker">'+txt.substring(inspos);
+              bglines[endline].innerHTML = txt;
+              */
+              //helper function: do all changes:
+              function applychanges(changes, text){
+                var txt=text;
+                for(var x=0;x<changes.length;x++){
+                  txt = txt.substring(0,changes[x].pos)+changes[x].html+txt.substring(changes[x].pos);
+                }
+                return txt;
+              }
+              //set start:
+              var changesinline = new Array();
+              var changesinendline = new Array();
+              for(var x=0;x<slidenote.parser.mdcodeeditorchanges.length;x++){
+                if(slidenote.parser.mdcodeeditorchanges[x].typ==="cursor")continue;
+                if(slidenote.parser.mdcodeeditorchanges[x].line===startline)changesinline.push(slidenote.parser.mdcodeeditorchanges[x]);
+                if(slidenote.parser.mdcodeeditorchanges[x].line===endline)changesinendline.push(slidenote.parser.mdcodeeditorchanges[x]);
+              }
+              var inspos = startpos;
+              for(var x=0;x<changesinline.length;x++){
+                if(startpos>changesinline[x].pos){
+                  inspos+=changesinline[x].html.length;
+                  if(changesinline[x].typ==="<")inspos--;
+                }
+              }
+              var txt = bglines[startline].innerHTML;
+              if(slidenote.parser.lineswithhtml[startline]==="code")txt = applychanges(changesinline,slidenote.parser.sourcecode.split("\n")[startline]);
+              txt = txt.substring(0,inspos)+'<u class="selectioncarretmarker">'+txt.substring(inspos);
+              var starthtml = txt;
+              txt=bglines[endline].innerHTML;
+              if(slidenote.parser.lineswithhtml[endline]==="code")txt = applychanges(changesinline,slidenote.parser.sourcecode.split("\n")[endline]);
+              var inspos2 = endpos;
+              for(var x=0;x<changesinendline.length;x++){
+                var ch = changesinendline[x];
+                if(endpos>ch.pos){
+                  inspos2+=ch.html.length;
+                  if(ch.typ==="<")inspos2--;
+                }
+              }
+              if(startline===endline){
+                var carretstart = txt.indexOf('<span id="carret"');
+                var carretend = txt.indexOf('</span>',carretstart)+'</span>'.length;
+                var carretlength = carretend - carretstart;
+                if(carretstart===-1)carretlength=0;
+                inspos2+=carretlength;
+              }
+              txt = txt.substring(0,inspos2)+"</u>"+txt.substring(inspos2);
+              if(startline===endline)txt = txt.substring(0,inspos)+'<u class="selectioncarretmarker">'+txt.substring(inspos);
+              var endhtml = txt;
+              if(startline!=endline){
+                starthtml+="</u>";
+                bglines[startline].innerHTML = starthtml;
+                endhtml = '<u class="selectioncarretmarker">'+endhtml;
+              }
+              bglines[endline].innerHTML = endhtml;
+              //bglines[startline].innerHTML = txt;
+              //set in-between:
+              if(startline!=endline){
+                for(var x=startline+1;x<endline;x++){
+                  if(bglines[x].classList.contains("pagebreak")){
+                    var pbtxt = bglines[x].innerHTML;
+                    pbtxt = '<u class="selectioncarretmarker">---</u>' + pbtxt.substring(3);
+                    bglines[x].innerHTML = pbtxt;
+                  }else bglines[x].innerHTML = '<u class="selectioncarretmarker">'+bglines[x].innerHTML+'</u>';
+                }
+              }
+
+            }
+    			});
+          document.getElementById("importbutton").addEventListener("click",function(){document.getElementById("importfile").click()});
+          console.log("slidenote-object created");
+          console.log(slidenote);
+          slidenote.menumanager = menumanager;
+          slidenote.menumanager.init();
+          slidenote.extensions.addAfterLoadingThemesHook(function(){
+    				slidenoteguardian = new slidenoteGuardian(slidenote);
+    			});
+      }
+    }
+}
+function insertbutton(code){
+	if(slidenote!=null)slidenote.insertbutton(code);
+}
+</script>
+
 
