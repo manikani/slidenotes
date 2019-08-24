@@ -683,12 +683,12 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 		var pline =this.map.pagestart[x].line-1;
 		if(pline<0)pline=0;
 		var pbpos = lines[pline].length;
-		if(pline>0 || this.lineswithhtml[pline]==="pagebreak")lines[pline]+='<span class="pagenr">    »»» new slide #'+x+'</span>';
+		if(pline>0 || this.lineswithhtml[pline]==="pagebreak")lines[pline]+='<span class="pagenr">    »»» new slide #'+(x+1)+'</span>';
 		changes.push({
 			line:pline,
 			posinall:this.map.lineend[pline],//this.map.linestart[this.perror[er].line]+lines[this.perror[er].line].length,
 			pos:pbpos,
-			html:'<span class="pagenr">    »»» new slide #'+x+'</span>',
+			html:'<span class="pagenr">    »»» new slide #'+(x+1)+'</span>',
 			mdcode:"",
 			typ:"pagenr",
 			tag:"pagebreak pagenr"
@@ -4418,8 +4418,8 @@ function getKeyOfKeyCode(keycode){
   keycodes[38]="ArrowUp";
   keycodes[39]="ArrowRight";
   keycodes[40]="ArrowDown";
-	keycodes[91]="Control"; //"mac-cmd-left";
-	keycodes[93]="Control";//"mac-cmd-right";
+	keycodes[91]="Meta"; //"mac-cmd-left";
+	keycodes[93]="Meta";//"mac-cmd-right";
 	//if(keycode>64 && keycode<90)return String.fromCharCode(keycode);
   if(keycodes[keycode]==null)return "webkitbug"+keycode;
   return keycodes[keycode];
