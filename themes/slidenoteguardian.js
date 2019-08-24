@@ -34,19 +34,23 @@ var SlidenoteCache = function(){
     this.id; //an id put in front of item-name in localstorage
     this.allIds; //a string in localstorage, containing all ids seperated by ","
     this.maxSpace; //a number with maximum number of chars possible in browser
+    this.version = 1; //a version number to check if we have to rebuild cache. Increase if you want to force rebuild of usercache
 }
 
 SlidenoteCache.prototype.init = function(){
 
     this.allIds = this.localstorage.getItem("allIds");
-    if(this.allIds ===null){
+    var version = this.localstorage.getItem("slidenotecacheversion");
+    if(this.allIds ===null || version === null || version < this.version ){
         //there is no cache in Browser - let things get started:
         //first: clear local-cache totaly, we dont want things from the past lindering inside:
         this.localstorage.clear();
         this.id = "sl1";
         this.allIds="sl1"; this.localstorage.setItem("allIds",this.allIds);
+        this.localstorage.setItem("slidenotecacheversion",this.version);
         this.maxSpace = this.calculateMaxSpace(); this.localstorage.setItem("maxSpace",this.maxSpace);
-        if(typeof initial_note!="undefined")this.localstorage.setItem("nid",initial_note.nid);
+        if(typeof initial_note!="undefined")this.localstorage.setItem("sl1nid",initial_note.nid);
+        if(slidenoteguardian.restObject && slidenoteguardian.restObject.nid)this.localstorage.setItem("nid",slidenoteguardian.restObject.nid);
     }else{
         this.maxSpace=this.localstorage.getItem("maxSpace");
         //there is a cache yet. try to find actual cache:
@@ -54,6 +58,7 @@ SlidenoteCache.prototype.init = function(){
         var acturl = window.location.pathname; //href;
         var nid = null;
         if(typeof initial_note!="undefined")nid=initial_note.nid;
+        if(slidenoteguardian.restObject && slidenoteguardian.restObject.nid)nid = slidenoteguardian.restObject.nid;
         for(var x=0;x<ids.length;x++){
             var cacheurl = this.localstorage.getItem(ids[x]+"url");
             var cachenid = this.localstorage.getItem(ids[x]+"nid");
@@ -70,6 +75,9 @@ SlidenoteCache.prototype.init = function(){
             this.id = "sl"+(ids.length+1);
             this.allIds +=  ","+this.id;
             this.localstorage.setItem("allIds",this.allIds);
+            if(nid)this.localstorage.setItem(this.id+"nid", nid);
+            if(acturl)this.localstorage.setItem(this.id+"url",acturl);
+
         }
         //set this cache activeTime so it would not be deleted by garbage-cleaning:
         this.localstorage.setItem(this.id+"lastActiveTime",Math.floor(new Date()/this.activeTimeAccuracy));
