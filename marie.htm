@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="themes/slidenoteguardian.css">
 <link rel="stylesheet" href="themes/keyboardshortcuts.css">
 <script language="javascript" src="slidenotes.js"></script>
+<script language="javascript" src="themes/dialoger.js"></script>
 <script language="javascript" src="themes/slidenoteguardian.js"></script>
 <script>
 var slidenoteguardian;
@@ -115,26 +116,44 @@ menumanager.buildPublishedMenu = function(){
             document.body.removeChild(input)
             console.log("copied "+text+" to clipboard:"+result);
         }
-        li.appendChild(del);
         li.appendChild(lod);
+        li.appendChild(del);
         li.appendChild(cpl);
         menu.appendChild(li);
     }
 }
 
+menumanager.showPresentationOptionsDialog = function(){
+  var dialogoptions = {
+    type:"dialog",
+    title:"slide design",
+    content: "design-list",
+    closebutton:true,
+    cssclass:"presentationoptionsdialog",
+    arrownavleftright:true
+  };
+  dialogoptions.content = this.buildPresentationMenu();
+  dialoger.buildDialog(dialogoptions);
+};
+
 menumanager.buildPresentationMenu = function(){
   var cssthemes = slidenote.extensions.CssThemes();
-  var list = document.getElementById("basicthemelist");
+  var list = document.createElement("ul");//document.getElementById("basicthemelist");
   list.innerHTML = "";
   for(var x=0;x<cssthemes.length;x++){
     var li = document.createElement("li");
     var title = document.createElement("div");
     title.innerText = cssthemes[x].classname;
+    title.classList.add("themepreviewtitle");
     var radio = document.createElement("input");
     radio.type = "radio";
     radio.name = "basictheme";
     radio.value = cssthemes[x].classname;
-    if(cssthemes[x].active)radio.checked = true; else radio.checked=false;
+    radio.tabable = false;
+    if(cssthemes[x].active){
+      radio.checked = true;
+      li.id="presentationoptionactiveradio";
+    } else radio.checked=false;
     var preview = document.createElement("div");
     preview.classList.add("themepreview");
     preview.classList.add(cssthemes[x].classname);
@@ -145,29 +164,43 @@ menumanager.buildPresentationMenu = function(){
     radio.onchange = function(){
       slidenote.extensions.changeThemeStatusByClassname(this.value,this.checked);
       slidenoteguardian.saveConfig("local");
-    }
+      //set li to active:
+      var oldli = document.getElementById("presentationoptionactiveradio");
+      if(oldli)oldli.id="";
 
-    li.appendChild(title);
+      this.parentElement.id="presentationoptionactiveradio";
+    }
+    var previewcontainer = document.createElement("button");
+    previewcontainer.classList.add("themepreviewcontainer");
+    previewcontainer.appendChild(preview);
+    li.appendChild(previewcontainer);
     li.appendChild(radio);
-    li.appendChild(preview);
+    li.appendChild(title);
+    li.onclick = function(e){
+      var radio = this.getElementsByTagName("input")[0];
+      if(e.target != radio)radio.click();
+    }
     list.appendChild(li);
   }
-
+  return list;
 }
 
 menumanager.init = function(){
-    var menus = ["menuload","menucloud","menupublish","menuimportexport", "menuoptionseditor", "menuoptionspresentation","toolbar"];
+    document.getElementById("presentationoptionsbutton").onclick = function(){
+      menumanager.showPresentationOptionsDialog();
+    }
+    var menus = ["menuload","menucloud","menupublish","menuimportexport", "menuoptionseditor","toolbar", "imagegallery"]; //, "menuoptionspresentation"
     this.standardmenus = menus;
-    var menubuttons = ["loadnote","cloud","publishbutton","importexportbutton", "optionsbutton","presentationoptionsbutton","toolbarbutton"];
+    var menubuttons = ["loadnote","cloud","publishbutton","importexportbutton", "optionsbutton","toolbarbutton", "imagegallerybutton"]; //,"presentationoptionsbutton"
     for(var x=0;x<menus.length;x++){
         var button = document.getElementById(menubuttons[x]);
         var menu = document.getElementById(menus[x]);
         this.menus.push({name:menus[x],menu:menu,button:button});
         button.menu = menus[x];
         menu.button = menubuttons[x];
-        if(menus[x]==="menuoptionspresentation")button.addEventListener("click",function(){
-          slidenote.menumanager.buildPresentationMenu();
-        });
+      //  if(menus[x]==="menuoptionspresentation")button.addEventListener("click",function(){
+      //    slidenote.menumanager.buildPresentationMenu();
+      //  });
         button.onclick = function(){
             var menus = document.getElementsByClassName("autohidemenu");
             var menu  = document.getElementById(this.menu);
@@ -182,6 +215,9 @@ menumanager.init = function(){
                 this.classList.remove("active");
 
             } else{
+                if(this.menu==="imagegallery"){
+                  slidenote.base64images.buildImageGallery();
+                }
                 menu.classList.add("active");
                 this.classList.add("active");
             }
@@ -531,7 +567,13 @@ function insertbutton(code){
     </div>
     <div id="sidebarcontainer">
         <div id="sidebar"></div>
-        <div id="nicesidebarsymbol"><a id="nicesidebarsymbolcontainer" href="javascript:slidenote.presentation.showInsertMenu();"><span id="nicesidebarsymbollabel">list</span><img src="images/buttons/droptildeneu.png" alt="open Elements Menu"></a><img id="cursorlinearrow" src="images/buttons/cursorlineneu.png"></div>
+        <div id="nicesidebarsymbol">
+          <a id="nicesidebarsymbolcontainer" href="javascript:slidenote.presentation.showInsertMenu();">
+            <span id="nicesidebarsymbollabel"></span>
+            <img src="images/buttons/droptildeneu.png" alt="open Elements Menu">
+          </a>
+          <img id="cursorlinearrow" src="images/buttons/cursorlineneu.png">
+        </div>
 			<div id="insertarea">
           <div id="insertmenulabel" class="screenreader-only"></div>
 			    <div id="standardinsertmenu">
@@ -684,11 +726,11 @@ end test-data-->
 		<div id="themeselectiontab" class="optiontab"></div>
 	</div>
 
-  <div id="imagesblock">
+  <div id="imagesblock" class="dialogboxparent">
+    <div id="imagesuploadblock" class="dialog_box">
       <h1>Image Upload <button onclick="Javascript:document.getElementById('imagesblock').classList.remove('visible');">close</button></h1>
     <div>
       Select an local image file to upload, then click on image to use it in this slidenote
-      <input type="file" id="fileInput">
     </div>
     <div id="imageResizeOptions">
       <input type="radio" name="imageResize" value="1024x768" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Background/Big (1024x768)</label>
@@ -696,8 +738,23 @@ end test-data-->
       <input type="radio" name="imageResize" value="100x50" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Icon (100x50)</label>
     </div>
     <div id="filePreview"></div>
-    <h1>Files in Database (click on image to reuse)</h1>
+    <input type="file" id="fileInput">
     <div id="fileOld"></div>
+    </div>
+    <div id="imagesreuseblock" class="dialogbox">
+      <h1 class="dialogtitle">
+        <span>image gallery</span>
+        <button class="dialogclosebutton" onclick="document.getElementById('imagesblock').classList.remove('visible');">close <img src="images/buttons/x.png"></button>
+      </h1>
+      <div id="imageselectionlist" class="dialogboxcontent"></div>
+      <div id="imageselectiondialogbuttons">
+        <button id="imageselectionuploadbutton" class="plusbutton" title="add image to imagegallery" onclick="document.getElementById('fileInput').value='';slidenote.base64images.uploadmode='imageselection'; document.getElementById('fileInput').click();">
+          <img src="images/buttons/+.png">add image
+        </button>
+        <span>or choose image from gallery</span>
+      </div>
+    </div>
+
   </div>
 
 </div><!-- end of slidenotediv-->

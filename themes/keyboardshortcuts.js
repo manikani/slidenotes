@@ -13,6 +13,8 @@ var keyboardshortcuts = {
     menupublish:[],//all shortcuts on publish-menu
     menuimportexport:[],//all shortcuts on import/export menu
     menuoptionspresentation:[],//all shortcuts presentation-options-menu
+    dialog:[], //all shortcuts on dialog
+    arrowleftright:[], //shortcuts arrownav left-right
     menuoptionseditor:[],//all shortcuts editor-options-menu
     pressedkeys:{}, //element that holds all pressed keys at the time - used to check if shortcut is found
     metakey: "Control", //global metakey to check against
@@ -83,6 +85,8 @@ keyboardshortcuts.addShortcut = function(shortcut){
     if(element==="menuimportexport")this.menuimportexport.push(shortcut);
     if(element==="menuoptionseditor")this.menuoptionseditor.push(shortcut);
     if(element==="menuoptionspresentation")this.menuoptionspresentation.push(shortcut);
+    if(element==="dialog")this.dialog.push(shortcut);
+    if(element==="arrowleftright")this.arrowleftright.push(shortcut);
 
 }
 
@@ -585,6 +589,38 @@ keyboardshortcuts.init = function(){
       if(actpos<0)actpos=buttons.length-1;
       buttons[actpos].focus();
     }
+    //dialog-key-nav:
+    this.addShortcut(new this.shortcut("arrownavigate dialog leftright", "arrowleftright",
+        {multipleChoiceKeys:["ArrowLeft","ArrowRight"],metakey:false},function(e){
+          var element = e.currentTarget;
+          var buttons = element.getElementsByClassName("menuitem");
+          if(buttons.length<1)buttons = element.getElementsByTagName("button");
+          if(buttons.length<1)return;
+          var actpos = 0;
+          var actel = document.activeElement;
+          for(var x=0;x<buttons.length;x++){
+            actpos=x; if(actel===buttons[x])break;
+          }
+          if(e.key==="ArrowLeft")actpos--;
+          if(e.key==="ArrowRight")actpos++;
+          if(actpos>=buttons.length)actpos=0;
+          if(actpos<0)actpos=buttons.length-1;
+          buttons[actpos].focus();
+    }));
+    this.addShortcut(new this.shortcut("arrownavigate dialog",
+      "dialog",
+      {multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:false},
+      arrownav));
+    this.addShortcut(new this.shortcut("arrownavigate dialog escape",
+        "dialog",
+        {key:["Escape"],metakey:false},
+        function(e){
+          var dialog = document.getElementById("dialogcontainer");
+          if(dialog)dialog.parentElement.removeChild(dialog);
+          slidenote.textarea.focus();
+        }));
+
+
     var standardmenus = slidenote.menumanager.standardmenus;
     if(standardmenus===undefined)return;
     for(var x=0;x<standardmenus.length;x++){

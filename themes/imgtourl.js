@@ -43,6 +43,8 @@ slidenote.base64images = {
   },
   rebuildOldImages: function(){
     //will be replaced soon i think:
+    this.buildImageGallery();
+    this.buildImageSelectionDialog();
     if(!document.getElementById("fileOld"))return;
     //displays images in js-database of slidenote in div
     var oldimagestext = "";
@@ -59,9 +61,337 @@ slidenote.base64images = {
     document.getElementById("fileOld").innerHTML = oldimagestext;
 
   },
+  sizeDialog: function(options){
+    var img = options.origimage;
+    var filename = options.filename;
+
+    //build sceleton:
+    /*
+    var container = document.createElement("div");
+    container.classList.add("dialogboxparent");
+    var oldcontainer = document.getElementById("dialogcontainer");
+    if(oldcontainer)oldcontainer.parentElement.removeChild(oldcontainer);
+    container.id = "dialogcontainer";
+    var dialogbox = document.createElement("div");
+    dialogbox.classList.add("dialogbox");
+    dialogbox.classList.add("imgtourlresizedialog");
+    var title = document.createElement("h1");
+    title.classList.add("dialogtitle");
+    var titletext = document.createElement("span");
+    titletext.innerText = "add image";
+    title.appendChild(titletext);
+    var closebutton = document.createElement("button");
+    closebutton.classList.add("dialogclosebutton");
+    var closespantxt = document.createElement("span");
+    closespantxt.innerText = "cancel import";
+    closebutton.appendChild(closespantxt);
+    var closespanimg = new Image();
+    closespanimg.src = slidenote.imagespath+"buttons/x.png";
+    closebutton.appendChild(closespanimg);
+    closefunction = function(){
+      var fileinput = document.getElementById("fileInput");
+      if(fileinput)fileinput.value="";
+      var dialog = document.getElementById("dialogcontainer");
+      dialog.parentElement.removeChild(dialog);
+      slidenote.textarea.focus();
+    };
+    closebutton.onclick = closefunction;
+    //container.onclick = closefunction;
+    title.appendChild(closebutton);
+    dialogbox.appendChild(title);
+    */
+    //build content:
+    var dialogcontent = document.createElement("div");
+    dialogcontent.classList.add("dialogcontent");
+    var dialogcontenttitle = document.createElement("div");
+    dialogcontenttitle.innerText = "desired image quality";
+    dialogcontenttitle.classList.add("imgtourl_dialog_innertitle");
+    dialogcontent.appendChild(dialogcontenttitle);
+    var previewcontainer = document.createElement("div");
+    previewcontainer.classList.add("imageuploadpreview");
+    var previewimage = new Image();
+    previewimage.src = img.src;
+    previewimage.id = "imageuploadoriginalimage";
+    previewcontainer.appendChild(previewimage);
+    dialogcontent.appendChild(previewcontainer);
+    var buttonlist = document.createElement("ul");
+    var buttontextlist = [
+      {up:"small",down:"(icon)", width:100,height:50},
+      {up:"medium",down:"(regular image)",width:400,height:300},
+      {up:"large", down:"(background)",width:1024,height:768},
+      {up:"original", down:"",width:1920,height:1080}
+    ];
+    for(var x=0;x<buttontextlist.length;x++){
+      var actb = buttontextlist[x];
+      var li = document.createElement("li");
+      var b = document.createElement("button");
+      var upt = document.createElement("div");
+      var dt = document.createElement("div");
+      upt.innerText = actb.up;
+      dt.innerText = actb.down;
+      b.appendChild(upt);b.appendChild(dt);
+      b.classList.add("resizebutton"+actb.up);
+      b.classList.add("resizebutton");
+      b.resizevaluewidth = actb.width;
+      b.resizevalueheight = actb.height;
+      b.name=filename;
+      b.onclick = function(){
+        var img = new Image();
+        img.src = document.getElementById("imageuploadoriginalimage").src;
+        var base64url = slidenote.base64images.resizeImage(img,this.resizevaluewidth,this.resizevalueheight);
+        slidenote.base64images.addImage(this.name, base64url);
+        var fileinput = document.getElementById("fileInput");
+        if(fileinput)fileinput.value="";
+        var dialog = document.getElementById("dialogcontainer");
+        dialog.parentElement.removeChild(dialog);
+      }
+      li.appendChild(b);
+      buttonlist.appendChild(li);
+    }
+    dialogcontent.appendChild(buttonlist);
+    dialogcontent.id="placeholder";
+
+    dialogoptions = {
+      type:"dialog",
+      title:"add image",
+      cssclass:"imgtourlresizedialog",
+      content: "previewimage+ullist",
+      closebutton:true,
+      closebuttontext:"cancel upload",
+      closefunction:function(){
+          var fileinput = document.getElementById("fileInput");
+          if(fileinput)fileinput.value="";
+      }
+    }
+    dialogoptions.content = dialogcontent;
+    dialoger.buildDialog(dialogoptions);
+    //finish sceleton:
+    /*
+    dialogbox.appendChild(dialogcontent);
+    container.appendChild(dialogbox);
+    document.getElementsByTagName("body")[0].appendChild(container);
+    */
+  },
+  buildImageSelectionDialog: function(){
+    var oldfiles = document.getElementById("imageselectionlist");
+    var newlist = this.buildImageList(false);
+    oldfiles.innerHTML = "";
+    oldfiles.appendChild(newlist);
+  },
+  buildImageGallery: function(){
+    var imggalleryparent = document.getElementById("imagegallery");
+    imggalleryparent.innerHTML = "";
+    var imggallery = document.createElement("div");
+    imggallery.classList.add("arrow_box");
+    imggallery.id = "imagegallerybox";
+    let title = document.createElement("div");
+    title.innerText = "image gallery";
+    imggallery.appendChild(title);
+    let uploadbutton = document.createElement("button");
+    uploadbutton.innerHTML = '<img src="images/buttons/+.png">add image';
+    uploadbutton.classList.add("plusbutton");
+    uploadbutton.title="add image to imagegallery";
+    uploadbutton.onclick = function(){
+      slidenote.base64images.uploadmode="imagegallery";
+      document.getElementById("fileInput").value="";
+      document.getElementById("fileInput").click();
+    };
+    imggallery.appendChild(uploadbutton);
+
+    var imagelist = this.buildImageList(true);
+    imggallery.appendChild(imagelist);
+
+    imggalleryparent.appendChild(imggallery);
+  },
+  buildImageList: function(imagegallery){
+    var images = this.allImagesByName();
+    var imagelist = document.createElement("ul");
+    for(var x=0;x<images.length;x++){
+      var actimg = images[x];
+      var li = document.createElement("li");
+      if(imagegallery){
+        var delbutton = document.createElement("button");
+        delbutton.classList.add("imagegallery-delbutton");
+        delbutton.innerHTML = '<img src="images/buttons/-.png">';
+        if(actimg.unnamed){
+          delbutton.delurl = actimg.base64url;
+          delbutton.onclick = function(){
+            slidenote.base64images.deleteImage(this.delurl);
+          }
+        }else{
+          delbutton.delname = actimg.name;
+          delbutton.delurl = actimg.base64url;
+          delbutton.onclick = function(){
+            var dialogoptions = {
+              type:"dialog",
+              title:"delete image",
+              closebutton:true,
+              closebuttontext:"cancel"
+            }
+            var placeholder = document.createElement("div");
+            placeholder.id="placeholder";
+            var b1 = document.createElement("button");
+            b1.innerText="delete connection to tag";
+            b1.delname = this.delname;
+            b1.onclick = function(){
+              slidenote.base64images.deleteImageByName(this.delname);
+              var dialog = document.getElementById("dialogcontainer");
+              if(dialog)dialog.parentElement.removeChild(dialog);
+            }
+            var b2 = document.createElement("button");
+            b2.innerText = "delete image from slidenote & image gallery";
+            b2.delurl = this.delurl;
+            b2.onclick = function(){
+              slidenote.base64images.deleteImage(this.delurl);
+              var dialog = document.getElementById("dialogcontainer");
+              if(dialog)dialog.parentElement.removeChild(dialog);
+            }
+            var trenner = document.createElement("div");
+            trenner.innerText = "or";
+            placeholder.appendChild(b1);
+            placeholder.appendChild(trenner);
+            placeholder.appendChild(b2);
+            dialogoptions.content = placeholder;
+            dialoger.buildDialog(dialogoptions);
+          }
+        }
+        li.appendChild(delbutton);
+      }
+      var imgname = document.createElement("div");
+      imgname.innerText = actimg.name;
+      if(actimg.unnamed)imgname.classList.add("imagegallery-unnamed");
+      imgname.classList.add("imagegallery-name");
+      imgname.title = actimg.name;
+      li.appendChild(imgname);
+      var usedslides = document.createElement("div");
+      usedslides.classList.add("imagegallery-usedslides");
+      var tagpositions = this.allPositionsOfTag(actimg.name,true);
+      var usedslidestext;
+      if(tagpositions.length===0){
+        usedslidestext = "unconnected";
+        usedslides.classList.add("imagegallery-unconnected");
+      }else{
+        usedslidestext = "slide ";
+        for(var us=0;us<tagpositions.length;us++){
+          if(us>0)usedslidestext+=", ";
+          usedslidestext+= tagpositions[us].page;
+        }
+      }
+      usedslides.innerText = usedslidestext;
+      li.appendChild(usedslides);
+      var imgbutton = document.createElement("button");
+      imgbutton.classList.add("imagegallery-image");
+      imgbutton.name = actimg.name;
+      if(imagegallery){
+        if(tagpositions.length>0){
+          imgbutton.onclick = function(){
+            slidenote.base64images.moveCursorToTag(this.name,this);
+          }
+        }
+      }else{
+        imgbutton.onclick = function(){
+          var imgtag = this.getElementsByTagName("img")[0];
+          var img = slidenote.base64images.imageByName(this.name);
+          if(!img && imgtag)img = slidenote.base64images.imageBySource(imgtag.src);
+          slidenote.base64images.addImage(this.name,img.base64url);
+        }
+      }
+      var imgnode = new Image();
+      imgnode.src = actimg.base64url;
+      imgbutton.appendChild(imgnode);
+      li.appendChild(imgbutton);
+      imagelist.appendChild(li);
+    }
+    if(images.length>0){
+      return imagelist;
+    }else{
+      var emptydiv = document.createElement("div");
+      emptydiv.classList.add("imagegallery-empty");
+      emptydiv.innerText = "<p>Your image gallery is empty. </p> <p>Press the button above to upload an image into the image gallery.</p> <p>Or type in an image tag in the text input field.</p>";
+      return emptydiv;
+    }
+  },
+  allPositionsOfTag: function(tag, oneperslide){
+    var insertedimages = slidenote.parser.map.insertedimages;
+    var positions = new Array();
+    for(var x=0;x<insertedimages.length;x++){
+      if(insertedimages[x].src===tag){
+        positions.push({
+          name:tag,
+          posinall:insertedimages[x].posinall,
+          page:slidenote.parser.map.pageAtPosition(insertedimages[x].posinall)
+        });
+      }
+    }
+    //only one element per slide?:
+    if(oneperslide)for(var x=positions.length-2;x>=0;x--){
+      if(positions[x].page===positions[x+1].page)positions.splice(x,1);
+    }
+    return positions;
+  },
+  moveCursorToTag: function(tag, button){
+    var positions = this.allPositionsOfTag(tag, false);
+    var actcursorpos = slidenote.textarea.selectionEnd;
+    var oldcursorpos = actcursorpos;
+    for(var x=positions.length-1;x>=0;x--){
+      if(positions[x].posinall>oldcursorpos)actcursorpos=positions[x].posinall;
+    }
+    if(actcursorpos===oldcursorpos){
+      //no tag found till end of file, search from the beginning:
+      for(var x=0;x<positions.length;x++){
+        if(positions[x].posinall<actcursorpos)actcursorpos = positions[x].posinall;
+      }
+    }
+    if(actcursorpos===oldcursorpos){
+      // no tag found??
+      return;
+    }
+    var imggallery = document.getElementById("imagegallery");
+    imggallery.classList.remove("autohidemenu");
+    slidenote.textarea.selectionEnd = actcursorpos;
+    slidenote.textarea.selectionStart = actcursorpos;
+    //slidenote.parser.renderNewCursorInCodeeditor()
+    slidenote.parseneu();
+    slidenote.textarea.blur();
+    slidenote.textarea.focus();
+
+    //  if(button)button.focus();
+      var cursor = document.getElementById("carret");
+      if(cursor)cursor.classList.add("unfocused");
+      imggallery.classList.add("autohidemenu");
+
+  },
+  allImagesByName: function(){
+    var images = new Array();
+    for(var x=0;x<this.base64images.length;x++){
+      var actimg = this.base64images[x];
+      for(var y=0;y<actimg.names.length;y++){
+        images.push({
+          name:actimg.names[y],
+          base64url:actimg.base64url,
+          filename:actimg.filename,
+          base64image:actimg,
+          unnamed:false
+        });
+      }
+      if(actimg.names.length===0){
+        images.push({
+          name:"unnamed",
+          base64url:actimg.base64url,
+          filename:actimg.filename,
+          base64image:actimg,
+          unnamed:true
+        });
+      }
+    }
+    return images;
+  },
   addImage: function(name,base64url){
+    var activeimage =slidenote.parser.CarretOnElement();
+    if(!activeimage||activeimage.typ!="image" )activeimage=false;
     var nombre = name;
-    if(this.preselectedname!=null)nombre=this.preselectedname;
+    //if(this.preselectedname!=null)nombre=this.preselectedname;
+    if(activeimage)nombre = activeimage.src;
     console.log("add image"+nombre);
     /*
     if(this.imageByName(nombre)!=null) {
@@ -86,29 +416,48 @@ slidenote.base64images = {
         if(imgbyname.names[x]===nombre)imgbyname.names.splice(x,1);
       }
     }
-    var activeimage =slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd);
-    //if(activeimage==null)activeimage =slidenote.parser.CarretOnElement(slidenote.textarea.selectionEnd-1);
-    if(activeimage !=null && activeimage.typ==="image"){
-      var imgmdcodestring = "!["+activeimage.alt+"]("+nombre+")";
-      //slidenote.textarea.value = slidenote.textarea.value.substring(0,activeimage.posinall)+
-      //                          imgmdcodestring+
-      //                          slidenote.textarea.value.substring(activeimage.posinall+activeimage.mdcode.length);
-      document.getElementById("imagesblock").classList.remove("visible");
-      slidenote.textarea.focus();
-    }else{
-      console.log("imageinsert nombre name:"+nombre+"-"+name)
-      this.insertImage(name); //adds image to md-code
-    }
-    this.rebuildOldImages(); //rebuild old images for further use
     console.log("parseneu forced by base64imageadded");
     slidenote.parseneu();
+
+    var uploadmode = this.uploadmode;
+    if(uploadmode==="imagegallery"){
+      //rebuild imagegallery:
+      this.buildImageGallery();
+      var imggallery = document.getElementById("imagegallery");
+      var imggalb = imggallery.getElementsByTagName("button");
+      if(imggalb.length>0)imggalb[imggalb.length-1].focus();
+    }else{
+      if(activeimage){
+        //hide imagesblock
+        document.getElementById("imagesblock").classList.remove("visible");
+        slidenote.textarea.focus();
+      }else{
+        //insert with filename
+        this.insertImage(name);
+        console.log("imageinsert nombre name:"+nombre+"-"+name)
+      }
+    }
+    this.uploadmode=undefined;
+
+    //old stuff - delete in future:
     this.preselectedname=null;
+    this.rebuildOldImages(); //rebuild old images for further use
+    return;
   },
   deleteImage: function(base64url){
-    for(var x=0;x<this.base64images.length;x++){
+    for(var x=this.base64images.length-1;x>=0;x--){
       if(this.base64images[x].base64url===base64url)this.base64images.splice(x,1);
     }
     this.rebuildOldImages();
+  },
+  deleteImageByName:function(name){
+    for(var x=this.base64images.length-1;x>=0;x--){
+      if(this.base64images[x].names.indexOf(name)>-1){
+        this.base64images[x].names.splice(this.base64images[x].names.indexOf(name),1);
+      }
+    }
+    this.rebuildOldImages();
+    slidenote.parseneu();
   },
   deleteAllImages: function(){
     this.base64images.length = 0;
@@ -196,14 +545,16 @@ slidenote.base64images = {
   notempty: function(){
     return (this.base64images.length>0);
   },
-  resizeImage: function(img){
+  resizeImage: function(img, maxw, maxh){
     var maxwidth = slidenote.base64images.maxwidth;
     var width = maxwidth;
     var maxheight = slidenote.base64images.maxheight;
+    if(maxw!=null && maxw<maxwidth)maxwidth=maxw;
+    if(maxh!=null && maxh<maxheight)maxheight=maxh;
     if(img.width<maxwidth){
       console.log("image has only width:"+img.width);
       document.getElementById("downsizedimage").src = img.src;
-      return;
+      return img.src;
     }
      var canvas = document.createElement('canvas'),
          ctx = canvas.getContext("2d"),
@@ -239,7 +590,10 @@ slidenote.base64images = {
 
      ctx.drawImage(oc, 0, 0, cur.width, cur.height, 0, 0, canvas.width, canvas.height);
      //document.getElementById("downsizedimage").src = canvas.toDataURL();
-     document.getElementById("downsizedimage").src = canvas.toDataURL(slidenote.base64images.imagetype,slidenote.base64images.quality);
+     var dsimg = document.getElementById("downsizedimage");
+     if(dsimg)dsimg.src = canvas.toDataURL(slidenote.base64images.imagetype,slidenote.base64images.quality);
+     var rbase64url = canvas.toDataURL(slidenote.base64images.imagetype,slidenote.base64images.quality);
+     return rbase64url;
   },//end of resizeImage
   changeMaxSize: function(size){
     if(size){
@@ -354,7 +708,9 @@ newtheme.init = function(){
             var targetimg = new Image();
             targetimg.id = "downsizedimage";
             targetimg.name = nombre;
-            targetimg.onclick = function(){slidenote.base64images.addImage(this.name,this.src);};
+            targetimg.onclick = function(){
+              slidenote.base64images.addImage(this.name,this.src);
+            };
 
   					fileDisplayArea.appendChild(targetimg);
 
@@ -364,13 +720,19 @@ newtheme.init = function(){
             slidenote.base64images.lastuploadedimage = img;
             //add to slidenote:
             //slidenote.base64images.addImage(nombre,reader.result);
-
+            //call sizechoose-dialog:
+            slidenote.base64images.sizeDialog({
+              origimage:img,
+              caller:this.caller,
+              filename:nombre
+            });
   				}
 
   				reader.readAsDataURL(file);
   			} else {
   				fileDisplayArea.innerHTML = "File not supported!";
   			}
+
   });
   slidenote.textarea.addEventListener("drop", function(e){
     console.log("dropevent:");
@@ -445,13 +807,16 @@ newtheme.insertMenu = function(element){
   }
   result.appendChild(previewimage);
 
-  var uploadlink = document.createElement("a");
-  uploadlink.href="#";
+  var uploadlink = document.createElement("button");
+  //uploadlink.href="#";
   uploadlink.name = element.src;
-  uploadlink.title = "open library";
+  uploadlink.title = "select image for current tagname";
   uploadlink.onclick=function(){
     slidenote.base64images.preselectedname = this.name;
-    document.getElementById("imagesblock").classList.add("visible");
+    var imggal = document.getElementById("imagesblock");
+    imggal.classList.add("visible");
+    var bs = imggal.getElementsByTagName("button");
+    if(bs.length>0)bs[bs.length-1].focus();
   };
   //uploadlink.innerHTML = "Upload an Image to the slidenote";
   var uploadlinkimg = new Image();

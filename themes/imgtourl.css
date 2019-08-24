@@ -1,23 +1,9 @@
 #slidenotediv #imagesblock{
   display:none;
-  position:absolute;
-  z-index: 1000;
-  top: 0;
-  background: white;
-  width: 100%;
-  height: 100%;
-}
-#slidenotediv #imagesblock > h1 button{
-  float:right;
-  margin-right: 50px;
-}
-#slidenotediv #imagesblock > h1{
-  background: lightblue;
-  padding: 15px;
 }
 
 #slidenotediv #imagesblock.visible{
-  display:block;
+  display:grid;
 }
 .imagenotfound{
   color:red;
@@ -36,4 +22,232 @@ h1 img{
 #insertarea img.insertmenu-preview-image {
     height: 6em;
     display: block;
+}
+
+#imagesuploadblock{
+  display:none;
+}
+
+/*new stuff:*/
+#imagegallery.active{
+  visibility:unset;
+  grid-area:unset;
+  grid-column-start: 6;
+  grid-column-end: 9;
+  grid-row-start: 5;
+  grid-row-end: 10;
+  margin-top:-2vh;
+  color:#9c9c9c;
+}
+#imagegallery .arrow_box:before,
+#imagegallery .arrow_box:after{
+  left:6vh;
+}
+#imagegallerybox > button{
+  background:#f4f4f4;
+  border:none;
+  width:85%;
+  color:#9c9c9c;
+  height:3em;
+  border-radius: 1vh;
+}
+
+#imagegallerybox button:hover,
+#imagegallerybox button:focus{
+  filter:brightness(0.5);
+}
+
+.plusbutton img{
+  margin-bottom:-0.3em;
+  margin-right:1vh;
+  height:1.5em;
+
+}
+
+#imagegallery ul {
+    overflow-y: auto;
+    padding-left: 0;
+    list-style: none;
+    max-height: 50vh;
+    overflow-x: hidden;
+    background:#f4f4f4;
+    border-radius:1vh;
+}
+
+#imagegallery li {
+    background:white;
+    display: inline-grid;
+    width: 13vh;
+    height: 7em;
+    overflow: hidden;
+    grid-template-areas: "minus title" "usedslides usedslides" "image image";
+    grid-template-columns: 1em 10vh;
+    grid-template-rows: 1em 1em 5em;
+    grid-gap: 2px 1vh;
+    margin:1.6vh;
+    border-radius:1vh;
+    padding:1vh;
+}
+
+button.imagegallery-delbutton {
+  grid-area: minus;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  padding:0;
+  border:none;
+  background:none;
+}
+
+.imagegallery-name {
+    grid-area: title;
+    overflow: hidden;
+    font-weight: bold;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.imagegallery-usedslides {
+    grid-area: usedslides;
+}
+
+.imagegallery-unnamed, .imagegallery-unconnected{
+  font-style:italic;
+}
+
+
+button.imagegallery-image {
+    grid-area: image;
+}
+
+button.imagegallery-image {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    padding: 0;
+    border-radius: 1vh;
+    background: none;
+}
+
+#imagegallery .imagegallery-image img {
+    height: unset;
+    width: 100%;
+}
+
+/*imageupload*/
+.dialogbox.imgtourlresizedialog .dialogcontent{
+  display:grid;
+  grid-template-columns: 50% 50%;
+  grid-template-areas:"title title" "preview buttons";
+  grid-template-rows: 3em 1fr;
+  grid-gap:4.6vh; /*50px in 1920x1080*/
+  width:95vh;
+
+}
+.imgtourl_dialog_innertitle{
+  justify-self:center;
+  grid-area:title;
+  align-self:center;
+}
+#imageuploadoriginalimage{
+  max-height:37vh;
+  max-width: 42vh;
+}
+.imageuploadpreview{
+  overflow:hidden;
+  justify-self: end;
+  align-self:start;
+  grid-area:preview;
+  max-height:37vh;
+  border:1px;
+}
+.dialogbox.imgtourlresizedialog ul{
+  justify-self:start;
+  grid-area:buttons;
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  justify-items:start;
+}
+.dialogbox.imgtourlresizedialog li{
+  margin-bottom:1vh;
+  margin-top:1vh;
+}
+.resizebutton{
+  height:8.3vh;
+  border:none;
+  box-shadow:0 0 3px 3px rgba(0,0,0,0.25);
+  border-radius:1vh;
+  background:white;
+}
+.resizebutton:hover{
+  background:#9c9c9c;
+}
+.resizebuttonsmall{
+  width:13vh;
+}
+.resizebuttonmedium{
+  width:19.5vh;
+}
+.resizebuttonlarge{
+  width:28vh;
+}
+.resizebuttonoriginal{
+  width:16.2vh;
+}
+/*buildImageSelectionDialog*/
+#imageselectionlist ul {
+    display: block;
+    list-style: none;
+    width: 90%;
+    height: 33vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#imageselectionlist li {
+    display: inline-block;
+    width: 12.7vh;
+    height: 12.7vh;
+    margin: 1vh 1vh;
+    background: white;
+    border-radius: 1vh;
+    box-shadow: 0 0px 4px 3px rgba(0,0,0,0.25);
+    padding: 0.5vh 1vh 0 1vh;
+}
+
+#imageselectionlist button.imagegallery-image {
+    width: 12vh;
+    height: 7.8vh;
+}
+
+#imageselectionlist img {
+    /* object-fit: cover; */
+    /* height: 7.8vh; */
+}
+button#imageselectionuploadbutton {
+    width: 13vh;
+    height: 3em;
+}
+
+#imagesreuseblock h1.dialogtitle {
+    background: #f4f4f4;
+}
+
+div#imageselectionlist {
+    background: #f4f4f4;
+    border-radius: 0 0 3vh 3vh;
+    height: 37vh;
+}
+
+div#imageselectiondialogbuttons {
+    justify-self: start;
+    align-self: center;
+    margin-left: 4vh;
+}
+
+div#imagesreuseblock {
+    grid-template-rows: auto 37vh 1fr;
+    width:95vh;
 }
