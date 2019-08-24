@@ -15,6 +15,9 @@
 
 #slidenoteGuardianPasswortPrompt > div {
 }
+#slidenoteGuardianPasswordPromptStore #slidenoteGuardianPasswortPromptTemplate{
+  opacity:0;
+}
 div#slidenoteGuardianPasswordPromptTemplate {
     border-radius: 50%;
     box-shadow: 0 0 14px -5px;
@@ -22,6 +25,15 @@ div#slidenoteGuardianPasswordPromptTemplate {
     background: white;
     width:400px;
     height:400px;
+
+    animation-name:fadein;
+    
+    animation-duration: 1.5s;
+    animation-fill-mode: forwards;
+}
+  @keyframes fadein{
+    0%{opacity: 0}
+    100%{opacity: 1}
 }
 
 #slidenoteGuardianPasswortPrompt > div div{

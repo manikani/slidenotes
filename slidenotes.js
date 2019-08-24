@@ -3829,18 +3829,29 @@ slidenotes.prototype.choseEditor = function(editor){
 	if(slidenoteguardian)slidenoteguardian.saveConfig("local");
 }
 
+var hardcodedwith = 521;
 slidenotes.prototype.texteditorrahmensetzen = function(){
 	//setzt den rahmen vom errorlayer auf textarea-größe:
 	var texteditorrahmen = this.textarea.parentElement;//document.getElementById("texteditor");
 	var eingabeblock = this.textarea;
 	var texteditorfehlerlayer = this.texteditorerrorlayer;
 	//check if textarea bigger than space available:
-	var maxspace = window.innerWidth - 30 - 521; //521 is hard-coded widths from neighbours, could change in future
+	var maxspace = window.innerWidth - 30 - hardcodedwith; //521 is hard-coded widths from neighbours, could change in future
+	maxspace = maxspace - (maxspace/16);
+	var normalizedwidth = [{minwidth:1400, maxwidth:1920, width:900}];
+	var newwidth;
+	for(var x=0;x<normalizedwidth.length;x++){
+		if(normalizedwidth[x].minwidth < window.innerWidth && normalizedwidth.maxwidth >= window.innerWidth){
+			newwidth = normalizedwidth[x].width;
+		}
+	}
+	if(newwidth)eingabeblock.style.width = newwidth;
 	if(eingabeblock.offsetWidth > maxspace)eingabeblock.style.width = maxspace + "px";
 	texteditorrahmen.style.width = eingabeblock.offsetWidth + "px";
 	texteditorrahmen.style.height = eingabeblock.clientHeight+"px";
 	texteditorfehlerlayer.style.width = (eingabeblock.offsetWidth-4) + "px";
 	//texteditorfehlerlayer.style.height = (eingabeblock.offsetHeight-4)+"px";
+	eingabeblock.style.height = document.getElementById("sidebarcontainer").offsetHeight+"px";
 	texteditorfehlerlayer.style.height = (eingabeblock.clientHeight-4)+"px";
 	//frag mich nicht warum 4px abgezogen werden müssen, aber dann passts.
 	//vermutung ist der focus-rahmen vom texteditor...

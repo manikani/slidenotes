@@ -23,7 +23,7 @@ a[href], input[type='submit'], input[type='image'], label[for], select, button, 
     border-radius:20px;
     box-shadow:0 0 5px 0 lightgray;
     padding:10px;
-    z-index: 10;
+    z-index: 100;
 }
 .arrow_box:after, .arrow_box:before {
 	bottom: 100%;
@@ -83,7 +83,7 @@ body{
     ". . . sidebar editor . sidebarright ."
     ". . playbutton sidebar editor . sidebarright ."
     ". cornerbottomleft cornerbottomleft sidebar editor . cornerbottomright .";
-    grid-template-columns: 4fr 0px 10.4vw auto auto auto 5.2vw 5fr;
+    grid-template-columns: 4fr 0px 15.4vw auto auto auto 5.2vw 5fr;
 /*  compare with:
 
     grid-template-columns: 1fr 0px 200px auto auto 50px 200px 1fr;
@@ -113,6 +113,7 @@ body{
     background:none;
     margin-top:0.5em;
     height:3em;
+    transition:filter 400ms ease;
 }
 
 #cloud-box{
@@ -249,10 +250,10 @@ div#cloud-undefined div {
 /*optionarea*/
 #optionarea{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr 30px;
+    grid-template-columns:30% 30% 30% 10%;
     align-items:start;
     justify-content:center;
-    z-index: 1;
+    z-index: 11;
     margin-top:30px;
 }
 #optionarea button{
@@ -297,7 +298,7 @@ div#cloud-undefined div {
     display:grid;
     grid-template-columns:50% 35% 15%;
     grid-template-rows:20% 30% 50%;
-    z-index: 1;
+    z-index: 11;
 }
 
 #playbutton{
@@ -406,6 +407,7 @@ button.fluidbutton::-moz-focus-inner {
     grid-template-rows: 25% 20% 10% 12% 33%;
     margin-left:5px;
     width:100px;
+    z-index: 11;
 }
 
 #toolbarbutton{
@@ -510,11 +512,16 @@ div#topright {
     width:45px;
     */
     height:3.7vh;
-    z-index:1;
+
+    z-index:10;
     justify-self: end;
+    visibility: hidden;
+    background:##FC0CFC;
 }
+
 #topright svg{
   height:100%;
+  visibility: hidden;
 }
 
 .rightcorner{
@@ -550,7 +557,7 @@ div#shadowelleft {
     border-radius: 0 3.7vh 0 0;
     box-shadow: 0 0px 4px 4px rgba(0, 0, 0, 0.13);
     background: #FCFCFC;
-    z-index: 0;
+    z-index: 10;
 }
 
 div#shadowelright {
@@ -571,16 +578,17 @@ div#shadowelright {
     border-right: 1px solid transparent;
     border-top: 1px solid transparent;
     border-radius: 0 4.2vh 0 0;
-    box-shadow: inset -8px 0px 4px -4px rgba(0, 0, 0, 0.13);
+    box-shadow: inset -8px 4px 4px -4px rgba(0, 0, 0, 0.13);
     /*margin-left: -10px;*/
     background:white;
+    z-index: 11;
 }
 div#rahmenright {
   grid-row-start: 1;
   grid-row-end: last;
   grid-column-start: 6;
   grid-column-end: last;
-  z-index: -2;
+  z-index: 10;
   background: #FCFCFC;
 }
 
@@ -613,6 +621,7 @@ button#loadnote {
   grid-row:1;
   height:100%;
   justify-self: end;
+  transition:filter 400ms ease;
 }
 
 
@@ -627,6 +636,7 @@ span#slidenotetitle {
     grid-row:1;
     margin-top:1px;
     border-radius: 10px 0;
+    transition:all 400ms ease;
 }
 
 /*cloud-menu*/
@@ -681,6 +691,9 @@ div#menuload {
     border: 1px solid transparent;
     border-radius: 10px;
     height: 3em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 #menuload ul {
@@ -749,6 +762,7 @@ div#menupublish,
     grid-column-start: 2;
     grid-column-end: 4;
     margin-top: 20px;
+    margin-right:-5%;
 }
 
 /*publishmenu*/
@@ -762,7 +776,7 @@ div#menupublish,
 }
 
 #menupublish .arrow_box:before, #menupublish .arrow_box:after {
-    left: 41%;
+    left: 42.5%;
 }
 
 #publishedlist {
@@ -1048,7 +1062,7 @@ ul#basicthemelist {
     border: 1px solid;
     text-align: center;
 }
-
+*/
 /*toolbar*/
 
 #toolbar .arrow_box:after,
@@ -1176,15 +1190,103 @@ button#outlet {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    background: white;
-    z-index: 900;
     top: 0;
     left: 0;
-    /*display: grid;*/
-    display:none;
+    display:grid;
     justify-content: center;
     align-content: center;
 }
+#slidenoteeditorloadingscreenbackground{
+  			position:absolute;
+        top:0;
+        left:0;
+  			width: 100%;
+  			height: 100%;
+        z-index: 1400;
+        background-color: #FCFCFC;
+        opacity:1;
+}
+#slidenoteloadingscreenwrapper.midstate #slidenoteeditorloadingscreenbackground{
+  opacity:0.7;
+  transition:all 1s ease;
+}
+#slidenoteloadingscreenwrapper.endstate #slidenoteeditorloadingscreenbackground{
+  			opacity: 0.7;
+  			animation-name:flaeche;
+  			animation-delay: 1s;
+  			animation-duration: 0.5s;
+  			animation-fill-mode: forwards;
+}
+  		@keyframes flaeche{
+  			0%{opacity: 0.7}
+  			100%{opacity: 0}
+  	}
+
+#slidenoteeditorhidetexteditor{
+  background:white;
+  position:absolute;
+  width:100vw;
+  height:100vh;
+  left:0;
+  top:0;
+  z-index: 8;
+}
+#slidenoteloadingscreenwrapper.endstate #slidenoteeditorhidetexteditor{
+  animation-name:loading-blob;
+  animation-delay: 0.2s;
+  animation-duration: 1s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+#loading-blob{
+      z-index: 10000;
+			position:absolute;
+      left:40vw;
+      top:33vh;
+			width: 20vw;
+}
+#slidenoteloadingscreenwrapper.endstate #loading-blob{
+			animation-name: loading-blob;
+			animation-duration: 0.87s;
+			animation-timing-function: ease-in;
+			animation-fill-mode: forwards;
+}
+		@keyframes loading-blob {
+			0%{opacity: 1;}
+			90%{opacity: 1;}
+			100%{opacity: 0;}
+		}
+
+#circle-colorful{
+  display:none;
+}
+#slidenoteloadingscreenwrapper.endstate #circle-colorful{
+      display:block;
+			position: absolute;
+			left:50%;
+			top:50%;
+			width: 100px;
+			height: 100px;
+			transform: translate(-50%, -50%);
+			background-color: #90C1C8;
+			border-radius: 50%;
+			opacity: 0;
+      z-index: 9;
+
+			animation-name: circle-colorful;
+			animation-delay: 0.8s;
+			animation-duration: 1s;
+			animation-timing-function: ease-out;
+			animation-fill-mode: forwards;
+		}
+		@keyframes circle-colorful {
+			0%{opacity: 1; transform:translate(-50%, -50%) scale(1);}
+			70%{opacity: 0.5; transform:translate(-50%, -50%) scale(30);}
+			100%{opacity: 0; transform:translate(-50%, -50%) scale(30);}
+		}
+
+/*old:
 
 img#loadingcircle {
     transform: rotate(1deg);
@@ -1198,14 +1300,11 @@ img#loadingcircle {
     0%{
         transform:rotate(1deg);
     }
-    /*50%{
-        transform:rotate(181deg);
-        }*/
     100%{
         transform:rotate(359deg);
     }
 }
-
+*/
 /*insert-menu*/
 #insertarea {
     background: #90c1c8;
@@ -1215,7 +1314,7 @@ img#loadingcircle {
     width:130px;
     position:absolute;
     visibility: hidden;
-    z-index: 10;
+    z-index: 5;
     /* margin-left: 10px; */
 }
 
@@ -1247,7 +1346,7 @@ img#loadingcircle {
     width: 150px;
     display: grid;
     grid-template-columns: 1fr 20px;
-    z-index: 11;
+    z-index: 6;
 }
 
 #nicesidebarsymbol a {
