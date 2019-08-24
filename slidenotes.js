@@ -2141,7 +2141,7 @@ emdparser.prototype.parseMap = function(){
 				//console.log("image found");
         var imgaktpos=0;
         while(lines[x].indexOf("![",imgaktpos)>-1 ){
-          var imgpos = lines[x].indexOf("![");
+          var imgpos = lines[x].indexOf("![",imgaktpos);
           var imgposmid = lines[x].indexOf("](",imgpos);
           var imgposend = lines[x].indexOf(")",imgpos);
           var imginimg = lines[x].indexOf("![",imgpos+1);
@@ -2162,7 +2162,8 @@ emdparser.prototype.parseMap = function(){
             this.perror.push(new parsererror(x,imgpos,lines[x].length-1,"image","missing midsymbol )"));//
             error="imgmid";
           }
-          imgaktpos = imgpos+2; //next scan after found imagepos regardless of result
+					if(imgpos>imgaktpos)imgaktpos = imgpos;
+					imgaktpos+=2;//next scan after found imagepos regardless of result
           if(error.length==0){
             var imgurl = lines[x].substring(imgposmid+2,imgposend);
             var imgalt = lines[x].substring(imgpos+2,imgposmid);
