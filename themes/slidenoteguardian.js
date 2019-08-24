@@ -1412,7 +1412,89 @@ slidenoteGuardian.prototype.encryptText = async function(txt){
     for(let i=0;i<imageutf8.length;i++)imagestring+=String.fromCharCode(imageutf8[i]+255);
     return imagestring;
 };
+
 slidenoteGuardian.prototype.loadConfig = async function(destination){
+    //new loadnote with JSON
+    //loads Config from configarea or from local destination
+    //destination is cms or local
+    var savedConfigString;
+    if(destination==="cms")savedConfigString = this.cmsConfig.value;
+    if(destination==="local")savedConfigString = this.localstorage.getItem('config');
+    if(slidenote==null){
+      setTimeout("slidenoteguardian.loadConfig("+destination+")",2000);
+      return;
+    }
+  var saveobject;
+  try {
+  saveobject = JSON.parse(savedConfigString);
+  }catch{
+  //load old config style? naa, just delete it...
+    console.log("old config found");
+    this.loadConfigOld(destination);
+    return;
+  }
+  //activate and disable Themes depending on config:
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+      var act=slidenote.extensions.themes[x];
+      if(saveobject.activethemes.indexOf(act.classname)>-1){
+          act.changeThemeStatus(true);
+      }else{
+          act.changeThemeStatus(false);
+      }
+  }
+  //choose editor:
+  slidenote.choseEditor(saveobject.editorchoice);
+  if(saveobject.nightmode){
+      var toggler = document.getElementById("nightmodetoggle");
+      toggler.classList.remove("off");
+      toggler.classList.add("on");
+      document.getElementById("slidenoteeditor").classList.add("nightmode");
+  }
+
+  //keyboardshortcuts:
+  if(slidenote.keyboardshortcuts && saveobject.keyboardmap){
+      slidenote.keyboardshortcuts.loadConfigString(saveobject.keyboardmap);
+  }
+
+  //load themes-config:
+  for(var x=0;x<saveobject.themeConfigs.length;x++){
+      var theme = slidenote.extensions.getThemeByName(saveobject.activethemes[x]);
+      theme.loadConfigString(saveobject.themeConfigs[x]);
+  }
+}
+
+slidenoteGuardian.prototype.saveConfig = async function(destination){
+  //if not initialised slidenoteguardian - return:
+  if(!this.initialised)return;
+  //saveconfig with JSON instead of manual - slower and more overhead, but more flexible for the future:
+  var saveobject = {};
+  //var themes = new Array();
+  saveobject.activethemes = new Array();
+  saveobject.themeConfigs = new Array();
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+      var theme = slidenote.extensions.themes[x];
+      if(theme.active){
+   //      themes.push(theme);
+       saveobject.activethemes.push(theme.classname);
+       saveobject.themeConfigs.push(theme.saveConfigString());
+      }
+  }
+
+  saveobject.editorchoice = document.getElementById("editorchoice").value;
+  saveobject.nightmode = document.getElementById("slidenoteeditor").classList.contains("nightmode");
+  if(slidenote.keyboardshortcuts){
+      saveobject.keyboardmap = slidenote.keyboardshortcuts.configString();
+  }
+  console.log(saveobject);
+  var stringToSave = JSON.stringify(saveobject);
+    if(destination==="local"){
+      this.localstorage.setItem("config",stringToSave);
+      console.log("saved to local:"+stringToSave);
+    }
+  return stringToSave;
+
+}
+slidenoteGuardian.prototype.loadConfigOld = async function(destination){
   //loads Config from configarea or from local destination
   //destination is cms or local
   var savedConfigString;
@@ -1482,7 +1564,7 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   }
 }
 
-slidenoteGuardian.prototype.saveConfig = function(destination){
+slidenoteGuardian.prototype.saveConfigOld = function(destination){
   //saves configs to local destination or to cmsarea -> CMS
   //destination is cms or local
   var themes = new Array(); //only active themes
