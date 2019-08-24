@@ -171,11 +171,6 @@ function slidenoteGuardian(slidenote){
     this.getRestToken("init");
     //this.getAllPlugins();
   }
-  if(location.protocol!="file:"){
-    console.log("get all css from static webserver");
-    setTimeout("slidenoteguardian.getCSSFromStaticWebserver();"+
-      "slidenoteguardian.getJSFromStaticWebserver();",100);
-  }
   if(this.restObject.exportedPresentations===undefined)this.restObject.exportedPresentations = new Array();
   this.restObject.combine = function(uploadobj){
     for(var key in uploadobj){
@@ -202,7 +197,7 @@ function slidenoteGuardian(slidenote){
   this.iv; //the initialisation-vector to use - we could get rid of it?
   this.ivlength = 12; //the length of the initialisation vector used for encryption
   this.localstorage = new SlidenoteCache();//window.localStorage; //set local storage
-  this.localstorage.init();
+  //this.localstorage.init();
   /*in local-storage there can be saved ONE slidenote only. items:
   * cryptnote: encrypted slidenote
   * cryptimagestring: encrypted string with base64-images
@@ -224,25 +219,91 @@ function slidenoteGuardian(slidenote){
   */
   if(!this.hascmsconnection){
     var savestatus = document.getElementById("savestatus");
-    savestatus.src = slidenote.imagespath+"buttons/clouderror.png";
-    savestatus.title = "no connection with the cloud";
+    if(savestatus){
+      savestatus.src = slidenote.imagespath+"buttons/clouderror.png";
+      savestatus.title = "no connection with the cloud";
+    }
     var cloudstatus = document.getElementById("cloudstatus");
     if(cloudstatus){
       cloudstatus.innerText = "no connection";
       cloudstatus.classList.add("error");
     }
+    var cloudbutton = document.getElementById("cloud");
+    cloudbutton.classList.add("status-error");
+    cloudbutton.title = "no connection with the cloud";
   }
   //can we start the init here? why not?
   //this.init(); not, because slidenoteguardian is not initialised yet :(
-  setTimeout("slidenoteguardian.init()",10);
+  if(location.protocol!="file:"){
+    setTimeout("slidenoteguardian.initLoad()",10);
+    console.log("get all css from static webserver");
+    setTimeout("slidenoteguardian.getCSSFromStaticWebserver();"+
+    "slidenoteguardian.getJSFromStaticWebserver();",100);
+
+  }else{
+    setTimeout("slidenoteguardian.init()",10);
+  }
   this.initialised = false;
+}
+
+slidenoteGuardian.prototype.initLoad = async function(){
+  this.getRestToken();
+  var searchurl = location.search;
+  var nid = searchurl.substring(searchurl.lastIndexOf("=")+1);
+  if(nid*1!=nid){ this.init();return;}
+  this.loadFromRest("/node/"+nid+".json", function(){
+    if(this.status===403){
+
+    }else if(this.status===404){
+
+    }else if(this.status===200){
+      var payload;
+      try{
+        payload = JSON.parse(this.response);
+      }catch(err){
+        payload = false;
+      }
+      if(payload){
+        //build initial_note:
+        //drupal7-to-slidenote-transition:
+        console.log("loaded note:");
+        console.log(payload);
+        if(!payload.field_encimg)payload.field_encimages=new Array();
+        slidenoteguardian.restObject.author = payload.author;
+        slidenoteguardian.restObject.encimages = payload.field_encimg;
+        slidenoteguardian.restObject.encimgmeta = payload.field_imagemeta;
+        slidenoteguardian.restObject.encnote = payload.field_encryptednote;
+        slidenoteguardian.restObject.exportedPresentations = payload.field_presentations;
+        slidenoteguardian.restObject.imagehash = payload.field_imageshash;
+        slidenoteguardian.restObject.imgmeta = payload.field_imagemeta;
+        slidenoteguardian.restObject.nid = payload.nid;
+        slidenoteguardian.restObject.notehash = payload.field_notehash;
+        slidenoteguardian.restObject.title = payload.title;
+        slidenoteguardian.restObject.drupal7 = {
+          nid:payload.nid,
+          author:payload.author
+        }
+        slidenoteguardian.hascmsconnection=true;
+        initial_note = slidenoteguardian.restObject;
+        slidenoteguardian.notetitle = payload.title;
+      }
+    }
+    slidenote.texteditorrahmensetzen();
+    slidenoteguardian.init();
+    //start midstate animation:
+    document.getElementById("slidenoteloadingscreenwrapper").classList.add("midstate");
+  });
 }
 
 slidenoteGuardian.prototype.init = function(){
   //init will be called once the slidenote has been loaded from cms
   //this.getCMSFields();
+  this.localstorage.init();
   var notetitle = this.restObject.title;
   this.notetitle = this.restObject.title;
+  //set notetitle into menus etc.:
+  document.getElementById("slidenotetitle").innerText=notetitle;
+
   var notehash = this.restObject.notehash;
   var cachednote = {
     title: this.localstorage.getItem("title"),
@@ -264,11 +325,12 @@ slidenoteGuardian.prototype.init = function(){
 
   if((cachednote.saved === "true" || cachednote.notehash === null) &&
       this.hascmsconnection &&
-    this.restObject.encnote.length>1){
+    this.restObject.encnote && this.restObject.encnote.length>1){
     setTimeout("slidenoteguardian.loadNote('cms')",1);
-  }else if(this.restObject.encnote!=undefined && this.restObject.encnote ===""){
+  }else if((this.hascmsconnection && this.restObject.encnote === null)||
+    (this.restObject.encnote!=undefined && this.restObject.encnote ==="")){
     //new slidenote, save to get password-prompt? seems not necesary
-    //setTimeout("slidenoteguardian.saveNote('local')");
+    setTimeout("slidenoteguardian.saveNote('cms')",1);
   }else if(notehash===undefined && cachednote.notehash != undefined){
     setTimeout("slidenoteguardian.loadNote('local')",1);
   }else{
@@ -393,26 +455,39 @@ slidenoteGuardian.prototype.init = function(){
   var savebutton = document.getElementById("savebutton");
   if(savebutton)savebutton.addEventListener("click",function(e){
     slidenoteguardian.saveNote("cms");
+  });
     this.savebutton = savebutton;
     this.savebuttontitles = {default:"not in sync with cloud",
                              error:"error while connecting to cloud",
-                             sync:""}
-  });
+                             sync:" in sync with cloud :)"}
   this.jsfilesForExport = [];
-  if(this.hascmsconnection)this.loadSlidenotesList();
+  if(this.hascmsconnection){
+    this.loadSlidenotesList();
+    this.loadPresentationList();
+  }
+
   this.initialised = true;
 }
 
+var testresponse;
 slidenoteGuardian.prototype.loadFromRest = async function(filepath, responseHandler){
   var oReq = new XMLHttpRequest();
-  if(responseHandler)oReq.addEventListener("load",responseHandler);else
+  if(responseHandler!=null && responseHandler!=undefined)
+  oReq.responseHandler = responseHandler;
+  else oReq.responseHandler = false;
   oReq.addEventListener("load", function(){
+    if(this.responseHandler && typeof this.responseHandler==="string"){
+      slidenoteguardian[this.responseHandler](this);
+    }else if(this.responseHandler && typeof this.responseHandler ==="function"){
+      this.responseHandler();
+    }else
     slidenoteguardian.loadedFromRest(this.response);
   });
   oReq.open("GET", filepath);
   oReq.setRequestHeader("CONTENT-TYPE","application/json");
   oReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
   oReq.send();
+  testresponse = oReq;
 }
 
 slidenoteGuardian.prototype.loadedFromRest = function(jsonstring){
@@ -433,11 +508,14 @@ slidenoteGuardian.prototype.importSlidenotesList = function(response){
       loadedSlidenotes.push({title:title.innerHTML,url:link.innerHTML});
   }
   slidenoteguardian.loadedSlidenotes = loadedSlidenotes;
+  if(menumanager)menumanager.buildSlidenoteList();
 }
 slidenoteGuardian.prototype.loadSlidenotesList = function(){
-  this.loadFromRest("/myslidenotes",function(){
+  this.loadFromRest("/myslidenotes","importSlidenotesList");
+  /*function(response){
+    console.log("catched slidenotelist "+this.response);
     slidenoteguardian.importSlidenotesList(this);
-  });
+  });*/
 }
 
 slidenoteGuardian.prototype.importPresentationList = function(response){
@@ -461,8 +539,9 @@ slidenoteGuardian.prototype.importPresentationList = function(response){
         }
     }
     slidenoteguardian.loadedPresentations = loadedPresentations;
+    if(menumanager)menumanager.buildPublishedMenu();
 }
-slidenoteGuardian.prototype.loadSlidenotesList = function(){
+slidenoteGuardian.prototype.loadPresentationList = function(){
   this.loadFromRest("/mypresentations",function(){
     slidenoteguardian.importPresentationList(this);
   });
@@ -589,6 +668,8 @@ slidenoteGuardian.prototype.saveToRest= async function(path, payload){
   if(this.restToken===undefined || this.restToken===null){
     console.log("Rest-Token not set yet... getting Token and try again...");
     this.getRestToken("save"); //has to be with await
+    if(this.uploadRestObject.inprogress)this.uploadRestObject.inprogress=false;
+    if(this.savingtoDestination)this.savingtoDestination=undefined;
     return; //return and wait for next save till we can await
   }
   //var payload = JSON.stringify(payloadobject);
@@ -611,9 +692,23 @@ slidenoteGuardian.prototype.saveToRest= async function(path, payload){
 slidenoteGuardian.prototype.savedToRest = function(resolve){
   console.log("saved to Rest:"+resolve.statusText);
   var statusimg = document.getElementById("savestatus");
+  var cloudbutton = document.getElementById("cloud");
+  //clear classlist:
+  var classList = cloudbutton.classList;
+  while (classList.length > 0) {
+       classList.remove(classList.item(0));
+  }
+  var statustext= document.getElementById("cloudstatus");
+
+
   if(resolve.statusText==="OK"){
-    statusimg.src = slidenote.imagespath+"buttons/cloudsaved.png";
-    statusimg.title = "slidenote in sync with cloud";
+    if(statusimg){
+      statusimg.src = slidenote.imagespath+"buttons/cloudsaved.png";
+      statusimg.title = "slidenote in sync with cloud";
+    }
+    cloudbutton.classList.add("status-ok");
+    cloudbutton.title = "slidenote in sync with cloud";
+    if(statustext)statustext.innerText="in sync with cloud";
     this.restObject.combine(this.uploadRestObject);
     //check if cached-version is same - if so set to saved:
     let cachedhash = this.localstorage.getItem("slidenotehash");
@@ -622,8 +717,13 @@ slidenoteGuardian.prototype.savedToRest = function(resolve){
     //this.localstorage.setItem("nid",this.restObject.drupal7.nid);
     //this.localstorage.setItem("url",window.location.href);
   }else{
-    statusimg.src = slidenote.imagespath+"buttons/clouderror.png";
-    statusimg.title=resolve.statusText;
+    if(statusimg){
+      statusimg.src = slidenote.imagespath+"buttons/clouderror.png";
+      statusimg.title=resolve.statusText;
+    }
+    cloudbutton.classList.add("cloud-error");
+    cloudbutton.title = resolve.statusText;
+    if(statustext)statustext.innerText="no connection with cloud";
   }
   this.savingtoDestination=undefined; //old? seems to not be used anymore
   this.uploadRestObject = {}; //destroy uploadRestObject?
@@ -715,6 +815,44 @@ slidenoteGuardian.prototype.exportPresentation = async function(destination, pre
   }
 }
 
+slidenoteGuardian.prototype.createNewSlidenote = async function(){
+  var payloadobj = this.prepareDrupal7Rest("new slidenote");
+  console.log(payloadobj);
+  var payload=payloadobj.payload;
+  console.log("start creating new slidenote");
+  if(!this.restToken){
+    console.log("Rest-Token not set yet... getting Token and try again...");
+    this.getRestToken("save"); //has to be with await
+    return; //return and wait for next save till we can await
+  }
+  var postReq= new XMLHttpRequest();
+  postReq.addEventListener("load",function(){
+    //slidenoteguardian.resolve=this;
+    console.log("new export-resolve");
+    console.log(this);
+    if(this.statusText==="Created"){
+      var respobj = JSON.parse(this.response);
+      if(window.location.href.indexOf("marie.htm?")>-1){
+        let nid = respobj.uri.substring(respobj.uri.lastIndexOf("/")+1);
+        if(nid)window.location.search = "id="+nid;
+      }else{
+        window.location.href=respobj.uri;
+      }
+    }
+
+  });
+  var nid = this.restObject.nid;
+  postReq.open("POST","/node/"+nid); //node/nid needs to be of type slidenote to work
+  postReq.setRequestHeader("CONTENT-TYPE","application/json");
+  postReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
+
+  //putReq.withCredentials = true;
+  postReq.send(payload);
+  console.log("sending payload");
+  console.log(postReq);
+
+}
+
 slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
   var path = "/node/"+this.restObject.drupal7.nid;
   var payloadobj = {
@@ -723,12 +861,17 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
   if(mode=="text"){
     payloadobj.field_encryptednote = this.uploadRestObject.encnote;
     payloadobj.field_notehash=this.uploadRestObject.notehash;
+    if(slidenoteguardian.notetitle != this.restObject.title){
+      payloadobj.title = this.notetitle;
+    }
   }else if(mode==="image"){
     payloadobj.field_encryptednote = this.uploadRestObject.encnote;
     payloadobj.field_notehash=this.uploadRestObject.notehash;
     payloadobj.field_encimages= this.uploadRestObject.encimg;
     payloadobj.field_imageshash=this.uploadRestObject.imagehash;
   }else if(mode ==="images"){
+      payloadobj.field_encryptednote = this.uploadRestObject.encnote;
+      payloadobj.field_notehash=this.uploadRestObject.notehash;
       payloadobj.field_imagemeta = this.uploadRestObject.encimgmeta;
       payloadobj.field_encimgdelete = this.uploadRestObject.deleteImageHashes;
       /*var imgupload = "";
@@ -749,6 +892,15 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
       field_encryptednote: this.uploadRestObject.encpresentation,
       field_optionstring: options,
       field_slidenotenode: this.restObject.drupal7.nid,
+      author: this.restObject.author
+    }
+  }else if(mode==="new slidenote"){
+    path="/node";
+    let options = this.saveConfig();
+    payloadobj = {
+      type:"slidenote",
+      title:"€€€new slidenote€€€",
+      //field_optionstring: options,
       author: this.restObject.author
     }
   }
@@ -892,6 +1044,10 @@ slidenoteGuardian.prototype.loadNote = async function(destination, dontinsert){
     }else if(destination==="local"){
       this.encBufferString = this.localstorage.getItem('cryptnote');
     }
+    if(this.encBufferString===null || this.encBufferString===undefined || this.encBufferString.length===0){
+      console.log("no buffer-string found, aborting load-note");
+      return;
+    }
     //getting iv of string:
     let iv = new Uint8Array(this.ivlength); //create empty ivarray
     for(let i=0;i<this.ivlength;i++)iv[i]=this.encBufferString.charCodeAt(i)-255;
@@ -914,7 +1070,7 @@ slidenoteGuardian.prototype.loadNote = async function(destination, dontinsert){
     let imgstring;
     if(destination==="cms"){
       if(this.cmsImages)imgstring = this.cmsImages.value;
-      else if(typeof initial_note!="undefined"){
+      else if(typeof initial_note!="undefined" && initial_note.encimgmeta){
         //imgstring = initial_note.encimg;
         imgstring = await this.decryptText(initial_note.encimgmeta);
         initial_note.imgmeta = imgstring;
@@ -936,11 +1092,19 @@ slidenoteGuardian.prototype.loadNote = async function(destination, dontinsert){
 
     }
     //cleaning up:
+    this.slidenote.parseneu(); //let wysiwyg-editor notice change
     this.slidenote.textarea.blur();
     this.slidenote.textarea.focus(); //focus on textarea for further editing
-    this.slidenote.parseneu(); //let wysiwyg-editor notice change
-
-}
+    //start animation
+    var loadingscreen = document.getElementById("slidenoteloadingscreenwrapper");
+    if(loadingscreen){
+      loadingscreen.classList.add("endstate");
+      setTimeout(function(){
+        var loadsc = document.getElementById("slidenoteloadingscreenwrapper");
+        loadsc.parentElement.removeChild(loadsc);
+      },5000);
+    }
+};
 
 slidenoteGuardian.prototype.saveNote = async function(destination){
   var restObject = this.restObject;
@@ -979,7 +1143,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   let encimgstring="";
   let newimghash="";
   var imghash = null;
-  if(this.slidenote.base64images.notempty){
+  if(this.slidenote.base64images.notempty()){
     if(destination ==="cms"){
       //first get the fields right:
       //this.getCMSFields();
@@ -1008,7 +1172,11 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
           this.isencryptingimages = false; //allow further encrypting
           var enctime = new Date().getTime() - starttime;
           console.log("Timecheck: encrypted imgstring in "+enctime+"Ms");
-        }else{ console.log("still encrypting images - do nothing"); return;}
+        }else{
+          console.log("still encrypting images - do nothing");
+
+          return;
+        }
       //} else{
       //  console.log("images did not change:"+newimghash);
       //}
@@ -1031,13 +1199,23 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     this.uploadRestObject.notehash = await this.hash(slidenotetext); //putting into rest-object
     this.uploadRestObject.encnote = result;
     var savestatus = document.getElementById("savestatus")
-    savestatus.src=slidenote.imagespath+"buttons/cloudupload.gif";
-    savestatus.title="saving note into cloud";
+    if(savestatus){
+      savestatus.src=slidenote.imagespath+"buttons/cloudupload.gif";
+      savestatus.title="saving note into cloud";
+    }
+    var cloudbutton = document.getElementById("cloud");
+    var classList = cloudbutton.classList;
+    while (classList.length > 0) {
+      classList.remove(classList.item(0));
+    }
+    cloudbutton.classList.add("status-syncing");
+
+
 
     var drupal7prepare = this.prepareDrupal7Rest("text");
     //TODO: images? new part:
     //check if we have to save:
-    if(restObject.imgmeta != b64meta){
+    if(b64meta != undefined && restObject.imgmeta != b64meta){
         this.uploadRestObject.encimgmeta = await this.encryptText(b64meta);
         this.uploadRestObject.imgmeta = b64meta;
         var deletedimages = new Array();
@@ -1606,12 +1784,21 @@ slidenoteGuardian.prototype.checkCloudStatus = async function(){
   let acthash = await this.hash(this.slidenote.textarea.value);
   let oldhash = this.restObject.notehash;
   var savestatus = document.getElementById("savestatus");
+  var cloudbutton = document.getElementById("cloud");
   if(acthash != oldhash){
-    savestatus.src=slidenote.imagespath+"buttons/cloud.png";
-    savestatus.title="not in sync with cloud";
+    if(savestatus){
+      savestatus.src=slidenote.imagespath+"buttons/cloud.png";
+      savestatus.title="not in sync with cloud";
+    }
+    cloudbutton.className = "status-undefined";
+    cloudbutton.title = "not in sync with cloud";
   }else{
-    savestatus.src=slidenote.imagespath+"buttons/cloudsaved.png";
-    savestatus.title="in sync with cloud";
+    if(savestatus){
+      savestatus.src=slidenote.imagespath+"buttons/cloudsaved.png";
+      savestatus.title="in sync with cloud";
+    }
+    cloudbutton.className = "status-ok";
+    cloudbutton.title = "in sync with cloud";
   }
   console.log("checking cloud status. in sync:"+(acthash!=oldhash));
   var timeneeded = new Date() - timestrt;
@@ -1704,6 +1891,7 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
     usernamefield.value=this.notetitle+".slidenote";
     usernamefield.classList.remove("hidden");
     usernamelabel.classList.remove("hidden");
+    usernamelabel.innerText = "filename for export";
     pwchecklabel.style.display="block";
     pwcheck.style.display="block";
   }else if(method==="exportCMS"){
@@ -1711,11 +1899,19 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
     usernamefield.value=this.notetitle;
     usernamefield.classList.remove("hidden");
     usernamelabel.classList.remove("hidden");
+    usernamelabel.innerText = "filename for export";
     pwchecklabel.style.display="block";
     pwcheck.style.display="block";
   }else {
-    usernamefield.classList.add("hidden");
-    usernamelabel.classList.add("hidden");
+    if(this.notetitle === "€€€new slidenote€€€"){
+      usernamefield.classList.remove("hidden");
+      usernamelabel.classList.remove("hidden");
+      usernamelabel.innerText = "slidenote filename";
+      usernamefield.value="new slidenote";
+    }else{
+      usernamefield.classList.add("hidden");
+      usernamelabel.classList.add("hidden");
+    }
     pwokbutton.innerText="ENCRYPT";
     pwchecklabel.style.display="block";
     pwcheck.style.display="block";
@@ -1731,7 +1927,12 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
 	      if (e.target.tagName !== 'BUTTON') { return; }
 	      pwprompt.removeEventListener('click', handleButtonClicks); //removes eventhandler on cancel or ok
 	      if (e.target === pwokbutton) {
-          if(pwinput.value===pwcheck.value||(pwcheck.style.display==="none" && pwcheck.value.length===0))resolve(pwinput.value); //return password
+          if(pwinput.value===pwcheck.value||(pwcheck.style.display==="none" && pwcheck.value.length===0)){
+            let newname = document.getElementById("username").value;
+            slidenoteguardian.notetitle=newname;
+            document.getElementById("slidenotetitle").innerText = newname;
+            resolve(pwinput.value); //return password
+          }
           else {
             return;
             //reject(new Error('Wrong retype'));
