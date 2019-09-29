@@ -1953,13 +1953,14 @@ emdparser.prototype.parseMap = function(){
   		}//lines[x] fängt jetzt mit <quote> an
 
 			//codeblock and datablock:
-			if(lines[x].substring(0,3)==="```"){
+			if(lines[x].substring(0,3)==="```" || lines[x].substring(0,3)==="+++"){
 				//possible code or datablock found
+				var dtsymbol = lines[x].substring(0,3); //use this further on instead of hardcoded symbol to switch easier
 				var head=lines[x];
 				//look out for datablock:
 				var datablocktypefound =null;
 				//check for default:
-				if(lines[x]==="```"){
+				if(lines[x]===dtsymbol){
 					//set default to
 				}
 				for(var blocktype=0;blocktype<slidenote.datatypes.length;blocktype++)if(head.indexOf(slidenote.datatypes[blocktype].type)>-1)datablocktypefound = slidenote.datatypes[blocktype];
@@ -4256,16 +4257,16 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 		var selectedtext = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
 		if(selectedtext.indexOf("\n")>-1 ||
 				(textarea.value.substring(textarea.selectionStart-1, textarea.selectionEnd)==="\n")){
-			emdstart="\n```code\n";
-			emdend="\n```\n";
+			emdstart="\n+++code\n";
+			emdend="\n+++\n";
 		}else{
 			emdstart="`";
 			emdend="`";
 		}
-	}else if(emdzeichen.substring(0,3)=="```"){
+	}else if(emdzeichen.substring(0,3)=="```" || emdzeichen.substring(0,3)==="+++"){
 		emdstart=emdzeichen+"\n";
 		//emdend="\n"+emdzeichen.substring(0,emdzeichen.indexOf("||",2)+2) +"\n";
-		emdend="\n```\n";
+		emdend="\n"+emdzeichen.substring(0,3)+"\n";
 	}else if(emdzeichen==="---"){
 		emdstart = "\n"+emdzeichen+"\n";
 		emdend = "";
@@ -4347,6 +4348,17 @@ slidenotes.prototype.insertbutton = function(emdzeichen, mdstartcode, mdendcode)
 
 
 };
+
+slidenotes.prototype.scrollToPosition = function(position){
+	var pos = position;
+	if(!pos)pos=this.textarea.selectionStart;
+	if(this.texteditorerroractivated){
+		//solution with texteditorerrorlayer which should work better/easier:
+		var linenr = this.parser.lineAtPosition(pos);
+		var bglines = document.getElementsByClassName("backgroundline");
+		if(bglines[linenr])this.textarea.scrollTop = bglines[linenr].offsetTop;
+	}
+}
 
 slidenotes.prototype.scroll = function(editor){
 	this.texteditorrahmensetzen();

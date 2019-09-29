@@ -14,10 +14,10 @@ newtheme.helpText = function(dataobject){
   return result;
 }
 var buttonhtml = '<img src="'+slidenote.imagespath+'buttons/hidden.png" title="Hidden Element">';
-buttonhtml += '<span class="buttonmdcode">```</span>';
+buttonhtml += '<span class="buttonmdcode">+++</span>';
 buttonhtml += '<span class="buttonmdtext">hidden</span>';
-buttonhtml += '<span class="buttonmdcode">```</span>';
-newtheme.addEditorbutton(buttonhtml, "```hidden","```");
+buttonhtml += '<span class="buttonmdcode">+++</span>';
+newtheme.addEditorbutton(buttonhtml, "+++hidden","+++");
 slidenote.datatypes.push({type:"hidden", mdcode:true, theme:newtheme});
 
 

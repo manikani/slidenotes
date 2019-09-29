@@ -1,5 +1,5 @@
 var newtheme = new Theme("chartist");
-newtheme.description = "Charts with Chartist - takes ```chart:(line|bar|pie)";
+newtheme.description = "Charts with Chartist - takes +++chart:(line|bar|pie)";
 newtheme.helpText = function(dataobject){
   var result = "Insert Your Data to create nice graphs on the fly."+
     "<br>Copy and Paste your Data from your Excell-Sheet or CSV and put some flavour with a nice configured head into it";
@@ -48,10 +48,10 @@ document.getElementsByTagName("head")[0].appendChild(jsfile);*/
 slidenote.extensions.loadingThemes.push({name:"chartist-placeholder"});
 slidenote.appendFile("script","chartist/chartist.js").onload = loadChartistPlugins;
 var buttonhtml = '<img src="'+slidenote.basepath+'themes/chartist/chartbutton.png" alt="Chart" title="Chart">';
-buttonhtml += '<span class="buttonmdcode">```</span>';
+buttonhtml += '<span class="buttonmdcode">+++</span>';
 buttonhtml += '<span class="buttonmdtext">chart</span>';
-buttonhtml += '<span class="buttonmdcode">```</span>';
-newtheme.addEditorbutton(buttonhtml,'```chart');
+buttonhtml += '<span class="buttonmdcode">+++</span>';
+newtheme.addEditorbutton(buttonhtml,'+++chart');
 slidenote.datatypes.push({type:"chart",mdcode:false, theme:newtheme});
 
 
@@ -231,8 +231,8 @@ newtheme.changeChartType = function(charttype){
   console.log(actelement);
   var start = actelement.posinall //"´´´chart:".length;
   console.log("insert "+charttype+" on ");
-  slidenote.textarea.value = slidenote.textarea.value.substring(0,start) +
-                              "```chart:"+
+  slidenote.textarea.value = slidenote.textarea.value.substring(0,start+3) +
+                              "chart:"+
                               charttype + //"\n"+
                               slidenote.textarea.value.substring(slidenote.textarea.value.indexOf("\n",start));
   console.log("parseneu forced by chartist-changeChartType");
@@ -256,9 +256,9 @@ newtheme.importCsv = function(csv){
   console.log("import csv");
   var selstart = slidenote.textarea.selectionStart;
   var selend = slidenote.textarea.selectionEnd;
-  let posofchartbegin = slidenote.textarea.value.lastIndexOf("```chart",selstart);
+  let posofchartbegin = slidenote.textarea.value.lastIndexOf("+++chart",selstart);
   posofchartbegin = slidenote.textarea.value.indexOf("\n",posofchartbegin)+1;
-  let posofchartend = slidenote.textarea.value.indexOf("\n```",selend);
+  let posofchartend = slidenote.textarea.value.indexOf("\n+++",selend);
   let posofseparator = slidenote.textarea.value.indexOf(this.syntaxContainer.headseparator,posofchartbegin);
   console.log("chartbegin:"+posofchartbegin)
   if(posofseparator>posofchartend || posofseparator===-1){
@@ -309,8 +309,8 @@ newtheme.insert = function(selection){
   var diff=0;
     var charbeforeinsert = slidenote.textarea.value.substring(selectionstart-1,selectionstart);
     if(charbeforeinsert!="\n")injection = "\n"+injection;
-    var posofchartbegin = slidenote.textarea.value.lastIndexOf("```chart",selectionstart);
-    var posofchartend = slidenote.textarea.value.indexOf("\n```",selectionend);
+    var posofchartbegin = slidenote.textarea.value.lastIndexOf("+++chart",selectionstart);
+    var posofchartend = slidenote.textarea.value.indexOf("\n+++",selectionend);
     var posofheadseparator = slidenote.textarea.value.lastIndexOf(this.syntaxContainer.headseparator,selectionstart);
     if(posofheadseparator<posofchartbegin ||posofheadseparator===-1)posofheadseparator=slidenote.textarea.value.indexOf(this.syntaxContainer.headseparator,selectionend);
     if((posofheadseparator>posofchartend||posofheadseparator===-1)&&selection!="example"){

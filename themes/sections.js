@@ -3,7 +3,7 @@ newtheme.description = "Let you organize content inside sections";
 
 newtheme.helpText = function(dataobject){
   var result = "<h2>Section-block</h2>"+
-          "Content inside ```layout ``` Block are considered a section.<br>"+
+          "Content inside +++layout +++ Block are considered a section.<br>"+
           "With sections you can organize your content more specific. "+
           "You can use every MD-Code inside a section except new page."+
           "If the first Line of a section is an image it serves as the "+
@@ -55,11 +55,11 @@ newtheme.changeSectionType = function(type){
   var selectionstart = slidenote.textarea.selectionStart;
   var selectionend = slidenote.textarea.selectionEnd;
   var actelement = slidenote.parser.CarretOnElement();
-  var start = actelement.posinall; //```layout
+  var start = actelement.posinall;
   console.log("change sectiontype to:"+type);
   var end=slidenote.textarea.value.indexOf("\n",start);
-  slidenote.textarea.value = slidenote.textarea.value.substring(0,start)+
-                            "```layout:"+type+
+  slidenote.textarea.value = slidenote.textarea.value.substring(0,start+3)+
+                            "layout:"+type+
                             slidenote.textarea.value.substring(end);
   var diff=type.length+9-(end-start);
   slidenote.textarea.selectionEnd = selectionend+diff;
@@ -69,9 +69,9 @@ newtheme.changeSectionType = function(type){
 }
 
 newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/layout.png" title="layout/section">'+
-  '<span class="buttonmdcode">```</span>'+
+  '<span class="buttonmdcode">+++</span>'+
   '<span class="buttonmdtext">layout</span>'+
-  '<span class="buttonmdcode">```</span>',"```layout","```");
+  '<span class="buttonmdcode">+++</span>',"+++layout","+++");
 
 slidenote.datatypes.push({type:"layout", mdcode:true, theme:newtheme});
 slidenote.standarddatablocktype = {type:"layout",mdcode:true,theme:newtheme};

@@ -256,8 +256,8 @@ newtheme.insertMenuArea = function(dataobject){
 			tx.value = tx.value.substring(0,insertPos)+insertText+tx.value.substring(insertPos);
 			var cursorpos = insertPos + key.length+1;
 			if(!metablockhead){
-				var newhead = "```code:"+theme.metablockSymbol+"\n";
-				tx.value = tx.value.substring(0,celement.posinall)+newhead+tx.value.substring(codeblockstart);
+				var newhead = "code:"+theme.metablockSymbol+"\n";
+				tx.value = tx.value.substring(0,celement.posinall+3)+newhead+tx.value.substring(codeblockstart);
 				cursorpos+= newhead.length - (codeblockstart-celement.posinall);
 			}
 			slidenote.textarea.selectionEnd = cursorpos;

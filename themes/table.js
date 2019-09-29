@@ -11,10 +11,10 @@ newtheme.helpText = function(head){
 }
 
 newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/table.png" title="Table">'+
-  '<span class="buttonmdcode">```</span>'+
+  '<span class="buttonmdcode">+++</span>'+
   '<span class="buttonmdtext">table</span>'+
-  '<span class="buttonmdcode">```</span>'
-,"```table","```");
+  '<span class="buttonmdcode">+++</span>'
+,"+++table","+++");
 slidenote.datatypes.push({type:"table",mdcode:false,theme:newtheme});
 
 newtheme.hasInsertMenu = true;
