@@ -806,11 +806,14 @@ div#menuload {
     list-style: none;
     margin: unset;
     padding: unset;
+    max-height:50vh;
+    overflow-y:auto;
 }
 
 #notelist li {
-    display: grid;
+/*    display: grid;
     grid-template-columns: 10% 90%;
+    */
     margin-top: 10px;
 }
 
@@ -827,9 +830,13 @@ div#menuload {
 /*hover and focus-effects:*/
 
 #menuload button:hover,#menuload button:focus,
+#menuload a:hover, #menuload a:focus,
 #menupublish button:hover,#menupublish button:focus,
+#menupublish a:hover, #menupublish a:focus,
 #menuimportexport button:hover,#menuimportexport button:focus,
 #toolbar button:hover,#toolbar button:focus,
+#menucloud button:hover, #menucloud button:focus,
+button.menuitem:hover, button.menuitem:focus,
 button:hover, button:focus,
 #nicesidebarsymbol a:hover,
 #nicesidebarsymbol a:focus,
@@ -868,17 +875,31 @@ div#menupublish,
     grid-column-start: 2;
     grid-column-end: 4;
     margin-top: 20px;
-    margin-right:-5%;
+    margin-right:-15%;
+}
+#menuimportexport .arrow_box_content, #menupublish .arrow_box_content, #menuoptionseditor .arrow_box_content {
+    max-height: 58vh;
+    overflow-y: auto;
 }
 
 /*publishmenu*/
-#menupublish button {
+#menupublish #publishtocms{
+  background: #f4f4f4;
+  color:unset;
+  height:auto;
+}
+#menupublish button,
+#menupublish .loadnotebutton {
     border: 1px solid transparent;
     border-radius: 10px;
     width: 100%;
     height: 3em;
-    background: #f4f4f4;
     font-size: large;
+    background:#505050;
+    color:white;
+    padding-top: 1em;
+    padding-bottom: 1em;
+    margin: 0;
 }
 
 #menupublish .arrow_box:before, #menupublish .arrow_box:after {
@@ -893,14 +914,12 @@ div#menupublish,
 
 #publishedlist li {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 4rem 2rem;
-    margin-top: 10px;
+    margin-top: 1vh;
     grid-template-areas:"loadnotebutton loadnotebutton" "delete copy";
-
+    grid-gap:0.5vh;
 }
 
-#publishedlist button.loadnotebutton{
+#publishedlist .loadnotebutton{
   grid-area:loadnotebutton;
 }
 
@@ -913,6 +932,7 @@ div#menupublish,
     justify-self: center;
     align-self: center;
     border-radius: 5px;
+    position: relative;
 /*    height: 20px;
     width: 20px;
     padding: 0;
@@ -984,7 +1004,8 @@ input#importfile {
     display: none;
 }
 
-#menuimportexport button {
+#menuimportexport button, button.menuitem,
+#menucloud button {
     border-radius: 10px;
     width: 100%;
     height: 3em;
@@ -1013,6 +1034,10 @@ a.menuitem {
     border-radius: 10px;
     text-align: center;
     margin-top: 5px;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 #menuoptionseditor .separator {
@@ -1256,6 +1281,7 @@ div#toolbar {
     grid-column-end: last;
     padding-left:10px;
     margin-top:-20px;
+    max-width:15ch;
 }
 
 div#texteditorbuttons {
@@ -1675,7 +1701,7 @@ div#nicesidebarsymbol.out #nicesidebarsymbolcontainer {
 }
 .backgroundline.code, .backgroundline code,
 .backgroundline.codehead, .backgroundline.metadata.codehead{
-	background:orange;
+	background:#ecf4ee;
 	font-family:unset;
 	font-size:unset;
 }
