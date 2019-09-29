@@ -35,33 +35,112 @@ menumanager.buildSlidenoteList = function(){
     var menu = document.getElementById("notelist");
     var menuparent = menu.parentElement;
     menu.innerHTML= "";
+    var delbutton = document.getElementById("deletebutton");
+    var renbutton = document.getElementById("renamebutton");
+    var chpwbutton = document.getElementById("changepasswordbutton");
+    var actntitle = document.getElementById("actnotetitle");
+    actntitle.innerText = slidenoteguardian.notetitle;
+    //append functions to buttons:
+    delbutton.onclick = function(){
+      var dialogoptions = {
+        type:"confirm",
+        title:"delete slidenote",
+        content:"Do you wish to delete the slidenote?",
+        confirmbutton:"delete"
+      };
+      dialoger.buildDialog(dialogoptions,function(){
+        let nid = slidenoteguardian.restObject.nid;
+        if(!nid)return;
+        //window.location.href="/node/"+nid+"/delete";
+        slidenoteguardian.deleteFromRest("/node/"+nid, function(){
+          window.location.href="/editor";
+        });
+      });
+    };
+    renbutton.onclick = function(){
+      slidenoteguardian.passwordPrompt("Enter new Name","rename").then(function(value){
+        slidenoteguardian.saveNote("cms");
+      }, function(error){});
+    };
+    chpwbutton.onclick = function(){
+      slidenoteguardian.passwordPrompt("password","changepassword").then(function(value){
+        //change the slidenoteguardian-password:
+        slidenoteguardian.password = value;
+        //reset images enc-status so they encrypt with new password:
+        var b64imor = slidenote.base64images.base64images;
+        for(var bx=0;bx<b64imor.length;bx++){
+          b64imor[bx].encrypt = undefined;
+        }
+        //state restObject as to delete all images:
+        slidenoteguardian.restObject.reencrypt = true;
+        //re-encrypt all revisions:
+        //not implemented yet
+        //save directly:
+        slidenoteguardian.saveNote("cms");
+        //focus on textarea:
+        slidenote.textarea.focus();
+      }, function(value){});
+    };
+
+    /*
+    var del = document.createElement("button");
+    //del.classList.add("circle");
+    del.classList.add("sysbutton");
+    var delimg = new Image();
+    delimg.src = slidenote.imagespath + "/buttons/-.png";
+    delimg.alt = "delete slidenote >>>"+title+"";
+    del.appendChild(delimg);
+    del.targeturl = url+"/delete";
+    del.onclick = function(){
+      if(confirm("are you shure you want to delete selected slidenote?")){
+        location.href=this.targeturl;
+      };
+    }
+    var renb = document.createElement("button");
+    renb.classList.add("sysbutton");
+    renb.innerText="rename";
+    renb.onclick = function(){
+      //slidenoteguardian.passwordPrompt()
+      //or dialog???
+    }
+    var chpasswb = document.createElement("button");
+    chpasswb.classList.add("sysbutton");
+    chpasswb.innerText="change password";
+    chpasswb.onclick = function(){
+      //slidenoteguardian.passwordPrompt("")
+      //or dialog???
+    }
+    var nodetitle = document.createElement("div");
+    nodetitle.classList.add("actualnote");
+    nodetitle.innerText=slidenoteguardian.notetitle;
+    var nodetitlearea = document.createElement("div");
+    nodetitlearea.classList.add("actualnotearea");
+    nodetitlearea.appendChild(nodetitle);
+    nodetitlearea.appendChild(del);
+    nodetitlearea.appendChild(renb);
+    nodetitlearea.appendChild(chpasswb);
+    */
+
     var list = slidenoteguardian.loadedSlidenotes;
     for(var x=0;x<list.length;x++){
+      //if(url.indexOf(location.pathname)>-1)continue;//lod.classList.add("actnotebutton");
         var title = list[x].title;
-        var url = list[x].url;
+        var url = encodeURI(decodeURI(decodeURI(list[x].url)));
+        var nid = url.substring(url.lastIndexOf("/")+1);
+        if(nid==slidenoteguardian.restObject.nid)continue;
         var li=document.createElement("li");
-        var del = document.createElement("button");
-        var lod = document.createElement("button");
-        del.classList.add("circle");
-        var delimg = new Image();
-        delimg.src = slidenote.imagespath + "/buttons/-.png";
-        delimg.alt = "delete slidenote >>>"+title+"";
-        del.appendChild(delimg);
-        del.targeturl = url+"/delete";
-        del.onclick = function(){
-            if(confirm("are you shure you want to delete selected slidenote?")){
-                location.href=this.targeturl;
-            };
-        }
+        var lod = document.createElement("a");
         lod.classList.add("loadnotebutton");
-        if(url.indexOf(location.pathname)>-1)lod.classList.add("actnotebutton");
+        lod.classList.add("menuitem");
         lod.innerText = title;
-        lod.url = url;
-        lod.onclick = function(){
+        lod.title = title;
+        lod.href="/sites/all/libraries/slidenotes/marie.htm?id="+nid;
+        //lod.url = url;
+        //lod.onclick = function(){
             //put save-question here
-            location.href= this.url;
-        }
-        li.appendChild(del);
+        //    location.href= this.url;
+        //}
+        //li.appendChild(del);
         li.appendChild(lod);
         menu.appendChild(li);
     }
@@ -72,31 +151,76 @@ menumanager.buildPublishedMenu = function(){
     var list = slidenoteguardian.loadedPresentations;
     var menu = document.getElementById("publishedlist");
     menu.innerHTML = "";
+    if(list.length===0){
+      var li = document.createElement("li");
+      li.innerText = "no published Presentation of this Slidenote";
+      menu.appendChild(li);
+      return;
+    }
     for(var x=0;x<list.length;x++){
-        var delurl = "/node/"+list[x].id+"/delete";
+        var delurl = "/node/"+list[x].slidenote+"/delete";
         var title=list[x].title;
         var url = list[x].url;
         var li = document.createElement("li");
         var del = document.createElement("button");
-        var lod = document.createElement("button");
+        var lod = document.createElement("a");
+        var cpl = document.createElement("button");
+        lod.classList.add("menuitem");
+        lod.classList.add("loadnotebutton");
+        del.classList.add("menuitem");
+        cpl.classList.add("menuitem");
         del.classList.add("circle");
         var delimg = new Image();
         delimg.src = "images/buttons/-.png";
         delimg.alt = "delete presentation >>>"+title+"";
         del.appendChild(delimg);
+        var deltext = document.createElement("div");
+        deltext.innerText = "delete";
+        del.appendChild(deltext);
         del.targeturl = delurl;
         del.onclick = function(){
-            if(confirm("are you shure you want to delete selected slidenote?")){
-                location.href=this.targeturl;
+
+            //if(confirm("are you shure you want to delete selected slidenote?"))
+            var dialogoptions = {
+              type: "confirm",
+              title:"delete presentation",
+              content:"Do you wish to delete the presentation published to slidenotes.io?",
+              confirmbutton:"delete"
             };
+            dialoger.buildDialog(dialogoptions, function(){
+              location.href=this.targeturl;
+            });
+
         }
-        lod.innerText = list[x].date;
-        lod.targeturl = url;
-        lod.onclick = function(){
+        var lodtitle = document.createElement("div");
+        lodtitle.innerHTML = list[x].title;
+        var loddate = document.createElement("div");
+        loddate.innerText = list[x].date;
+        let commentstring = list[x].commentstring;
+        var commenttext = "";
+        if(commentstring && commentstring.length>0){
+          let commentcount = commentstring.split(":");
+          if(commentcount[1] && commentcount[1]*1>0){
+            commenttext+= commentcount[1]+" comments";
+          }
+          if(commentcount[0] && commentcount[0]*1>0){
+            commenttext+=" ("+commentcount[0]+" new)";
+          }
+        }
+        if(commenttext==="")commenttext = "no comments so far";
+        var lodcomment = document.createElement("div");
+        lodcomment.innerText = commenttext;
+        lod.appendChild(lodtitle);
+        lod.appendChild(loddate);
+        lod.appendChild(lodcomment);
+        //lod.innerText = list[x].date;
+        //if(url.indexOf("%25")>1)url.replace("%25","%"); //i dont know why it encodes % again but it does?!?
+        lod.href = encodeURI(url);
+        //lod.targeturl = url;
+        //lod.onclick = function(){
             //TODO: put save question here
-            location.href=this.targeturl;
-        }
-        var cpl = document.createElement("button");
+        //    location.href=this.targeturl;
+        //}
         cpl.classList.add("copylink");
         var cplimg = new Image();
         cplimg.src = "images/buttons/publish.svg";
@@ -418,7 +542,11 @@ function initeditor(){
 
             }
     			});
-          document.getElementById("importbutton").addEventListener("click",function(){document.getElementById("importfile").click()});
+          document.getElementById("importbutton").addEventListener("click",function(){
+            var impb = document.getElementById("importfile");
+            impb.value="";
+            impb.click();
+          });
           console.log("slidenote-object created");
           console.log(slidenote);
           slidenote.menumanager = menumanager;
@@ -471,7 +599,10 @@ function insertbutton(code){
           				</svg>
           	</div>
             <div id="cloud-undefined" class="cloud-box-element">
-                  <div>°</div>
+                  <!--<div>°</div>-->
+        				<svg viewBox="0 0 34 19">
+        					<circle cx="17" cy="11" r="2" fill="white"></circle>
+        				</svg>
             </div>
           </div>
         </button>
@@ -593,8 +724,52 @@ end test-data-->
 
     </div>
     <div id="playbuttonarea">
-        <button class="fluidbutton" id="presentationoptionsbutton"><img src="images/buttons/presentation-options.svg"></button>
-        <button class="fluidbutton" id="playbutton" onclick="slidenote.presentation.showpresentation()"><img src="images/buttons/play-button.svg"></button>
+        <button class="fluidbutton" id="presentationoptionsbutton">
+          <!--
+          <img src="images/buttons/presentation-options.svg">
+          -->
+          <svg viewBox="0 0 54 50" style="fill-rule:evenodd;clip-rule:evenodd;">
+
+                      <path filter="url(#presentationoptions-glow)" d="M22.361,34.174c-11.059,-6.016 -17.523,-2.76 -18.253,-13.28c-0.546,-7.86 15.243,-12.505 27.686,-7.46c10.295,4.174 18.13,20.108 12.763,27.504c-8.776,12.092 -14.754,-2.716 -22.196,-6.764Z" style="fill:url(#presentationoptions-linear);"></path>
+
+
+                      <clipPath id="_clip-presentationoptions">
+      					<path d="M22.361,34.174c-11.059,-6.016 -17.523,-2.76 -18.253,-13.28c-0.546,-7.86 15.243,-12.505 27.686,-7.46c10.295,4.174 18.13,20.108 12.763,27.504c-8.776,12.092 -14.754,-2.716 -22.196,-6.764Z"></path>
+      				</clipPath>
+
+      				<g clip-path="url(#_clip-presentationoptions)"><path d="M25.11,21.001c0.708,0.052 1.394,0.191 2.048,0.406l1.324,-1.349l1.663,0.93l-0.211,1.939l-0.066,-0.036c0.404,0.329 0.778,0.693 1.117,1.09l1.809,-0.455l0.933,1.661l-1.173,1.523c0.177,0.507 0.308,1.038 0.388,1.587l1.752,0.553l-0.077,1.904l-1.8,0.682c-0.132,0.575 -0.323,1.131 -0.565,1.658l1.121,1.311l-1.071,1.575l-1.825,-0.36c-0.338,0.333 -0.704,0.638 -1.094,0.912l0.137,-0.067l0.326,1.877l-1.727,0.806l-1.451,-1.302l0.257,-0.125c-0.599,0.178 -1.227,0.293 -1.876,0.337c-4.242,0.281 -7.972,-2.588 -8.897,-6.602l0.214,1.759l-1.881,-0.3l-0.204,-1.895l1.671,-0.933c-0.043,-0.656 -0.011,-1.298 0.089,-1.921l-1.468,-1.094l0.698,-1.773l1.81,-0.049c0.261,-0.45 0.562,-0.875 0.899,-1.269l-0.738,-1.589l1.457,-1.228l1.693,0.856c0.521,-0.285 1.077,-0.517 1.659,-0.69l0.376,-1.789l1.902,-0.112l0.781,1.572Zm-1.046,2.239c3.457,-0.23 6.45,2.39 6.68,5.847c0.23,3.457 -2.39,6.451 -5.847,6.68c-3.457,0.23 -6.451,-2.39 -6.68,-5.847c-0.23,-3.457 2.39,-6.45 5.847,-6.68Z" style="fill:#fcfcfc;fill-opacity:0.82;"></path></g>
+
+
+      		    <defs>
+      		        <linearGradient id="presentationoptions-linear" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(37.2753,-56.8819,56.8819,37.2753,0.165507,67.0311)">
+      		            <stop offset="0" style="stop-color:#c87f6d;stop-opacity:1"></stop>
+      		            <stop offset="1" style="stop-color:#89bec9;stop-opacity:1"></stop>
+      		        </linearGradient>
+
+      		        <filter id="presentationoptions-glow">
+      		            <feGaussianBlur in="SourceAlpha" stdDeviation="2"></feGaussianBlur>
+      		                <feOffset dx="0" dy="0" result="offsetblur"></feOffset>
+      		                <feFlood flood-color="rgb(30,87,99)" flood-opacity="0.4"></feFlood>
+      		                <feComposite in2="offsetblur" operator="in"></feComposite>
+      		                <feMerge>
+      		                    <feMergeNode></feMergeNode>
+      		                    <feMergeNode in="SourceGraphic"></feMergeNode>
+      		                </feMerge>
+      		        </filter>
+      		    </defs>
+      		</svg>
+        </button>
+        <button class="fluidbutton" id="playbutton" onclick="slidenote.presentation.showpresentation()">
+          <img src="images/buttons/play-buttonneu.png">
+          <!--
+          insert svg here
+          -->
+        </button>
+    </div>
+    <div id="searchbuttonarea">
+      <button class="fluidbutton" id="searchbutton">
+        <img src="images/buttons/search.png" alt="open search and replace menu">
+      </button>
     </div>
 <!-- the menus:-->
     <div id="menucloud"><div class="arrow_box">
@@ -610,16 +785,22 @@ end test-data-->
         </ul>
     </div></div>
     <div id="menuload"><div class="arrow_box">
-        <button id="newnote" onclick="slidenoteguardian.createNewSlidenote()"><img src="images/buttons/+.png">+++new slidenote+++</button>
+        <button id="newnote" class="menuitem" onclick="slidenoteguardian.createNewSlidenote()"><img src="images/buttons/+.png"><span>new slidenote</span></button>
+        <div id="actnotearea">
+          <div id="actnotetitle">new note</div>
+          <button id="deletebutton" class="minibutton menuitem">delete</button>
+          <button id="renamebutton" class="minibutton menuitem">rename</button>
+          <button id="changepasswordbutton" class="minibutton menuitem">change password</button>
+        </div>
         <ul id="notelist">
-            <li><button class="circle"><img src="images/buttons/-.png" alt="delete slidenote new note"></button><button class="loadnotebutton actnotebutton">new note</button></li>
-            <li><button class="circle"><img src="images/buttons/-.png"></button><button class="loadnotebutton ">dinosaurs today</button></li>
-            <li><button class="circle"><img src="images/buttons/-.png"></button><button class="loadnotebutton ">reading literature in the last century</button></li>
+            <li><a class="menuitem loadnotebutton">new note</a></li>
+            <li><a class="loadnotebutton menuitem">dinosaurs today</a></li>
+            <li><a class="loadnotebutton menuitem">reading literature in the last century</a></li>
         </ul>
     </div></div>
     <div id="menuoutlet"></div>
-    <div id="menupublish"><div class="arrow_box">
-        <button id="publishtocms">publish presentation to slidenotes.io</button>
+    <div id="menupublish"><div class="arrow_box"><div class="arrow_box_content">
+        <button id="publishtocms" onclick="slidenoteguardian.exportPresentationToCMS()">publish presentation to slidenotes.io</button>
         <div class="separator">published to slidenotes.io</div>
         <ul id="publishedlist">
 <!-- some test-data to see structure: -->
@@ -634,20 +815,49 @@ end test-data-->
                 <button class="copylink"><img src="images/buttons/publish.svg" alt="copy link of presentation...">copy link</button>
             </li>
         </ul>
-    </div></div>
-    <div id="menuimportexport"><div class="arrow_box">
-        <button id="importbutton"><div>import slidenote or MD-file</div><input type="file" id="importfile" accept=".slidenote,.txt,.md,.csv"></button>
+    </div></div></div>
+    <div id="menuimportexport"><div class="arrow_box"><div class="arrow_box_content">
+        <button id="importbutton" title="import slidenote or MD-file">
+          <img src="images/buttons/noteblock.png">
+          <img src="images/buttons/export.png" class="importpng">
+          <span>import slidenote or MD-file</span>
+          <input type="file" id="importfile" accept=".slidenote,.txt,.md,.csv">
+        </button>
         <div class="separator">download slidenote as</div>
-        <button onclick="slidenoteguardian.saveNote('filesystem')">encrypted .slidenote file</button>
-        <button onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')">unencrypted .md/.txt file</button>
+        <button id="exportasslidenotebutton" onclick="slidenoteguardian.saveNote('filesystem')" title="download as encrypted .slidenote file">
+          <img src="images/buttons/noteblock.png">
+          <img src="images/buttons/encrypted.png">
+          <img src="images/buttons/export.png">
+          <span class="screenreader-only">download slidenote as</span>
+          <span>encrypted .slidenote file</span>
+        </button>
+        <button id="exportasmdfilebutton" onclick="slidenoteguardian.exportToFilesystem(slidenote.textarea.value, slidenoteguardian.notetitle+'.md')" title="download as unencrypted text file">
+          <img src="images/buttons/noteblock.png">
+          <img src="images/buttons/notencrypted.png">
+          <img src="images/buttons/export.png">
+          <span class="screenreader-only">download code as</span>
+          <span>unencrypted .md/.txt file</span>
+        </button>
         <div class="separator">download presentation as</div>
-        <button onclick="slidenoteguardian.exportPresentationLocal(true);">encrypted .html file</button>
-        <button onclick="slidenoteguardian.exportPresentationLocal(false);">unencrypted .html file</button>
-    </div></div>
-    <div id="menuoptionseditor"><div class="arrow_box">
-        <a href="/user" class="menuitem">Account</a>
-        <a href='/user/logout' class="menuitem">log out</a>
-        <div class="separator">night shift</div>
+        <button id="exportasenchtmlbutton" onclick="slidenoteguardian.exportPresentationLocal(true);" title="download presentation as encrypted .html file">
+          <img src="images/buttons/presentationnice.png">
+          <img src="images/buttons/encrypted.png">
+          <img src="images/buttons/export.png">
+          <span class="screenreader-only">download presentation as</span>
+          <span>encrypted .html file</span>
+        </button>
+        <button id="exportasunenchtmlbutton" onclick="slidenoteguardian.exportPresentationLocal(false);" title="download presentation as unencrypted .html file">
+          <img src="images/buttons/presentationnice.png">
+          <img src="images/buttons/notencrypted.png">
+          <img src="images/buttons/export.png">
+          <span class="screenreader-only">download presentation as</span>
+          <span>unencrypted .html file</span>
+        </button>
+    </div></div></div>
+    <div id="menuoptionseditor"><div class="arrow_box"><div class="arrow_box_content">
+        <a href="/user" class="menuitem"><img src="images/buttons/account.png"><span>Account</span></a>
+        <a href='/user/logout' class="menuitem"><img src="images/buttons/logout.png"><span>log out</span></a>
+        <div class="separator"><span>night shift</span></div>
         <button id="nightmodetoggle" class="menuitem"><div>on</div><div>off</div></button>
         <div class="separator">view mode</div>
         <div id="optionmenuinterfacedesign">
@@ -673,7 +883,7 @@ end test-data-->
 				<li><a href="#" class="menuitem">community</a></li>
 			</ul>
 
-    </div></div>
+    </div></div></div>
     <div id="menuoptionspresentation"><div class="arrow_box_down">
         <div class="separator">slide design</div>
         <ul id="basicthemelist">
@@ -682,6 +892,20 @@ end test-data-->
           <li><div>prototype</div><input type="radio" name="basictheme" value="coding"><div class="coding"><div>WELCOME</div> TO SLIDENOTES</div></li>
 		</ul>
     </div></div>
+    <div id="menusearchbox"><div class="arrow_box"><div class="arrow_box_content">
+      <div class="separator">Search</div>
+      <input type="text" name="find" id="findinput" class="menuitem">
+      <div class="buttonarea">
+        <button id="findbutton" class="menuitem">Find</button>
+      </div>
+      <div class="separator">Replace</div>
+      <input type="text" name="replace" id="replaceinput" class="menuitem">
+      <div class="buttonarea">
+        <button id="replacebutton" class="menuitem">replace</button>
+        <button id="replaceallbutton" class="menuitem">replace all</button>
+      </div>
+      <div id="searchresult"></div>
+    </div></div></div>
 <!-- only stuff for making shadows and such:-->
     <!-- old stuff(cornerleft)
     <div id="cornerleft"></div>
@@ -712,7 +936,7 @@ end test-data-->
 			    </defs>
 			</svg></div>
     <div id="shadowelleft"></div>
-    <div id="shadowelright"></div>
+    <div id="shadowelright"><img src="images/rahmenrechts.png"></div>
     <div id="rahmenright"></div>
 </div><!--end of slidenoteeditor-div-->
 	<div id="praesentationrahmen">
@@ -747,9 +971,9 @@ end test-data-->
       <input type="radio" name="imageResize" value="100x50" onchange="slidenote.base64images.changeMaxSize(this.value)"><label>Icon (100x50)</label>
     </div>
     <div id="filePreview"></div>
-    <input type="file" id="fileInput">
     <div id="fileOld"></div>
-    </div>
+    <input type="file" id="fileInput">
+  </div>
     <div id="imagesreuseblock" class="dialogbox">
       <h1 class="dialogtitle">
         <span>image gallery</span>
@@ -758,7 +982,9 @@ end test-data-->
       <div id="imageselectionlist" class="dialogboxcontent"></div>
       <div id="imageselectiondialogbuttons">
         <button id="imageselectionuploadbutton" class="plusbutton" title="add image to imagegallery" onclick="document.getElementById('fileInput').value='';slidenote.base64images.uploadmode='imageselection'; document.getElementById('fileInput').click();">
-          <img src="images/buttons/+.png">add image
+          <img src="images/buttons/+.png" alt="add image to gallery">
+          <span>add image</span>
+          <span class="screenreader-only">to gallery</span>
         </button>
         <span>or choose image from gallery</span>
       </div>

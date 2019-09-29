@@ -3,12 +3,20 @@
     height: 0;
     width:0;
     overflow: hidden;
+    display:block;
 }
 
 /*make all clickable items show pointer*/
 a[href], input[type='submit'], input[type='image'], label[for], select, button, .pointer {
        cursor: pointer;
 }
+/*show special border on all focus elements*/
+:focus {
+    outline-style: dashed !important;
+    outline-color: rgb(190 111 97) !important;
+    outline-width: 2px !important;
+}
+
 /*implementing font rubikReg*/
 @font-face {
   font-family: rubikReg;
@@ -21,7 +29,7 @@ a[href], input[type='submit'], input[type='image'], label[for], select, button, 
 	background: white;
 	border: 1px solid transparent;
     border-radius:20px;
-    box-shadow:0 0 5px 0 lightgray;
+    box-shadow:0 0 5px 3px rgb(0,0,0,0.2);
     padding:10px;
     z-index: 100;
 }
@@ -56,9 +64,10 @@ body{
 /*gridding:*/
 
 #slidenoteeditor{
-    width:100%;
-    height:100%;
-    position:absolute;
+    width:100vw;
+    height:100vh;
+    position:fixed;
+    overflow:hidden;
     top:0;
     left:0;
     display:grid;
@@ -81,8 +90,8 @@ body{
     ". . buttonleft sidebar editor . buttonright ."
     ". . buttonleft sidebar editor . sidebarright ."
     ". . . sidebar editor . sidebarright ."
-    ". . playbutton sidebar editor . sidebarright ."
-    ". cornerbottomleft cornerbottomleft sidebar editor . cornerbottomright .";
+    "playbutton playbutton playbutton sidebar editor . sidebarright ."
+    "playbutton playbutton playbutton sidebar editor . cornerbottomright .";
     grid-template-columns: 4fr 0px 15.4vw auto auto auto 5.2vw 5fr;
 /*  compare with:
 
@@ -114,6 +123,10 @@ body{
     margin-top:0.5em;
     height:3em;
     transition:filter 400ms ease;
+    text-align: left;
+}
+#cloud svg{
+  height:100%;
 }
 
 #cloud-box{
@@ -216,9 +229,9 @@ body{
 /*STATUS ERROR END*/
 /*STATUS UNDEFINED*/
 #cloud.status-undefined #cloud-undefined{
-  display:grid;
-  align-content:center;
-  justify-content: center;
+  display:block;
+  /*align-content:center;
+  justify-content: center;*/
 }
 div#cloud-undefined div {
     color: white;
@@ -296,8 +309,10 @@ div#cloud-undefined div {
 #playbuttonarea{
     grid-area:playbutton;
     display:grid;
-    grid-template-columns:50% 35% 15%;
-    grid-template-rows:20% 30% 50%;
+    /*grid-template-columns:50% 35% 15%;
+    grid-template-rows:20% 30% 50%;*/
+    grid-template-columns: 9vh auto;
+    grid-template-rows: 4.5vh auto;
     z-index: 11;
 }
 
@@ -306,11 +321,19 @@ div#cloud-undefined div {
     grid-column-end:3;
     grid-row-start:2;
     grid-row-end:4;
-    justify-self:end;
+    justify-self:start;
+    align-self:end;
     border:1px solid transparent;
-    border-radius:50%;
+    border-radius:0 50% 0 0;
     height:15vh;
     overflow:hidden;
+    margin-bottom:-2px;
+    margin-left:-1px;
+}
+
+#playbuttonarea img, #playbuttonarea svg{
+  height:100%;
+  width:unset;
 }
 #presentationoptionsbutton{
     grid-column-start:2;
@@ -672,12 +695,13 @@ div#menucloud {
 }
 
 #menucloud button {
-    display: block;
+/*    display: block;
     border: none;
     background: lightgray;
     margin: 5px;
     width: 100%;
     border-radius: 3px;
+    */
     font-size: large;
 }
 
@@ -701,6 +725,31 @@ div#menuload {
 #menuload .arrow_box:before, #menuload .arrow_box:after {
     left: unset;
     right:16px;
+}
+#actnotearea {
+    background: #f4f4f4;
+    border-radius: 1vh;
+    margin-top: 1vh;
+    display: grid;
+    grid-template-areas: "actn actn actn" "del ren chg";
+    grid-gap: 0.5vh;
+    padding-bottom: 0.5vh;
+}
+
+#actnotetitle {
+    grid-area: actn;
+    background: #7db5bd;
+    border-radius: 1vh;
+    padding: 0.5rem 0 0.5rem 1rem;
+    color: white;
+}
+
+#menuload #actnotearea button.minibutton {
+    background: #505050;
+    height: 1.5em;
+    border-radius: 5px;
+    color: white;
+    font-size: xx-small;
 }
 
 #menuload button {
@@ -1099,9 +1148,9 @@ ul#basicthemelist {
 ul#toolbarbuttons {
     list-style: none;
     margin: unset;
-    padding: unset;
+    padding: 0.5vh;
     background:white;
-    height:100%;
+    max-height:60vh;
     overflow-y:auto;
 }
 #toolbarbuttons li:first-child button {
@@ -1397,7 +1446,7 @@ img#loadingcircle {
     text-align: right;
 }
 #insertarea button:first-child{
-  margin-top:10px;
+  margin-top:1em;
 }
 
 #insertarea button:focus, #insertarea button:hover {
@@ -1571,7 +1620,7 @@ div#nicesidebarsymbol.out #nicesidebarsymbolcontainer {
 .backgroundline.data{
 	display:inline-block;
 	width: 100%;
-	background:yellow;
+	background:#f3f8f8;
 }
 .backgroundline.metadataseparator {
     background: darkgreen;
@@ -2122,6 +2171,8 @@ button#importbutton .importpng {
   display: grid;
   align-items: center;
   justify-items: center;
+  max-width:80vw;
+  max-height:82vh;
 }
 .dialogbox .buttonarea {
     width: 100%;
