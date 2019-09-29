@@ -40,6 +40,7 @@ var SlidenoteCache = function(){
 SlidenoteCache.prototype.init = function(){
 
     this.allIds = this.localstorage.getItem("allIds");
+    var acturl = window.location.pathname; //href;
     var version = this.localstorage.getItem("slidenotecacheversion");
     if(this.allIds ===null || version === null || version < this.version ){
         //there is no cache in Browser - let things get started:
@@ -50,12 +51,11 @@ SlidenoteCache.prototype.init = function(){
         this.localstorage.setItem("slidenotecacheversion",this.version);
         this.maxSpace = this.calculateMaxSpace(); this.localstorage.setItem("maxSpace",this.maxSpace);
         if(typeof initial_note!="undefined")this.localstorage.setItem("sl1nid",initial_note.nid);
-        if(slidenoteguardian.restObject && slidenoteguardian.restObject.nid)this.localstorage.setItem("nid",slidenoteguardian.restObject.nid);
+        if(slidenoteguardian.restObject && slidenoteguardian.restObject.nid)this.localstorage.setItem("sl1nid",slidenoteguardian.restObject.nid);
     }else{
         this.maxSpace=this.localstorage.getItem("maxSpace");
         //there is a cache yet. try to find actual cache:
         var ids = this.allIds.split(",");
-        var acturl = window.location.pathname; //href;
         var nid = null;
         if(typeof initial_note!="undefined")nid=initial_note.nid;
         if(slidenoteguardian.restObject && slidenoteguardian.restObject.nid)nid = slidenoteguardian.restObject.nid;
@@ -112,6 +112,7 @@ SlidenoteCache.prototype.fitsIntoSpace = function(key,value){
 SlidenoteCache.prototype.setItem = function(key, value){
     //test if freeSpace is ok:
     var rkey = this.id+key;
+    if(key==="config")rkey="config"; //only one config for all notes
     if(this.fitsIntoSpace(rkey,value)){
         this.localstorage.setItem(rkey,value);
         //should i here set the time or let it the program do by itself? if here it happens often but is it bad?
@@ -122,6 +123,7 @@ SlidenoteCache.prototype.setItem = function(key, value){
 }
 
 SlidenoteCache.prototype.getItem = function(key){
+    if(key==="config") return this.localstorage.getItem(key); //config is stored globaly
     return this.localstorage.getItem(this.id+key);
 }
 
@@ -157,7 +159,7 @@ function slidenoteGuardian(slidenote){
   this.cmsImagesHash = document.getElementById("cmsimageshash");
   this.cmsNoteSave;
   this.cmsImagesSave;
-
+  this.jsfilesForExport = [];
   //this.exportedPresentations = new Array();
   this.restObject={};
   this.hascmsconnection=false;
