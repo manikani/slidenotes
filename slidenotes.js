@@ -4043,7 +4043,7 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 			this.parser.map.lastcursorpos = this.textarea.selectionEnd;
 			event.preventDefault();
 		}else{
-			if(key.length===1 && !event.ctrlKey){ //TODO: Mac-Command-Taste?
+			if(key.length===1 && !event.ctrlKey && !event.metaKey){ //TODO: Mac-Command-Taste?
 				//this.lastcarretpos = carretpos;
 				if(this.textarea.selectionEnd-this.textarea.selectionStart>0){
 					console.log("parseneu forced because of selection");
@@ -4068,6 +4068,7 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 
 slidenotes.prototype.keypressup = function(event, inputobject){
 	var key = ""+event.key;
+	var renderkeys = "*_#]:\\";
 
 
 	/*var carretpos = this.textarea.selectionEnd;
