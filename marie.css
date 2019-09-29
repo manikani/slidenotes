@@ -935,6 +935,8 @@ button#nightmodetoggle div:first-child {
 .presentationoptionsdialog input[type="radio"] {
   height: 0;
   width: 0;
+  position: absolute;
+  z-index: -1;
 }
 
 .presentationoptionsdialog ul {
@@ -1673,7 +1675,7 @@ div#nicesidebarsymbol.out #nicesidebarsymbolcontainer {
 /*Dialog box*/
 .dialogboxparent{
   position:fixed;
-  z-index:100;
+  z-index: 10000;
   width:100%;
   height:100%;
   top:0;

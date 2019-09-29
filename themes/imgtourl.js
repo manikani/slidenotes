@@ -42,64 +42,12 @@ slidenote.base64images = {
     }
   },
   rebuildOldImages: function(){
-    //will be replaced soon i think:
     this.buildImageGallery();
     this.buildImageSelectionDialog();
-    if(!document.getElementById("fileOld"))return;
-    //displays images in js-database of slidenote in div
-    var oldimagestext = "";
-    for(var x=0;x<this.base64images.length;x++){
-      //oldimagestext+='<a href="Javascript:insertbutton(\'%b64'+this.base64images[x].name+'\')"';
-      oldimagestext+= 'Image #'+x+'. <br>';
-      for(var y=0;y<this.base64images[x].names.length;y++){
-          oldimagestext+='Use ![]('+this.base64images[x].names[y]+') in md-code or click on image to insert into editor<br>';
-      }
-      oldimagestext+='<img src="'+this.base64images[x].base64url+'" name="'+this.base64images[x].filename+'" onclick="slidenote.base64images.addImage(this.name,this.src)">';
-      oldimagestext+='<a href="Javascript:slidenote.base64images.deleteImage(\''+this.base64images[x].base64url+'\')">Delete Image from Database</a>';
-      oldimagestext+='<br>';
-    }
-    document.getElementById("fileOld").innerHTML = oldimagestext;
-
   },
   sizeDialog: function(options){
     var img = options.origimage;
     var filename = options.filename;
-
-    //build sceleton:
-    /*
-    var container = document.createElement("div");
-    container.classList.add("dialogboxparent");
-    var oldcontainer = document.getElementById("dialogcontainer");
-    if(oldcontainer)oldcontainer.parentElement.removeChild(oldcontainer);
-    container.id = "dialogcontainer";
-    var dialogbox = document.createElement("div");
-    dialogbox.classList.add("dialogbox");
-    dialogbox.classList.add("imgtourlresizedialog");
-    var title = document.createElement("h1");
-    title.classList.add("dialogtitle");
-    var titletext = document.createElement("span");
-    titletext.innerText = "add image";
-    title.appendChild(titletext);
-    var closebutton = document.createElement("button");
-    closebutton.classList.add("dialogclosebutton");
-    var closespantxt = document.createElement("span");
-    closespantxt.innerText = "cancel import";
-    closebutton.appendChild(closespantxt);
-    var closespanimg = new Image();
-    closespanimg.src = slidenote.imagespath+"buttons/x.png";
-    closebutton.appendChild(closespanimg);
-    closefunction = function(){
-      var fileinput = document.getElementById("fileInput");
-      if(fileinput)fileinput.value="";
-      var dialog = document.getElementById("dialogcontainer");
-      dialog.parentElement.removeChild(dialog);
-      slidenote.textarea.focus();
-    };
-    closebutton.onclick = closefunction;
-    //container.onclick = closefunction;
-    title.appendChild(closebutton);
-    dialogbox.appendChild(title);
-    */
     //build content:
     var dialogcontent = document.createElement("div");
     dialogcontent.classList.add("dialogcontent");

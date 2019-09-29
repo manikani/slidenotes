@@ -330,14 +330,70 @@ slidenoteGuardian.prototype.init = function(){
   }else if((this.hascmsconnection && this.restObject.encnote === null)||
     (this.restObject.encnote!=undefined && this.restObject.encnote ==="")){
     //new slidenote, save to get password-prompt? seems not necesary
-    setTimeout("slidenoteguardian.saveNote('cms')",1);
+    //first get the name, then the password:
+    var dialogoptions = {
+      type:"prompt",
+      title: "welcome back!",
+      content: "Please give your Slidenote a name",
+      inputlabel:"slidenote file name",
+      confirmbutton:"save",
+      //nocancelbutton:true,
+      closefunction: function(){
+        var nid = slidenoteguardian.restObject.nid;
+        if(!nid)return;
+        slidenoteguardian.deleteFromRest("/node/"+nid,function(){
+          window.location.href="/editor";
+        });
+      },
+      cssclass:"initial"
+    };
+    dialogoptions.content = document.createElement("div");
+    dialogoptions.content.id = "placeholder";
+    var subtitle = document.createElement("h2");
+    subtitle.innerText = "Please give your Slidenote a name";
+    //check if first note:
+    if(this.notetitle==="€€€FIRST SLIDENOTE€€€"){
+      subtitle.innerText = "let's start with giving it a name:"
+      dialogoptions.title = "welcome to your first slidenote!";
+    }
+    dialogoptions.content.appendChild(subtitle);
+
+
+    dialoger.prompt(dialogoptions).then(function(resolve){
+      var name = resolve;
+      slidenoteguardian.notetitle = name;
+      slidenote.menumanager.buildSlidenoteList();
+      document.getElementById("slidenotetitle").innerText = name;
+      var pwuserfield = document.getElementById("username");
+      pwuserfield.value = name;
+
+      slidenoteguardian.passwordPrompt("now choose a password to encrypt your slidenote","encrypt").then(
+        function(resolve){
+          slidenoteguardian.password = resolve;
+          slidenoteguardian.saveNote('cms');
+          slidenoteguardian.startEditorAnimation();
+          //setTimeout("slidenoteguardian.saveNote('cms')",1);
+
+        },
+        function(error){
+          slidenoteguardian.password = "";
+          slidenoteguardian.startEditorAnimation();
+        }
+      );
+    },function(error){
+
+    });
+
+
+
   }else if(notehash===undefined && cachednote.notehash != undefined){
     setTimeout("slidenoteguardian.loadNote('local')",1);
   }else{
     if(cachednote.url === window.location.href){
-      var confirmtext = "You have an unsaved Version of this slidenote in Cache. Load local Cache instead of Cloud?";
-      if(confirm(confirmtext))setTimeout("slidenoteguardian.loadNote('local')",1);
-      else setTimeout("slidenoteguardian.loadNote('cms')",1);
+      //var confirmtext = "You have an unsaved Version of this slidenote in Cache. Show Diff?";
+      //if(confirm(confirmtext))setTimeout("slidenoteguardian.loadDiff()",1); //only for now, TODO: always load Diff on this occasion
+      //else setTimeout("slidenoteguardian.loadNote('cms')",1);
+      setTimeout("slidenoteguardian.loadDiff()",1);
     }else if(cachednote.url != undefined){
       var confirmtext = "You have an unsaved Version in Cache from another Slidenote "+this.localstorage.getItem("title");
       confirmtext +="\n Open unsaved Slidenote? ("+cachednote.url+") \n\n Warning - unsaved Cache will be lost if not saved to Cloud";
@@ -1056,13 +1112,76 @@ slidenoteGuardian.prototype.loadNote = async function(destination, dontinsert){
     let buffer = new Uint8Array(this.encBufferString.length);
     for(let i=0;i<this.encBufferString.length;i++)buffer[i]=this.encBufferString.charCodeAt(i)-255;
     //this.encTextBuffer = buffer.buffer; //changing to ArrayBuffer -- TODO:kann weg oder?
+    this.password = "";
     this.decText = await this.decrypt(buffer.buffer, this.iv); //decrypt ArrayBuffer
+    if(this.decText === "decryption has failed"){
+      this.password = undefined;
+      this.decText = await this.decrypt(buffer.buffer, this.iv); //decrypt ArrayBuffer
+    }
     //console.log("decryption fail:"+this.decText);
     //error-handling - try again:
-    while(this.decText === "decryption has failed" && confirm("decryption failed. try it again?")){
+    var decfaileddialogoptions = {
+      type:"confirm",
+      title:"decryption failed - wrong password!",
+      content: "decryption failed. try it again?",
+      confirmbutton: "try again",
+      cancelbutton: "cancel", //delete slidenote
+      /*closefunction: function(){
+        var nid = slidenoteguardian.restObject.nid;
+        if(!nid)return;
+        slidenoteguardian.deleteFromRest("/node/"+nid, function(){
+          window.location.href="/editor";
+        });
+      }*/
+    };
+    //while(this.decText === "decryption has failed" && confirm("decryption failed. try it again?")){
+    while(this.decText === "decryption has failed" && await dialoger.confirm(decfaileddialogoptions)){
         this.decText = await this.decrypt(buffer.buffer, this.iv); //decrypt ArrayBuffer anew
     }
-    if(this.decText === "decryption has failed")return; //password wrong, abort the load
+    if(this.decText === "decryption has failed"){
+
+      var errl = document.getElementById("texteditorerrorlayer");
+      var instext = this.encBufferString.substring(0,4000);
+      if(instext.length<4000){
+        while(instext.length<4000)instext+=instext+"|";
+      }
+      var encspan = document.createElement("span");
+      instext = begintext + instext;
+      encspan.innerText =instext;
+      var begintext = "<span>opening file &quot;"+slidenoteguardian.notetitle+"&quot; --- done</span><br>";
+      begintext += "<span>please input password: *******</span><br>";
+      begintext += "<span>trying to decrypt slidenote ---  error</span><br>";
+      begintext += "<span>please click to try again</span><br><br>";
+      begintext += "<span>loaded file:</span><br>";
+      errl.innerHTML = begintext;
+      errl.appendChild(encspan);
+      errl.onclick = function(){
+        errl.style.overflow = null;
+        errl.style.wordBreak= null;
+        errl.style.backgroundRepeat= null;
+        errl.style.backgroundSize= null;
+        errl.style.background = null;
+        document.getElementById("slidenoteloadingscreenwrapper").style.display = null;
+        var slidenotediv = document.getElementById("slidenotediv")
+        slidenotediv.classList.add("initial");
+        slidenotediv.classList.add("midstate");
+        slidenotediv.classList.remove("abortedDecryption");
+        slidenote.textarea.style.display = null;
+        slidenoteguardian.loadNote("cms");
+      }
+      slidenote.textarea.style.display = "none";
+      errl.style.background = "url(images/schloss-rot.png)";
+      errl.style.overflow= "hidden";
+      errl.style.wordBreak= "break-all";
+      errl.style.backgroundRepeat= "no-repeat";
+      errl.style.backgroundSize= "contain";
+      document.getElementById("slidenoteloadingscreenwrapper").style.display = "none";
+      var slidenotediv = document.getElementById("slidenotediv")
+      slidenotediv.classList.remove("initial");
+      slidenotediv.classList.remove("midstate");
+      slidenotediv.classList.add("abortedDecryption");
+      return; //password wrong, abort the load
+    }
     console.log("decryption ended succesfully:"+this.decText.substring(0,20));
     if(dontinsert)return this.decText;
     this.slidenote.textarea.value = this.decText; //putting result into textarea
@@ -1096,16 +1215,57 @@ slidenoteGuardian.prototype.loadNote = async function(destination, dontinsert){
     this.slidenote.textarea.blur();
     this.slidenote.textarea.focus(); //focus on textarea for further editing
     //start animation
-    var loadingscreen = document.getElementById("slidenoteloadingscreenwrapper");
-    if(loadingscreen){
-      loadingscreen.classList.add("endstate");
+    this.startEditorAnimation();
+    slidenote.base64images.rebuildOldImages();
+    if(this.password==="" && !this.localstorage.getItem("dontBotherOnEmptyPassword")){
       setTimeout(function(){
-        var loadsc = document.getElementById("slidenoteloadingscreenwrapper");
-        loadsc.parentElement.removeChild(loadsc);
-      },5000);
+        //show dialog after Editor is loaded and password is empty:
+        var dialogoptions = {
+          type:"confirm",
+          title:"missing password",
+          content:"Your slidenote is not protected with a password. Do you want to set a password now?",
+          confirmbutton:"yes",
+          cancelbutton:"no"
+        };
+        var dontarea = document.createElement("div");
+        var dontl = document.createElement("label");
+        dontl.innerText = "Don't remind me again";
+        var dontbother = document.createElement("input");
+        dontbother.type = "checkbox";
+        dontbother.onchange = function(){
+          slidenoteguardian.localstorage.setItem("dontBotherOnEmptyPassword", this.checked);
+        };
+        dontarea.appendChild(dontbother);
+        dontarea.appendChild(dontl);
+        dontarea.classList.add("dontbotherarea");
+        dialogoptions.afterButtonArea = dontarea;
+        var dialog = dialoger.buildDialog(dialogoptions, function(){
+          document.getElementById("changepasswordbutton").click();
+        });
+
+      },3100);
     }
 };
-
+slidenoteGuardian.prototype.startEditorAnimation = function(){
+  var loadingscreen = document.getElementById("slidenoteloadingscreenwrapper");
+  var slidenotediv = document.getElementById("slidenotediv");
+  if(loadingscreen){
+    loadingscreen.classList.remove("midstate");
+    slidenotediv.classList.remove("midstate");
+    loadingscreen.classList.add("endstate");
+    slidenotediv.classList.add("endstate");
+    setTimeout(function(){
+      var loadsc = document.getElementById("slidenoteloadingscreenwrapper");
+      loadsc.parentElement.removeChild(loadsc);
+      var pwprompt = document.getElementById("slidenoteGuardianPasswordPromptTemplate");
+      pwprompt.classList.remove("initial");
+      document.getElementById("slidenotediv").classList.remove("initial");
+      document.getElementById("slidenotediv").classList.remove("endstate");
+      document.getElementById("slidenotediv").classList.remove("midstate");
+      slidenote.textarea.focus();
+    },3000);
+  }
+};
 slidenoteGuardian.prototype.saveNote = async function(destination){
   var restObject = this.restObject;
   if(!this.initialised)return;
@@ -1650,16 +1810,25 @@ slidenoteGuardian.prototype.encryptForExport = async function(plaintext, passwor
     /*the job of encryptForExport is done - rest of code should be in saveNote*/
 }
 slidenoteGuardian.prototype.decryptImport = async function(buffer, iv){
-  let pw = await this.passwordPrompt("please type in password of import", "decrypt",true);
+  let pw = "";
   let keyguardian = await this.createKey(iv, pw);
-  console.log("decoding starts");
+  console.log("decoding starts without pw");
   try{
     this.plainTextBuffer = await this.crypto.subtle.decrypt(keyguardian.alg, keyguardian.key, buffer);
   } catch(e){
     console.log(e);
-    console.log("decryption has failed!");
-    //this.password = null; //reset password as it has no meaning
-    return "decryption has failed";
+    console.log("decryption without password has failed!");
+    pw = await this.passwordPrompt("please type in password of import", "decrypt",true);
+    keyguardian = await this.createKey(iv, pw);
+    console.log("decoding starts");
+    try{
+      this.plainTextBuffer = await this.crypto.subtle.decrypt(keyguardian.alg, keyguardian.key, buffer);
+    } catch(e){
+      console.log(e);
+      console.log("decryption has failed!");
+      //this.password = null; //reset password as it has no meaning
+      return "decryption has failed";
+    }
   }
   console.log("decoding has ended");
   return new TextDecoder().decode(this.plainTextBuffer); //TODO: error-handling
@@ -1782,6 +1951,7 @@ slidenoteGuardian.prototype.createKey = async function(iv, passw){
 }
 
 slidenoteGuardian.prototype.getCMSFields = function(){
+  console.log("dont do this anymore"); return;
   //get the cms-fields right. Test Style for slidenote.htm:
   //this.configArea = document.getElementById("configarea");
   this.cmsArea = document.getElementById("cmsarea");
@@ -1902,88 +2072,89 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
 	pwprompt.id= "slidenoteGuardianPasswortPrompt"; //id for css
   var pwpromptbox = document.getElementById("slidenoteGuardianPasswordPromptTemplate");
   if(pwpromptbox===null){
-    console.log("no password template found"+pwpromptbox);
-    pwpromptbox = document.createElement("div"); //inner promptbox
-  	var pwtext = document.createElement("div"); //text to be displayed inside box
-  	pwtext.innerHTML = text;
-  	pwpromptbox.appendChild(pwtext);
-    //password-box and retype-password-box
-    var pwform = document.createElement("form");
-    var emailfield = document.createElement("input");
-    emailfield.id="email";
-    emailfield.type="email";
-    emailfield.value= this.slidenotetitle+"@slidenotes.io";
-    //emailfield.style.display="none";
-    //emailfield.style.height="1px";
-    emailfield.autocomplete="username";
-    pwform.appendChild(emailfield);
-    var pwlabel = document.createElement("label");
-    pwlabel.innerText="PASSWORD";
-    pwform.appendChild(pwlabel);
-  	var pwinput = document.createElement("input"); //password-box
-  	pwinput.type="password";
-    pwinput.id="password";
-    pwinput.autocomplete="current-password";
-  	pwform.appendChild(pwinput);
-    pwpromptbox.appendChild(pwform);
-    var pwchecklabel = document.createElement("label");
-    pwchecklabel.innerText="RE-TYPE PASSWORD";
-    pwpromptbox.appendChild(pwchecklabel);
-    pwcheck = document.createElement("input");
-    pwcheck.type="password";
-    pwcheck.id="pwcheckfield";
-    pwpromptbox.appendChild(pwcheck);
-
-    //buttons
-  	var pwokbutton = document.createElement("button");
-  	pwokbutton.innerHTML = "ENCRYPT";
-  	var pwcancelb = document.createElement("button");
-  	pwcancelb.innerHTML = "cancel";
-  	pwpromptbox.appendChild(pwcancelb);
-  	pwpromptbox.appendChild(pwokbutton);
-
-    var pwpromptaftertext = document.createElement("div");
-    pwpromptaftertext.innerText = "we recommend using a password manager to keep up with the task of choosing and remembering safe passwords on the web.";
-    pwpromptbox.appendChild(pwpromptaftertext);
-  }else{
-    console.log("template found: using template to comply with password-manager");
-    var usernamefield = document.getElementById("username");
-    var usernamelabel = document.getElementById("slidenoteGuardianPasswordPromptUsernameLabel");
-    var pwinput = document.getElementById("password");
-    var pwcheck = document.getElementById("pwcheckfield");
-    var pwchecklabel = document.getElementById("slidenoteGuardianPasswordPromptRetypeLabel");
-    var pwtext = document.getElementById("slidenoteGuardianPasswordPromptTemplatePreText");
-    var pwokbutton = document.getElementById("slidenoteGuardianPasswordPromptEncrypt");
-    var pwnotetitle = document.getElementById("slidenoteGuardianPasswordPromptNotetitle");
-    pwtext.innerText = text;
-    if(this.notetitle==="undefined")this.notetitle=this.localstorage.getItem("title");
-    pwinput.value="";
-    usernamefield.value = this.notetitle; //+"@slidenotes.io";
-    if(pwnotetitle!=null)pwnotetitle.innerText = "Decrypting Slidenote \""+this.notetitle+"\"";
+    console.log("no passwordprompt found");
+    return;
   }
+  pwpromptbox.encmethod = ""+method;
+  console.log("template found: using template to comply with password-manager");
+  var usernamefield = document.getElementById("username");
+  var usernamelabel = document.getElementById("slidenoteGuardianPasswordPromptUsernameLabel");
+  var pwinput = document.getElementById("password");
+  var pwcheck = document.getElementById("pwcheckfield");
+  var pwchecklabel = document.getElementById("slidenoteGuardianPasswordPromptRetypeLabel");
+  var pwtext = document.getElementById("slidenoteGuardianPasswordPromptTemplatePreText");
+  var pwokbutton = document.getElementById("slidenoteGuardianPasswordPromptEncrypt");
+  var pwnotetitle = document.getElementById("slidenoteGuardianPasswordPromptNotetitle");
+  var pwskipbutton = document.getElementById("skippassword");
+  var pwgenbutton = document.getElementById("passwordgen");
+  pwtext.innerText = text;
+  //if(this.notetitle==="undefined")this.notetitle=this.localstorage.getItem("title");
+  pwinput.value="";
+  usernamefield.value = this.notetitle; //+"@slidenotes.io";
+  if(pwnotetitle!=null)pwnotetitle.innerText = "Decrypting Slidenote \""+this.notetitle+"\"";
+  //standard: skipbutton is hidden
+  pwskipbutton.classList.add("hidden");
+  if(method==="encrypt" && document.getElementById("slidenotediv").classList.contains("midstate")){
+    pwskipbutton.classList.remove("hidden");
+  }
+
   if(method==="decrypt"){
+    pwinput.classList.remove("hidden");
     pwokbutton.innerText="DECRYPT";
-    pwchecklabel.style.display="none";
-    pwcheck.style.display="none";
+    pwchecklabel.classList.add("hidden");
+    pwcheck.classList.add("hidden");//style.display="none";
     pwcheck.value="";
     usernamefield.classList.add("hidden");
     usernamelabel.classList.add("hidden");
+    pwgenbutton.classList.add("hidden");
   }else if(method==="export") {
     pwokbutton.innerText="ENCRYPT";
     usernamefield.value=this.notetitle+".slidenote";
     usernamefield.classList.remove("hidden");
     usernamelabel.classList.remove("hidden");
     usernamelabel.innerText = "filename for export";
-    pwchecklabel.style.display="block";
-    pwcheck.style.display="block";
+    //pwchecklabel.style.display="block";
+    //pwcheck.style.display="block";
+    pwinput.classList.remove("hidden");
+    pwcheck.classList.remove("hidden");
+    pwchecklabel.classList.remove("hidden");
+    pwnotetitle.innerText = "Exporting to Filesystem";
+    pwgenbutton.classList.remove("hidden");
   }else if(method==="exportCMS"){
+    pwnotetitle.innerText="Exporting to Filesystem";
     pwokbutton.innerText="ENCRYPT";
     usernamefield.value=this.notetitle;
     usernamefield.classList.remove("hidden");
     usernamelabel.classList.remove("hidden");
     usernamelabel.innerText = "filename for export";
-    pwchecklabel.style.display="block";
-    pwcheck.style.display="block";
+    //pwchecklabel.style.display="block";
+    //pwcheck.style.display="block";
+    pwinput.classList.remove("hidden");
+    pwcheck.classList.remove("hidden");
+    pwchecklabel.classList.remove("hidden");
+    pwgenbutton.classList.remove("hidden");
+  }else if(method==="rename"){
+    pwokbutton.innerText = "save";
+    usernamefield.value = this.notetitle;
+    usernamefield.classList.remove("hidden");
+    usernamelabel.innerText = "Enter new name";
+    pwnotetitle.innerText = "rename";
+    //usernamelabel.classList.remove("hidden");
+    usernamelabel.classList.add("hidden");
+    pwinput.classList.add("hidden");
+    pwinput.value = this.password;
+    pwcheck.classList.add("hidden");
+    pwchecklabel.classList.add("hidden");
+    pwgenbutton.classList.add("hidden");
+  }else if(method==="changepassword"){
+    pwokbutton.innerText = "save";
+    pwnotetitle.innerText = "change password";
+    usernamefield.value = this.notetitle;
+    usernamefield.classList.add("hidden");
+    pwinput.classList.remove("hidden");
+    pwcheck.classList.remove("hidden");
+    pwchecklabel.classList.remove("hidden");
+    pwgenbutton.classList.remove("hidden");
   }else {
     if(this.notetitle === "€€€new slidenote€€€"){
       usernamefield.classList.remove("hidden");
@@ -1999,20 +2170,40 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
     pwcheck.style.display="block";
     pwnotetitle.innerText="Set Password for Slidenote";
   }
+
   pwprompt.appendChild(pwpromptbox);
+  var dialogoptions = {
+    type:"passwordprompt",
+    title:pwnotetitle.innerText,
+    confirmbutton:"encrypt",
+    cancelbutton:"skip",
+    content:pwprompt,
+    closefunction: function(e){
+      var store = document.getElementById("slidenoteGuardianPasswordPromptStore");
+      var dialog = document.getElementById("slidenoteGuardianPasswordPromptTemplate");
+      store.appendChild(dialog);
+    },
+  }
+
+  //old stuff:
 	document.body.appendChild(pwprompt); //make promptbox visible
 	pwinput.focus(); //focus on pwbox to get direct input
   setTimeout("document.getElementById('password').focus()",500); //not the most elegant, but direct focus does not work sometimes - dont know why
 
 	return new Promise(function(resolve, reject) {
 	    pwprompt.addEventListener('click', function handleButtonClicks(e) {
-	      if (e.target.tagName !== 'BUTTON') { return; }
+	      if (e.target.tagName !== 'BUTTON' || e.target.id==="passwordgen" || e.target.id==="skippassword") { return; }
 	      pwprompt.removeEventListener('click', handleButtonClicks); //removes eventhandler on cancel or ok
-	      if (e.target === pwokbutton) {
-          if(pwinput.value===pwcheck.value||(pwcheck.style.display==="none" && pwcheck.value.length===0)){
+	      if (e.target.id === "slidenoteGuardianPasswordPromptEncrypt") {
+          if(pwinput.value===pwcheck.value||(pwcheck.classList.contains("hidden") && pwcheck.value.length===0)){
             let newname = document.getElementById("username").value;
-            slidenoteguardian.notetitle=newname;
-            document.getElementById("slidenotetitle").innerText = newname;
+            if(pwpromptbox.encmethod.indexOf("export")==-1 && newname!=slidenoteguardian.notetitle){
+              slidenoteguardian.notetitle=newname;
+              menumanager.buildSlidenoteList();
+              slidenoteguardian.localstorage.setItem("title",newname);
+              document.getElementById("slidenotetitle").innerText = newname;
+              //slidenoteguardian.saveNote("cms");
+            }
             resolve(pwinput.value); //return password
           }
           else {
@@ -2020,10 +2211,11 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
             //reject(new Error('Wrong retype'));
           }
 	      } else {
+          slidenoteguardian.savingtoDestination=undefined;
 	        reject(new Error('User canceled')); //return error
 	      }
         document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
-		    document.body.removeChild(pwprompt); //let prompt disapear
+		    pwprompt.parentElement.removeChild(pwprompt); //let prompt disapear
 	    });
     var handleenter= function handleEnter(e){
       if(pwinput.value===pwcheck.value){
@@ -2039,10 +2231,12 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
             //reject(new Error("Wrong retype"));
             }
           document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
-          if(pwprompt.parentElement === document.body)document.body.removeChild(pwprompt);
+          //if(pwprompt.parentElement === document.body)document.body.removeChild(pwprompt);
+          if(pwprompt.parentElement)pwprompt.parentElement.removeChild(pwprompt);
   			}else if(e.keyCode==27){
           document.getElementById("slidenoteGuardianPasswordPromptStore").appendChild(pwpromptbox);
-  				document.body.removeChild(pwprompt);
+  				if(pwprompt && pwprompt.parentElement)pwprompt.parentElement.removeChild(pwprompt);
+          slidenoteguardian.savingtoDestination=undefined;
   				reject(new Error("User cancelled"));
   			}
   		}
@@ -2052,58 +2246,112 @@ slidenoteGuardian.prototype.passwordPrompt = function (text, method, newpassword
 }
 
 slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
+/*
   var promptwrapper = document.createElement("div");
   promptwrapper.id = "slidenoteGuardianImportPromptWrapper";
+  promptwrapper.classList.add("dialogboxparent");
   var prompt = document.createElement("div"); //prompt-container
   prompt.id = "slidenoteGuardianImportPrompt";
-  var mdcodeblock = document.createElement("div"); //md-code-container
+  prompt.classList.add("dialogbox");
   var imageblock; //block for preview-images
   let imageblocktitle;
   let mdcodeblocktitle = document.createElement("h1");
   mdcodeblocktitle.innerHTML = "Import MD-Code from File:";
+  mdcodeblocktitle.classList.add("dialogtitle");
   prompt.appendChild(mdcodeblocktitle);
-  prompt.appendChild(mdcodeblock);
+  dialogcontent.classList.add("dialogcontent");
+  prompt.appendChild(dialogcontent);
+*/
+  var dialogoptions = {
+    type:"dialog",
+    title:"Import MD-Code from File:",
+    closebutton:true,
+    arrownavleftright:true
+  }
+  var dialogcontent = document.createElement("div");
+  dialogcontent.id="placeholder";
+  var mdcodeblock = document.createElement("div"); //md-code-container
+  dialogcontent.appendChild(mdcodeblock);
   if(imagestring){
     imageblock = document.createElement("div"); //block for preview-images
+    imageblock.classList.add("importfile-image-preview-block");
     imageblocktitle = document.createElement("h2");
-    prompt.appendChild(imageblocktitle);
-    prompt.appendChild(imageblock);
+    dialogcontent.appendChild(imageblocktitle);
+    dialogcontent.appendChild(imageblock);
   }
   //buttons:
   var importbutton = document.createElement("button");
   var cancelbutton = document.createElement("button");
   var replacebutton = document.createElement("button");
-  importbutton.innerHTML = "add to existing Code";
-  cancelbutton.innerHTML = "cancel";
-  replacebutton.innerHTML = "replace existing code";
+  importbutton.innerText = "add to existing Code";
+  cancelbutton.innerText = "cancel";
+  replacebutton.innerText = "replace existing code";
   var buttonwrapper = document.createElement("div");
+  buttonwrapper.classList.add("buttonarea");
   buttonwrapper.appendChild(cancelbutton);
   buttonwrapper.appendChild(replacebutton);
   buttonwrapper.appendChild(importbutton);
-  prompt.appendChild(buttonwrapper);
+  dialogcontent.appendChild(buttonwrapper);
 
-  mdcodeblock.innerHTML = mdcode;
+  //mdcodeblock.innerText = mdcode;
+  var mdcodearr = mdcode.split("\n");
+  var mdcodeol = document.createElement("ul");
+  for(var x=0;x<mdcodearr.length;x++){
+    let li = document.createElement("li");
+    li.innerText = mdcodearr[x];
+    mdcodeol.appendChild(li);
+  }
+  mdcodeblock.appendChild(mdcodeol);
   mdcodeblock.id = "slidenoteGuardianCodePreview";
+
 
   if(imagestring){
     //old: imagestring is now json, not old-style:
     //var imagepuffer = imagestring.split("<<<");
     //imagepuffer.pop(); //delete last element as it has no meaning
     var imagepuffer = JSON.parse(imagestring);
-    imageblocktitle.innerHTML = "Images from slidenote to import: (Total "+imagepuffer.length+" images)";
+    imageblocktitle.innerText = "Images from slidenote to import: (Total "+imagepuffer.length+" images)";
+    var imgul = document.createElement("ul");
     for(let i=0;i<imagepuffer.length;i++){
       let imgdata = imagepuffer[i].base64url;//imagepuffer[i].split(">>>");
       let imgnames = imagepuffer[i].names; //imgdata[0].substring(0,imgdata[0].indexOf("§$§")).split("§€§");
       let imgfilename = imagepuffer[i].filename;//imgdata[0].substring(imgdata[0].indexOf("§$§")+3);
-
+      let li = document.createElement("li");
       //previewimages.push({name:imgdata[0],src:imgdata[1]});
-      let imgtitle = document.createElement("h3");
-      imgtitle.innerHTML = imgfilename + ": used as <i>![]("+imgnames.join(")</i> and <i>![](")+")</i>";
+      let imgtitle = document.createElement("div");
+      imgtitle.classList.add("imagegallery-name");
+      imgtitle.innerText = imgfilename;
+      let imgnamediv = document.createElement("div");
+      imgnamediv.innerText = imgnames.join(" , ");
+      imgnamediv.classList.add("imagegallery-usedslides")
+      if(imgnames.length==0){
+        imgnamediv.innerText = "unconnected";
+        imgnamediv.classList.add("imagegallery-unconnected");
+      }
+       //+ ": used as <i>![]("+imgnames.join(")</i> and <i>![](")+")</i>";
+       //check against xss-attacks:
+       let detxss = imgdata.indexOf("\"");
+       detxss += imgdata.indexOf("\'");
+       detxss += imgdata.indexOf("<");
+       if(detxss>-3){
+         console.log("possible xss-attack found - aborting import of image");
+         continue;
+       }
+       let b64initstring = imgdata.substring(0,imgdata.indexOf(";base64,"));
+       if(b64initstring != "data:image/jpeg" &&
+           b64initstring!= "data:image/png" &&
+           b64initstring!= "data:image/gif"){
+             console.log("no valid base64 image found");
+             continue;
+       }
       let img = new Image();
       img.src = imgdata;
-      imageblock.appendChild(imgtitle);
-      imageblock.appendChild(img);
+      li.appendChild(imgtitle);
+      li.appendChild(imgnamediv);
+      li.appendChild(img);
+      imgul.appendChild(li);
     }
+    imageblock.appendChild(imgul);
   }
   let nombre=document.getElementById("importfile").files[0];
   if(nombre){
@@ -2123,12 +2371,17 @@ slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
     buttonwrapper.appendChild(chartbutton);
     buttonwrapper.appendChild(tablebutton);
     buttonwrapper.removeChild(replacebutton);
-    mdcodeblocktitle.innerHTML="Import Data from CSV-File";
-    importbutton.innerHTML = "insert at current carret position";
-
+    //mdcodeblocktitle.innerHTML="Import Data from CSV-File";
+    dialogoptions.title = "Import Data from CSV-File";
+    importbutton.innerText = "insert at current carret position";
   }
-  promptwrapper.appendChild(prompt);
-  document.body.appendChild(promptwrapper); //make prompt visible
+
+  //promptwrapper.appendChild(prompt);
+  //document.body.appendChild(promptwrapper);
+  dialogoptions.content = dialogcontent;
+  //make prompt visible
+  dialoger.buildDialog(dialogoptions);
+  var prompt = document.getElementById("dialogcontainer");
   return new Promise(function(resolve,reject){
     prompt.addEventListener('click', function handleButtonClicks(e){
       if(e.target.tagName!== 'BUTTON'){return;}
@@ -2144,8 +2397,9 @@ slidenoteGuardian.prototype.importPrompt = function(mdcode, imagestring){
       } else{
         reject(new Error('User aborted Import'));
       }
-      document.body.removeChild(promptwrapper);
-
+      //document.body.removeChild(promptwrapper);
+      document.getElementById("dialogcontainer").parentElement.removeChild(document.getElementById("dialogcontainer"));
+      document.getElementById("importfile").value="";
     });
   });
 
@@ -2155,41 +2409,102 @@ slidenoteGuardian.prototype.loadDiff = async function(){
   this.initialised = false;
   var cachedText = await this.loadNote("local",true);
   var cmsText = await this.loadNote("cms",true);
-  var confirmpage = document.createElement("div");
-  confirmpage.id = "slidenoteguardiandiff";
+  //var confirmpage = document.createElement("div");
+  //confirmpage.id = "slidenoteguardiandiff";
   var cachedButton = document.createElement("button");
   cachedButton.onclick = function(){
     slidenoteguardian.loadNote("local");
     slidenoteguardian.initialised=true;
-    var confirmp = document.getElementById("slidenoteguardiandiff");
+    var confirmp = document.getElementById("dialogcontainer");
     confirmp.parentNode.removeChild(confirmp);
   };
   var cmsButton = document.createElement("button");
   cmsButton.onclick = function(){
     slidenoteguardian.loadNote("cms");
     slidenoteguardian.initialised=true;
-    var confirmp = document.getElementById("slidenoteguardiandiff");
+    var confirmp = document.getElementById("dialogcontainer");
     confirmp.parentNode.removeChild(confirmp);
   };
   cachedButton.innerText = "Load Cached Version";
   cmsButton.innerText = "Load Version of Cloud";
-  var title = document.createElement("h1");
-  title.innerText = "Cached Version differs from Cloud-Status";
-  confirmpage.appendChild(title);
+  //var title = document.createElement("h1");
+  //title.innerText = "Cached Version differs from Cloud-Status";
+  //confirmpage.appendChild(title);
+  var dialogcontent = document.createElement("div");
+  //dialogcontent.classList.add("dialogcontent");
+  dialogcontent.id = "placeholder";
   var pretext = document.createElement("div");
   pretext.innerText = "We found an unsaved Version of this Note in your local Cache. Load local Cache or Cloud?";
   pretext.classList.add("pretext");
-  confirmpage.appendChild(pretext);
+  function createList(text){
+    var ul = document.createElement("ol");
+    var textarr = text.split("\n");
+    for(var tx=0;tx<textarr.length;tx++){
+      var li = document.createElement("li");
+      li.innerText = textarr[tx];
+      ul.appendChild(li);
+    }
+    return ul;
+  }
   var cacheContainer = document.createElement("div");
-  cacheContainer.innerText = cachedText;
+  //cacheContainer.innerText = cachedText;
+  var cacheList = createList(cachedText);
+  cacheContainer.appendChild(cacheList);
   cacheContainer.classList.add("slidenoteguardian-diff");
+  cacheContainer.classList.add("slidenoteguardian-diff-cache");
   var cmsContainer = document.createElement("div");
-  cmsContainer.innerText = cmsText;
   cmsContainer.classList.add("slidenoteguardian-diff");
-  confirmpage.appendChild(cachedButton);
-  confirmpage.appendChild(cmsButton);
-  confirmpage.appendChild(cacheContainer);
-  confirmpage.appendChild(cmsContainer);
-  document.getElementsByTagName("body")[0].appendChild(confirmpage);
+  cmsContainer.classList.add("slidenoteguardian-diff-cms");
+  var cmsCList = createList(cmsText);
+  cmsContainer.appendChild(cmsCList);
+  //cmsContainer.innerText = cmsText;
+  dialogcontent.appendChild(pretext);
+  dialogcontent.appendChild(cachedButton);
+  dialogcontent.appendChild(cmsButton);
+  dialogcontent.appendChild(cacheContainer);
+  dialogcontent.appendChild(cmsContainer);
+  //confirmpage.appendChild(dialogcontent);
+  //document.getElementsByTagName("body")[0].appendChild(confirmpage);
+  //call dialog:
+  var dialogoptions = {
+    type:"dialog",
+    title: "Cached Version differs from Cloud-Status",
+    content:dialogcontent,
+    cssclass:"slidenoteguardiandiffdialog",
+    closebutton:true,
+    closefunction: function(){
+      console.log("user canceled");
+      slidenoteguardian.loadNote("cms");
+    }
+    //closefunction: if user cancels/Escape load cms
+  };
+  dialoger.buildDialog(dialogoptions);
 
+}
+
+slidenoteGuardian.prototype.passwordGenerator = function(){
+    // put a new password directly into fields, no dialog, title shows password
+    var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!§$%&/()=?+-_#*~;,:.<>|@€ ²³{[]}\"'µ";
+    var length = 30;
+    var pw = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        pw += charset.charAt(Math.floor(Math.random() * n));
+    }
+    var rdl = Math.floor(Math.random()*10)+20;
+    pw = pw.substring(0,rdl);
+    document.getElementById("passwordgen").title = "Generated Password:"+pw;
+    document.getElementById("password").value = pw;
+    document.getElementById("pwcheckfield").value = pw;
+}
+
+slidenoteGuardian.prototype.skipPassword = function(){
+  var pw = document.getElementById("password");
+  var pwchk = document.getElementById("pwcheckfield");
+  if(pw.value!="" || pwchk.value!=""){
+    pw.value="";
+    pwchk.value="";
+    //pw.focus();
+    return;
+  }
+  document.getElementById("slidenoteGuardianPasswordPromptEncrypt").click();
 }

@@ -2,6 +2,7 @@ var dialoger = {
   standardtitle:{
     prompt:"please insert",
     confirm:"please confirm",
+    alert:" "
   }
 
 };
@@ -14,17 +15,23 @@ var dialoger = {
 * title: title to be placed on top of dialog - optional
 * confirmbutton: text ("ok") for confirmbutton - optional
 * cancelbutton: text ("cancel") for cancelbutton - optional
+* nocancelbutton: boolean (false) if confirm without cancel - optional
 * closebutton: boolean (false) if closebutton is placed on top right - optional
 * closebuttontext: text placed before x of button - optional
++ focuson: DOM-Node (null) the node that should be focused after build - optional
+* afterButtonArea: node to be appended on Area after Buttons (dont bother me...)
 */
 dialoger.buildDialog = function(options, followfunction){
   var type = options.type;
   var content = options.content;
   //standard-closefunction: optional: options.closefunction
   var closefunction = function(){
-    var dialog = document.getElementById("dialogcontainer");
-    dialog.parentElement.removeChild(dialog);
-    slidenote.textarea.focus();
+    //we set this into a setTimeout so that it happens as last in the stack of close-functions:
+    setTimeout(function(){
+      var dialog = document.getElementById("dialogcontainer");
+      dialog.parentElement.removeChild(dialog);
+      slidenote.textarea.focus();
+    },40);
   };
 
   //html-structure:
@@ -49,6 +56,7 @@ dialoger.buildDialog = function(options, followfunction){
   if(options.closebutton){
     var closebutton = document.createElement("button");
     closebutton.classList.add("dialogclosebutton");
+    closebutton.id = "dialogclosebutton";
     if(options.closebuttontext){
       var closespantxt = document.createElement("span");
       closespantxt.innerText = options.closebuttontext;
@@ -68,13 +76,14 @@ dialoger.buildDialog = function(options, followfunction){
   if(options.content.innerHTML!=undefined){
     if(options.content.id==="placeholder"){
       for(var x=content.childNodes.length-1;x>=0;x--){
-        dialogcontent.appendChild(options.content.childNodes[x]);
+        //dialogcontent.appendChild(options.content.childNodes[x]);
+        dialogcontent.insertBefore(options.content.childNodes[x],dialogcontent.firstChild);
       }
     }else{
       dialogcontent.appendChild(options.content);
     }
   }else if(typeof options.content ==="string"){
-    dialogcontent.innerHTML = options.content;
+    dialogcontent.innerText = options.content;
   }else if(options.content.length>0){
     for(var x=0;x<options.content.length;x++){
       dialogcontent.appendChild(options.content[x]);
@@ -82,13 +91,13 @@ dialoger.buildDialog = function(options, followfunction){
   }
   //finish content:
   dialogbox.appendChild(dialogcontent);
-  if(type==="confirm"){
+  if(type==="confirm" || type==="alert"){
     var buttondiv = document.createElement("div");
     buttondiv.classList.add("buttonarea");
     var confirmbutton = document.createElement("button");
     //confirmbutton.classList.add("dialogconfirmbutton");
     confirmbutton.id = "dialogconfirmbutton";
-    confirmbutton.onclick = followfunction;
+    confirmbutton.addEventListener("click", followfunction);
     confirmbutton.addEventListener("click",closefunction);
     if(options.confirmbutton)confirmbutton.innerText = options.confirmbutton;
     else confirmbutton.innerText="Ok";
@@ -107,8 +116,12 @@ dialoger.buildDialog = function(options, followfunction){
     else cancelbutton.innerText="cancel";
     cancelbutton.onclick = closefunction;
     if(options.closefunction)cancelbutton.addEventListener("click",options.closefunction);
-    buttondiv.appendChild(cancelbutton);
+    if(type==="confirm" && !options.nocancelbutton)buttondiv.appendChild(cancelbutton);
     dialogbox.appendChild(buttondiv);
+  }
+  //something pending to get appended after?
+  if(options.afterButtonArea){
+    dialogbox.appendChild(options.afterButtonArea);
   }
   //finish html-structure
   container.appendChild(dialogbox);
@@ -123,9 +136,12 @@ dialoger.buildDialog = function(options, followfunction){
     });
   }
   //append dialog to document:
-  document.getElementsByTagName("body")[0].appendChild(container);
+  //document.getElementsByTagName("body")[0].appendChild(container);
+  document.getElementById("slidenotediv").appendChild(container);
+  if(options.focuson){
+    options.focuson.focus();
   //focus on confirm-button if exists
-  if(confirmbutton){
+  }else if(confirmbutton){
     confirmbutton.focus();
   }else{
     //as the first button is the closebutton we want to avoid it by selecting last one:
@@ -140,8 +156,103 @@ dialoger.buildDialog = function(options, followfunction){
       bns[bns.length-1].focus();
     }
   }
+  return container;
 }
 
+/*prompt returns a promise with resolve string
+* if options.content is a string it builds a standard
+* if options.ispassword is true then it builds a standard password dialog
+* if options.checkpassword is true then it checks password before resolving
+* if content is a html-node without input with id then add input to it
+* if options.inputlabel then add that as label to input
+*/
+dialoger.prompt = async function(options){
+  var dialogoptions = options;
+  dialogoptions.type="confirm"; //has to be confirm to let ok and cancel
+  if(typeof options.content === "string" || (options.content.innerHTML &&
+    options.content.innerHTML.indexOf("dialogPromptTextInput")===-1)){
+
+
+    if(typeof options.content === "string"){
+      var content = document.createElement("div");
+      content.id = "placeholder";
+      var dialogtext = document.createElement("div");
+      dialogtext.innerText = options.content;
+    }else{
+      var content = options.content;
+      var dialogtext = document.createElement("div");;
+      if(options.inputlabel)dialogtext.innerText = options.inputlabel;
+    }
+    var inp = document.createElement("input");
+    if(options.ispassword)inp.type="password";
+     else inp.type="text";
+    inp.id = "dialogPromptTextInput";
+    inp.addEventListener("keyup",function(e){
+      if(e.key!="Enter")return;
+      document.getElementById("dialogconfirmbutton").click();
+    });
+    var wrapper = document.createElement("div");
+    wrapper.classList.add("promptInputWrapper");
+    wrapper.appendChild(dialogtext);
+    wrapper.appendChild(inp);
+    content.appendChild(wrapper);
+    dialogoptions.content = content;
+    dialogoptions.focuson = inp;
+  }
+  var dialog = this.buildDialog(dialogoptions);
+  return new Promise(function(resolve,reject){
+    document.getElementById("dialogconfirmbutton").addEventListener('click', function handleButtonClicks(e){
+      e.stopPropagation();
+      var input = document.getElementById("dialogPromptTextInput");
+        if(!input)input = dialog.getElementsByTagName("input")[0];
+        if(!input)resolve(null);
+        resolve(input.value);
+    });
+    dialog.addEventListener('keydown',function(e){
+      if(e.key==="Escape")resolve(null);
+    });
+
+  });
+
+}
+
+/* dialoger.confirm: builds a confirm-dialog and returns a promise
+*/
+dialoger.confirm = async function(options){
+  var dialogoptions = options;
+  dialogoptions.type="confirm"; //has to be confirm to let ok and cancel
+  if(typeof options.content === "string" || (options.content.innerHTML &&
+    options.content.innerHTML.indexOf("dialogPromptTextInput")===-1)){
+
+
+    if(typeof options.content === "string"){
+      var content = document.createElement("div");
+      content.id = "placeholder";
+      var dialogtext = document.createElement("div");
+      dialogtext.innerText = options.content;
+    }else{
+      var content = options.content;
+      var dialogtext = document.createElement("div");;
+      if(options.inputlabel)dialogtext.innerText = options.inputlabel;
+    }
+    dialogoptions.content = content;
+  }
+  var dialog = this.buildDialog(dialogoptions);
+  return new Promise(function(resolve,reject){
+    document.getElementById("dialogconfirmbutton").addEventListener('click', function handleButtonClicks(e){
+      e.stopPropagation();
+        resolve(true);
+    });
+    document.getElementById("dialogcancelbutton").addEventListener('click',function (){
+      resolve(false)
+    });
+    dialog.addEventListener('keydown',function(e){
+      if(e.key==="Escape")resolve(false);
+    });
+
+  });
+
+}
 
 //just for testing purpose some elements:
 revertoptions = {
@@ -172,11 +283,45 @@ confirmbutton:"delete"
 }
 
 renameslidenoteoptions = {
-type:"prompt",
+type:"confirm",
 title:"rename",
-content:"Enter new name",
 confirmbutton:"save",
-cancelbutton:"cancel"
+cancelbutton:"cancel",
+content:"Enter new name"
+}
+
+renameslidenotefunction = function(){
+  var newname = document.getElementById("newname");
+  if(newname)newname = newname.value; else return;
+  if(!newname || newname===slidenoteguardian.notetitle)return;
+  slidenoteguardian.notetitle = newname;
+  slidenote.menumanager.buildSlidenoteList();
+  document.getElementById("slidenotetitle").innerText = newname;
+  document.getElementById("username").value = newname;
+  //activate password-manager:
+  document.getElementById("slidenoteGuardianPasswordPromptEncrypt").click();
+  //dialog = document.getElementById("dialogcontainer");
+  //if(dialog)dialog.parentElement.removeChild(dialog);
+}
+
+function renametest(){
+  var content = document.createElement("div");
+  content.id = "placeholder";
+  var txt = document.createElement("div");
+  txt.innerText = "Enter new name";
+  var inp = document.createElement("input");
+  inp.type = "text";
+  inp.id = "newname";
+  inp.addEventListener("keyup",function(e){
+    if(e.key!="Enter")return;
+    document.getElementById("dialogconfirmbutton").click();
+  });
+  content.appendChild(txt);
+  content.appendChild(inp);
+  var dialogoptions = renameslidenoteoptions;
+  dialogoptions.content = content;
+  dialogoptions.focuson = inp;
+  dialoger.buildDialog(dialogoptions, renameslidenotefunction);
 }
 
 changepassword = {
