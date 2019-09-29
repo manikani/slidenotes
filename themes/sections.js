@@ -151,6 +151,8 @@ newtheme.styleThemeSpecials = function(){
         sectiondata.classList.add("right");
       }else if(dataobject.head.indexOf("head")>-1){
           sectiondata.classList.add("head");
+      }else if(dataobject.head.indexOf("inline")>-1){
+          sectiondata.classList.add("inline");
       }
 
 
