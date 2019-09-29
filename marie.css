@@ -924,6 +924,51 @@ div#menupublish,
     width: 40px;*/
 }
 
+#menupublish .copylink div,#menupublish .circle div{
+  display: inline-block;
+  margin-left:1ch;
+}
+
+div#linkcopyalert {
+    position: absolute;
+    top: -2em;
+    background: #f3f8f8;
+    width: 14ch;
+    padding: 0.5em;
+    color: black;
+    left: 9ch;
+    border-radius: 1ch;
+    animation-name: linkcopyalert;
+    animation-duration: 3s;
+    animation-delay:3s;
+    animation-iteration-count:1;
+    animation-fill-mode: forwards;
+}
+
+@keyframes linkcopyalert{
+    0%{
+        opacity:1;
+    }
+    99%{
+        display:block;
+    }
+    100%{
+        opacity:0;
+        display:none;
+    }
+}
+#linkcopyalert svg path {
+    stroke: black;
+}
+
+#linkcopyalert svg {
+    height: 1em;
+    display: inline-block;
+    margin-right:-1ch;
+}
+
+
+
 #menupublish .separator {
     margin-top: 25px;
 }

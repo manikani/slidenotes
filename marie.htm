@@ -239,6 +239,20 @@ menumanager.buildPublishedMenu = function(){
             var result = document.execCommand('copy');
             document.body.removeChild(input)
             console.log("copied "+text+" to clipboard:"+result);
+            var oldlinkcopied = document.getElementById("linkcopyalert");
+            if(oldlinkcopied)oldlinkcopied.parentElement.removeChild(oldlinkcopied);
+            var linkcopied = document.createElement("div");
+            var linktext = document.createElement("span");
+            linktext.innerText = "link copied";
+            var svgcheck = document.getElementById("cloud-ok");
+            linkcopied.innerHTML = svgcheck.innerHTML;
+            linkcopied.appendChild(linktext);
+            linkcopied.id = "linkcopyalert";
+            this.appendChild(linkcopied);
+            setTimeout(function(){
+              var oldlinkcopied = document.getElementById("linkcopyalert");
+              if(oldlinkcopied)oldlinkcopied.parentElement.removeChild(oldlinkcopied);
+            }, 6000);
         }
         li.appendChild(lod);
         li.appendChild(del);
