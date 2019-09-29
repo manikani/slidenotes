@@ -313,9 +313,9 @@ menumanager.init = function(){
     document.getElementById("presentationoptionsbutton").onclick = function(){
       menumanager.showPresentationOptionsDialog();
     }
-    var menus = ["menuload","menucloud","menupublish","menuimportexport", "menuoptionseditor","toolbar", "imagegallery"]; //, "menuoptionspresentation"
+    var menus = ["menuload","menucloud","menupublish","menuimportexport", "menuoptionseditor","toolbar", "imagegallery", "menusearchbox"]; //, "menuoptionspresentation"
     this.standardmenus = menus;
-    var menubuttons = ["loadnote","cloud","publishbutton","importexportbutton", "optionsbutton","toolbarbutton", "imagegallerybutton"]; //,"presentationoptionsbutton"
+    var menubuttons = ["loadnote","cloud","publishbutton","importexportbutton", "optionsbutton","toolbarbutton", "imagegallerybutton","searchbutton"]; //,"presentationoptionsbutton"
     for(var x=0;x<menus.length;x++){
         var button = document.getElementById(menubuttons[x]);
         var menu = document.getElementById(menus[x]);
@@ -350,13 +350,25 @@ menumanager.init = function(){
             if(firstbutton.length<1)return;
             firstbutton[0].focus();
         }
-        if(menus[x]!="toolbar"){
+        if(menus[x]!="toolbar" && menus[x]!="menusearchbox" && menus[x]!="imagegallery"){
             menu.classList.add("autohidemenu");
             //menu.onblur = function(){console.log("test onblur");this.classList.remove("active");};
             //menu.onfocusout = function(){console.log("test onfocusout");this.classList.remove("active");};
         }
     }
-    document.getElementsByTagName("textarea")[0].addEventListener("focus",function(event){
+    document.getElementById("slidenotediv").addEventListener("click",function(event){
+    console.log(event.target);
+    var activemenu = document.querySelector(".autohidemenu.active");
+    if(activemenu)var actbutton = document.getElementById(activemenu.button);
+    console.log(activemenu);
+    if(activemenu==null ||
+      (event.target && activemenu && activemenu.contains(event.target))||
+      (actbutton && actbutton.contains(event.target))){
+      console.log("found");
+      return;
+    }
+    //return;
+    //document.getElementsByTagName("textarea")[0].addEventListener("focus",function(event){
         var menus = document.getElementsByClassName("autohidemenu");
         for(var x=0;x<menus.length;x++){
             menus[x].classList.remove("active");
@@ -384,11 +396,156 @@ menumanager.init = function(){
           slidenoteguardian.saveConfig("local");
         }
     }
+    document.getElementById("findinput").addEventListener("keydown",function(e){
+      if(e.key!="Enter")return;
+      document.getElementById("findbutton").click();
+      this.focus();
+    });
+    document.getElementById("findbutton").onclick = function(){
+      var searchinput = document.getElementById("findinput")
+      var searchtext = searchinput.value;
+      var resultdiv = document.getElementById("searchresult");
+      var selstart = slidenote.textarea.selectionStart;
+      var selend = slidenote.textarea.selectionEnd;
+      if(!searchtext || !searchtext.length || searchtext.length===0)return;
+      var resultcount;
+      var searchflag = "";
+      var nextresult = {};
+      var actcursor = {
+        start:slidenote.textarea.selectionStart,
+        end:slidenote.textarea.selectionEnd
+      };
+      var sc = slidenote.textarea.value;
+      if(searchtext.charAt(0)==="/"&&searchtext.indexOf("/",1)>-1){
+        //regex
+        //parse regex and searchtext should only be the pattern-part
+        var tmpsearchflag = searchtext.substring(searchtext.indexOf("/",1)+1);
+        searchtext = searchtext.substring(1,searchtext.indexOf("/",1));
+        var allowedflags = ['i','m'];
+        for(var fx=0;fx<allowedflags.length;fx++)if(tmpsearchflag.indexOf(allowedflags[fx])>-1)searchflag+=allowedflags[fx];
+        nextresult.searchtext = searchtext;
+        var findregex = new RegExp(searchtext,searchflag);
+        let scshort = sc.substring(selstart+1);
+        var tmppos = scshort.search(findregex);
+        var actm = scshort.match(findregex);
+
+        if(tmppos>-1)tmppos+=selstart+1; else{
+        tmppos = sc.search(findregex);
+        actm = sc.match(findregex);
+        }
+        if(tmppos>-1)nextresult.startpos = tmppos;
+        console.log(actm);
+        if(actm){
+          nextresult.searchtext = actm[0];
+          nextresult.regExString = "/"+searchtext+"/"+searchflag;
+        }
+        var rcex = new RegExp(searchtext,"g"+searchflag);
+        resultcount = sc.match(rcex);
+        if(resultcount)resultcount = resultcount.length; else resultcount =0;
+      }else{
+        //standard search
+        searchtext = searchtext.replace(/\\n/g,"\n");
+        nextresult = {
+          startpos: sc.indexOf(searchtext,actcursor.end),
+          searchtext:searchtext
+        };
+        if(nextresult.startpos===-1)nextresult.startpos = sc.indexOf(searchtext);
+        var actpos = 0;
+        resultcount=0;
+        while(sc.indexOf(searchtext,actpos)>-1){
+          actpos=sc.indexOf(searchtext,actpos)+1;
+          resultcount++;
+        }
+      }
+      var resulttext = " result found for '";
+      if(resultcount!=1)resulttext = " results found for '";
+      if(nextresult.regExString)resulttext+="Regular Expression "+nextresult.regExString+"', actual Result:'";
+      resultdiv.innerText = resultcount + resulttext + nextresult.searchtext+"'";
+      document.getElementById("findinput").foundTerm = nextresult.searchtext;
+      if(nextresult.startpos >-1){
+        slidenote.textarea.selectionStart = nextresult.startpos;
+        slidenote.textarea.selectionEnd = nextresult.startpos + nextresult.searchtext.length;
+        slidenote.scrollToPosition();
+        console.log("parseneu forced by searchbox");
+        slidenote.parseneu();
+        slidenote.textarea.focus();
+        this.focus();
+      }
+    }//end of findbutton.onclick
+
+    document.getElementById("replacebutton").onclick = function(){
+      var ta = slidenote.textarea;
+      var text = ta.value;
+      var actselstart = slidenote.textarea.selectionStart;
+      var actselend = slidenote.textarea.selectionEnd;
+      var actsel = text.substring(actselstart,actselend);
+      var actsearch = document.getElementById("findinput").foundTerm;
+
+      var matches = (actsearch===actsel)
+      var actreplace = document.getElementById("replaceinput").value;
+      console.log("replace current selected "+actsel+" with "+actreplace+"? "+matches);
+      actreplace = actreplace.replace(/\\n/g,"\n");
+      if(!matches)console.log("replace aborted. actsearch:"+actsearch);
+      if(matches){
+        text = text.substring(0,actselstart)+actreplace+text.substring(actselend);
+        ta.value = text;
+        ta.setSelectionRange(actselstart,actselstart+actreplace.length);
+        console.log("parseneu forced by search-replace");
+        slidenote.parseneu();
+      }
+      document.getElementById("findbutton").click();
+      this.focus();
+    }
+    document.getElementById("replaceinput").onclick = function(){
+      document.getElementById("findbutton").click();
+      this.focus();
+    }
+    document.getElementById("replaceinput").addEventListener("keydown",function(e){
+      if(e.key!="Enter")return;
+      document.getElementById("replacebutton").click();
+    });
+    document.getElementById("replaceallbutton").onclick = function(){
+      var rpb = document.getElementById("replacebutton");
+      var res = document.getElementById("searchresult");
+      var text = slidenote.textarea.value;
+      var findinput = document.getElementById("findinput").value;
+      var replinput = document.getElementById("replaceinput").value;
+      var searchpattern = findinput;
+      var searchflag = "g";
+      if(findinput.charAt(0)==="/" && findinput.indexOf("/",1)>-1){
+        searchpattern = findinput.substring(1,findinput.indexOf("/",1));
+        let parsedsearchflag = findinput.substring(searchpattern.length+2);
+        var allowedflags = ['i','m'];
+        for(var fx=0;fx<allowedflags.length;fx++)if(parsedsearchflag.indexOf(allowedflags[fx])>-1)searchflag+=allowedflags[fx];
+        var rex = new RegExp(searchpattern,searchflag);
+        var matchcount = text.match(rex);
+        if(matchcount)matchcount = matchcount.length;
+        text = text.replace(rex,replinput);
+      }else{
+        searchpattern = searchpattern.replace(/\\n/g,"\n");
+        var rit = replinput.replace(/\\n/g,"\n");
+        var actpos=text.length-1;
+        var matchcount = 0;
+        while(actpos>=0 && text.lastIndexOf(searchpattern,actpos)>-1){
+          actpos = text.lastIndexOf(searchpattern,actpos);
+          text = text.substring(0,actpos)+rit+text.substring(actpos+findinput.length);
+          matchcount++;
+          actpos--;
+        }
+      }
+      slidenote.textarea.value = text;
+      res.innerText = matchcount + " instances of '"+findinput+"' replaced with '"+replinput+"'";
+      slidenote.parseneu();
+      this.focus();
+    }
+
     //temporary here to have it available on monday, TODO: delete this part:
-    document.getElementById("praesentationrahmen").onkeyup = function(event){
+    document.getElementById("praesentationrahmen").onkeydown = function(event){
+
       //Keyboardsteuerung der Slideshow:
       var key=""+event.key;
-      console.log("keycode of pressed key:"+key);
+      if(key==="undefined")key=getKeyOfKeyCode(event.keyCode);
+      //console.log("keycode of pressed key:"+key);
       if(key==="Escape")slidenote.presentation.showpresentation();
       if(key==="ArrowRight" || key===" ")presentation.nextPage();
       if(key==="ArrowLeft")presentation.lastPage();

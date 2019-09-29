@@ -13,6 +13,7 @@ var keyboardshortcuts = {
     menupublish:[],//all shortcuts on publish-menu
     menuimportexport:[],//all shortcuts on import/export menu
     menuoptionspresentation:[],//all shortcuts presentation-options-menu
+    menusearchbox:[],//all shortcuts searchbox
     dialog:[], //all shortcuts on dialog
     arrowleftright:[], //shortcuts arrownav left-right
     menuoptionseditor:[],//all shortcuts editor-options-menu
@@ -85,6 +86,7 @@ keyboardshortcuts.addShortcut = function(shortcut){
     if(element==="menuimportexport")this.menuimportexport.push(shortcut);
     if(element==="menuoptionseditor")this.menuoptionseditor.push(shortcut);
     if(element==="menuoptionspresentation")this.menuoptionspresentation.push(shortcut);
+    if(element==="menusearchbox")this.menusearchbox.push(shortcut);
     if(element==="dialog")this.dialog.push(shortcut);
     if(element==="arrowleftright")this.arrowleftright.push(shortcut);
 
@@ -514,6 +516,8 @@ keyboardshortcuts.init = function(){
     this.addShortcut(new this.shortcut("open toolbar", "textarea", " ", function(e){
       var toolbar = document.getElementById("toolbar");
       if(!toolbar.classList.contains("active"))toolbar.classList.add("active");
+      document.getElementById("imagegallery").classList.remove("active");
+      document.getElementById("menusearchbox").classList.remove("active");
       setTimeout("document.getElementById('toolbar').getElementsByTagName('button')[0].focus()",20);
     }));
     /*this.addShortcut(new this.shortcut("arrownavigate toolbar", "toolbar", {multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:false}, function(e){
@@ -551,6 +555,9 @@ keyboardshortcuts.init = function(){
     }));
     this.addShortcut(new this.shortcut("open imagegallery", "textarea","i",function(e){
       document.getElementById("imagegallerybutton").click();
+    }));
+    this.addShortcut(new this.shortcut("open search menu", "textarea","f",function(e){
+      document.getElementById("searchbutton").click();
     }));
 
     //history:
@@ -632,7 +639,14 @@ keyboardshortcuts.init = function(){
       this.addShortcut(new this.shortcut("arrownavigate "+menuname+" escape",
           menuname,
           {key:["Escape"],metakey:false},
-          function(e){slidenote.textarea.focus();}));
+          function(e){
+            slidenote.textarea.focus();
+            slidenote.textarea.click();
+      }));
+    }
+    this.shortcutByName("arrownavigate menusearchbox escape").activate = function(e){
+      slidenote.textarea.focus();
+      document.getElementById("menusearchbox").classList.remove("active");
     }
     //letter-navigation in toolbar:
     this.addShortcut(new this.shortcut("letter navigation in toolbar","toolbar",{multipleChoiceKeys:["c","t","l","q","n","f","i","o","h","b","d"],metakey:false},function(e){

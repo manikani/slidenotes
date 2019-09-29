@@ -251,6 +251,42 @@ div#cloud-undefined div {
 #editorblock{
     grid-area:editor;
 }
+/*searchbutton and searchmenu*/
+#searchbuttonarea {
+    grid-column-start: 7;
+    grid-row-start: 1;
+    grid-row-end: 3;
+    z-index: 11;
+}
+#searchbutton{
+  height:4vh;
+}
+
+#menusearchbox{
+  grid-column-start:6;
+  grid-column-end:last;
+  grid-row-start:2;
+  grid-row-end:4;
+  z-index: 120;
+  display:none;
+}
+
+#menusearchbox.active{
+  display:grid;
+}
+#menusearchbox input{
+  max-width:80%;
+}
+#menusearchbox .arrow_box{
+  max-width:20ch;
+  text-align: center;
+}
+#menusearchbox .arrow_box::after,
+#menusearchbox .arrow_box::before{
+  left:7vh;
+}
+
+
 #buttonarearight{
     grid-area:buttonright;
 }
