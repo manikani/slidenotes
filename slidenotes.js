@@ -1978,7 +1978,7 @@ emdparser.prototype.parseMap = function(){
 					var dataende = x+1;
 					var innerblocks = 0;
 					while(dataende<lines.length){
-						if(lines[dataende].substring(0,3)==="```"){
+						if(lines[dataende].substring(0,3)===dtsymbol){
 							if(lines[dataende].length===3){
 								if(innerblocks===0)break; else innerblocks--;
 							}else{
@@ -1989,8 +1989,8 @@ emdparser.prototype.parseMap = function(){
 			    }
 					if(dataende===lines.length){
 						 //error no dataend found
-			            this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol ```"));
-			    		this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol ```"));
+			            this.perror.push(new parsererror(x,0,lines[x].length-1,"data","missing endsymbol "+dtsymbol));
+			    		this.perror.push(new parsererror(dataende-1,0,lines[x].length-1,"data","missing endsymbol "+dtsymbol));
 					}else{
 						var rawdata = new Array();
 			              for(var rdx=x+1;rdx<dataende;rdx++){
@@ -2048,12 +2048,12 @@ emdparser.prototype.parseMap = function(){
 					//codeblock is much easier as no inner blocks are allowed. the next line with ``` breaks the codeblock:
 					var codeende = x+1;
 			        while(codeende < lines.length){
-			          if(lines[codeende].substring(0,3)==="```")break;
+			          if(lines[codeende].substring(0,3)===dtsymbol)break;
 			          codeende++;
 			        }
-			        if(codeende===lines.length || lines[codeende].substring(0,3)!="```"){
+			        if(codeende===lines.length || lines[codeende].substring(0,3)!=dtsymbol){
 			          //error: no codeend found
-			          this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol ```"));
+			          this.perror.push(new parsererror(x,0,lines[x].length-1,"code","missing endsymbol "+dtsymbol));
 			        }else{
 			          //codeend found:
 								var codeblock = {
