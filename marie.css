@@ -390,7 +390,9 @@ button img{
 /*outline-border in firefox*/
 
 button::-moz-focus-inner {
-  border-radius: 10px;
+  /*border-radius: 10px;*/
+  border:0;
+
 }
 
 button.fluidbutton::-moz-focus-inner {
@@ -406,8 +408,8 @@ button.fluidbutton::-moz-focus-inner {
     grid-template-columns: 40% 10% 15% 35%;
     grid-template-rows: 25% 20% 10% 12% 33%;
     margin-left:5px;
-    width:100px;
-    z-index: 11;
+    width:13vh;
+    z-index: 12;
 }
 
 #toolbarbutton{
@@ -583,6 +585,23 @@ div#shadowelright {
     background:white;
     z-index: 11;
 }
+.initial div#shadowelright{
+  background:transparent;
+}
+#shadowelright img{
+  display:none;
+  margin-right:-8px;
+  margin-top:-2px;
+  z-index:10;
+
+}
+.initial #shadowelright img{
+  display:block;
+}
+.initial div#rahmenright{
+  grid-column-start:7;
+}
+
 div#rahmenright {
   grid-row-start: 1;
   grid-row-end: last;
@@ -593,7 +612,7 @@ div#rahmenright {
 }
 
 
-/*fucking load-note bricket*/
+/*load-note bricket*/
 #loadnote div {
     display: grid;
     grid-template-columns: 1fr 20px;
@@ -1233,6 +1252,7 @@ button#outlet {
   top:0;
   z-index: 8;
 }
+
 #slidenoteloadingscreenwrapper.endstate #slidenoteeditorhidetexteditor{
   animation-name:loading-blob;
   animation-delay: 0.2s;
@@ -1260,6 +1280,48 @@ button#outlet {
 			100%{opacity: 0;}
 		}
 
+#slidenoteloadingscreenwrapper #loadingcircle{
+  animation-name: loading-circle;
+  animation-duration: 2s;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-iteration-count: 500;
+  position: relative;
+  z-index: 1500;
+
+}
+@keyframes loading-circle {
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+}
+
+#slidenoteloadingscreenwrapper.midstate #loadingcircle{
+  animation-name:none;
+  transition:valueTransform;
+}
+
+#slidenoteloadingscreenwrapper.endstate #loadingcircle{
+  animation-name: loading-circle2;
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+}
+@keyframes loading-circle2 {
+    0%{
+      transform:rotate(0deg);
+      height:400px;
+      opacity:1;
+    }
+    50%{
+      opacity:0.8;
+    }
+    100%{
+      transform:rotate(360deg);
+      height:0px;
+      opacity:0;
+    }
+}
 #circle-colorful{
   display:none;
 }
@@ -1758,4 +1820,15 @@ button#dialogconfirmbutton {
 
 button#dialogcancelbutton {
     background: #777777;
+}
+
+.dontbotherarea{
+  background:#f4f4f4;
+}
+/*hide imagesblock as fast as possible:*/
+#imagesuploadblock{
+  display:none;
+}
+#slidenotediv #imagesblock{
+  display:none;
 }

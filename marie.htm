@@ -768,7 +768,7 @@ end test-data-->
     <div id="slidenoteeditorloadingscreenbackground"></div>
     <div id="slidenoteeditorhidetexteditor"></div>
     <div id="circle-colorful"></div>
-
+    <!--
 		 <svg id="loading-blob" viewBox="0 0 100 100">
       <path d="M37.554,80.489c2.083-.017,21.2,10.486,39.876-17.363,6.662-9.931,4.772-23.982-2.23-31.908-7.628-8.634-21.694-11.453-31.4-6.106C20.036,38.21,24.457,54.56,23.024,56.588c-.961,1.359-13.326,6.287-6.491,19.617,5.777,11.266,19.1,4.3,21.021,4.284Z" fill-rule="nonzero"style="fill:url(#linear_blob);">
             	<animate dur="1s" repeatCount="indefinite" attributeName="d" values="M37.554,80.489c2.083-.017,21.2,10.486,39.876-17.363,6.662-9.931,4.772-23.982-2.23-31.908-7.628-8.634-21.694-11.453-31.4-6.106C20.036,38.21,24.457,54.56,23.024,56.588c-.961,1.359-13.326,6.287-6.491,19.617,5.777,11.266,19.1,4.3,21.021,4.284Z;
@@ -789,7 +789,7 @@ end test-data-->
             fill="freeze"
             calcMode="spline"
             keySplines="0.55 0.17 0.2 1; 0.42 0.34 0.9 0.25; 0.58 0.27 0.2 1">
-      </path>  -->
+      </path>
 
       <defs>
         <linearGradient id="linear_blob" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(45.7569,-39.1744,39.1744,45.7569,19.4679,67.8736)">
@@ -797,24 +797,30 @@ end test-data-->
         	<stop offset="1" style="stop-color:rgb(114,195,211);stop-opacity:0.77"/>
       </defs>
     </svg>
-
+  -->
+    <img id="loadingcircle" src="images/loadingscreen.gif">
   </div>
 </div>
 <div id="slidenoteGuardianPasswordPromptStore">
-<div id="slidenoteGuardianPasswordPromptTemplate">
-	<div id="slidenoteGuardianPasswordPromptNotetitle">TITLE</div>
-	<div id="slidenoteGuardianPasswordPromptTemplatePreText"></div>
-	<form onsubmit="event.preventDefault();" action="#" method="POST">
-		<label id="slidenoteGuardianPasswordPromptUsernameLabel">FILENAME FOR EXPORT</label>
-		<input type="text" id="username">
-		<label>PASSWORD</label>
-		<input type="password" id="password">
-		<label id="slidenoteGuardianPasswordPromptRetypeLabel">RE-TYPE PASSWORD</label>
-		<input type="password" id="pwcheckfield">
-		<button type="submit" id="slidenoteGuardianPasswordPromptEncrypt">ENCRYPT</button>
-		<div id="slidenoteGuardianPasswortPromptAfterText">we recommend using a password manager to keep up with the task of choosing and remembering safe passwords on the web.</div>
-	</form>
-
+<div id="slidenoteGuardianPasswordPromptTemplate" class="initial dialogbox">
+	<h1 class="dialogtitle" id="slidenoteGuardianPasswordPromptNotetitle">TITLE</h1>
+  <div class="dialogcontent">
+  	<div id="slidenoteGuardianPasswordPromptTemplatePreText"></div>
+  	<form onsubmit="event.preventDefault();" action="#" method="POST">
+  		<label id="slidenoteGuardianPasswordPromptUsernameLabel">FILENAME FOR EXPORT</label>
+  		<input type="text" id="username">
+  		<label>PASSWORD</label>
+  		<input type="password" id="password">
+  		<label id="slidenoteGuardianPasswordPromptRetypeLabel">RE-TYPE PASSWORD</label>
+  		<input type="password" id="pwcheckfield">
+      <div class="buttonarea">
+    		<button type="submit" id="slidenoteGuardianPasswordPromptEncrypt">ENCRYPT</button>
+        <button id="skippassword" onclick="slidenoteguardian.skipPassword()">skip</button>
+        <button id="passwordgen" onclick="slidenoteguardian.passwordGenerator()">Generate a Password for me</butt>
+      </div>
+  		<div id="slidenoteGuardianPasswortPromptAfterText">we recommend using a password manager to keep up with the task of choosing and remembering safe passwords on the web.</div>
+  	</form>
+  </div>
 </div>
 </div>
 <div id="slidenoteLoadingScreen">

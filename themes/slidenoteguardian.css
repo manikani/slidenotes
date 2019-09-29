@@ -13,12 +13,8 @@
   align-content: center;
 }
 
-#slidenoteGuardianPasswortPrompt > div {
-}
-#slidenoteGuardianPasswordPromptStore #slidenoteGuardianPasswortPromptTemplate{
-  opacity:0;
-}
-div#slidenoteGuardianPasswordPromptTemplate {
+/*div#slidenoteGuardianPasswordPromptTemplate*/
+.dialogbox.initial {
     border-radius: 50%;
     box-shadow: 0 0 14px -5px;
     padding: 112px;
@@ -27,7 +23,7 @@ div#slidenoteGuardianPasswordPromptTemplate {
     height:400px;
 
     animation-name:fadein;
-    
+
     animation-duration: 1.5s;
     animation-fill-mode: forwards;
 }
@@ -36,10 +32,26 @@ div#slidenoteGuardianPasswordPromptTemplate {
     100%{opacity: 1}
 }
 
+/*#slidenoteGuardianPasswordPromptTemplate*/
+.dialogbox.initial div{
+  background:none;
+}
+
+.dialogbox.initial .dialogtitle{
+  display: unset;
+  padding-left:10vh;
+  padding-right:10vh;
+}
+
+#slidenoteGuardianPasswordPromptNotetitle{
+  display:unset;
+}
+
+/*
 #slidenoteGuardianPasswortPrompt > div div{
   margin-top:20px;
 }
-
+*/
 #slidenoteGuardianPasswortPrompt label{
     display:block;
     margin-top:20px;
@@ -56,13 +68,19 @@ div#slidenoteGuardianPasswordPromptTemplate {
   display:none;
 }
 
-input#username.hidden {
+input#username.hidden, input#password.hidden {
     position: absolute;
     top: -100%;
 }
-label#slidenoteGuardianPasswordPromptUsernameLabel.hidden {
+input#pwcheckfield.hidden, #slidenoteGuardianPasswordPromptRetypeLabel.hidden {
     display: none;
 }
+
+label#slidenoteGuardianPasswordPromptUsernameLabel.hidden,
+#skippassword.hidden, #passwordgen.hidden {
+    display: none;
+}
+
 
 #slidenoteGuardianImportPromptWrapper {
     position: fixed;
@@ -92,7 +110,27 @@ label#slidenoteGuardianPasswordPromptUsernameLabel.hidden {
 }
 
 #slidenoteGuardianCodePreview{
-  white-space:pre;
+  white-space:pre-wrap;
+}
+.importfile-image-preview-block, #slidenoteGuardianCodePreview {
+    background: white;
+    overflow: hidden;
+    max-height:30vh;
+    margin: 1em;
+    border-radius: 1em;
+    box-shadow: inset black 0px 0px 0.5vh -0.2vh;
+}
+
+.importfile-image-preview-block ul, #slidenoteGuardianCodePreview ul {
+    overflow-y: auto;
+    max-height: 29vh;
+    margin-right: 1em;
+    margin-top: 0.5vh;
+    list-style: none;
+}
+
+.importfile-image-preview-block img{
+  height:4em;
 }
 
 div#slidenoteguardiandiff {
@@ -119,9 +157,121 @@ div#slidenoteguardiandiff {
 }
 
 .slidenoteguardian-diff {
-    max-height: 20em;
+    height: 20em;
     padding: 10px;
     border: 1px solid red;
     overflow-y: scroll;
-    white-space:pre;
+    max-width:90%;
+    white-space:pre-wrap;
+}
+
+.slidenoteguardian-diff-cache{
+  grid-area: localt;
+}
+.slidenoteguardian-diff-cms{
+  grid-area: cachedt;
+}
+.slidenoteguardiandiffdialog .dialogcontent{
+  grid-template-areas: "pretext pretext" "button1 button2" "cachedt localt";
+  grid-gap:2vh;
+  padding:2vh;
+}
+.slidenoteguardiandiffdialog .pretext{
+  grid-area:pretext;
+}
+
+/*making options available during initial
+and all other options unavailable*/
+.initial div#optionarea, .initial .arrow_box {
+  z-index: 10001;
+}
+
+.midstate #optionarea button  {
+    display: none;
+}
+.initial #optionarea button{
+  opacity:0;
+}
+
+
+.midstate div#optionarea #optionsbutton{
+    display: block;
+    grid-column: 3;
+    opacity:1;
+}
+
+
+.initial div#optionmenuinterfacedesign,
+.initial .separator {
+    display: none;
+}
+/*making buttonarea invisible and untabable during initial phase*/
+.initial div#buttonarearight {
+    transition: all 3s ease;
+}
+
+/*blur-effect to fade-in:*/
+.initial.endstate #optionarea button,
+.endstate #buttonarearight,
+.endstate #playbuttonarea,
+.endstate #cloud,
+.endstate #loadnote,
+.endstate #editorblock {
+
+}
+.endstate.never {
+  /*opacity:0;*/
+  /*filter: blur(100px) contrast(0.5) saturate(10.5);*/
+  animation-name:pixelin;
+  animation-duration: 3s;
+  animation-iteration-count: 1;
+}
+@keyframes pixelin {
+  0%{
+    filter: blur(150px);
+    opacity:0;
+   }
+   50%{
+     filter:blur(150px);
+     opacity:1;
+   }
+  100%{ filter: blur(0px);}
+}
+
+.midstate #buttonarearight,
+.midstate #playbuttonarea {
+    display: none;
+}
+/*initial buttons*/
+.initial.dialogbox .buttonarea button {
+    color: unset;
+    border-radius: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px 1px rgba(144, 193, 200, 0.7);
+    transition: all 0.2s ease-in;
+}
+.initial.dialogbox .buttonarea button:first-child,
+.initial button#dialogconfirmbutton{
+    border-radius: 13px;
+    border-style: solid;
+    border-width: 3px;
+    border-color: #90C1C8;
+    background-color: #F6F9F9;
+    box-shadow: 0 0 10px 1px rgba(144, 193, 200, 0.7);
+    transition: all 0.2s ease-in;
+}
+
+.abortedDecryption .fluidbutton,
+.abortedDecryption #changepasswordbutton,
+.abortedDecryption #cloud-box,
+.abortedDecryption #importexportbutton,
+.abortedDecryption #publishtocms {
+  display:none;
+}
+.abortedDecryption #optionsbutton {
+    grid-column: 3;
+}
+
+.abortedDecryption #publishbutton {
+    grid-column: 2;
 }
