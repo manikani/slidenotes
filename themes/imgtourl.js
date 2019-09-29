@@ -335,6 +335,20 @@ slidenote.base64images = {
     return images;
   },
   addImage: function(name,base64url){
+    //check if valid image:
+    if(base64url.indexOf("\"")>-1 || base64url.indexOf("<")>-1){
+      console.log("illegal character in base64url");
+      return;
+    }
+    let b64initstring = base64url.substring(0,base64url.indexOf(";base64,"));
+    if(b64initstring != "data:image/jpeg" &&
+        b64initstring!= "data:image/png" &&
+        b64initstring!= "data:image/gif"){
+          console.log("no valid base64 image found");
+    }
+    //clean name:
+    name = name.replace(/[<\"\']/g,"")
+
     var activeimage =slidenote.parser.CarretOnElement();
     if(!activeimage||activeimage.typ!="image" )activeimage=false;
     var nombre = name;
@@ -366,6 +380,7 @@ slidenote.base64images = {
     }
     console.log("parseneu forced by base64imageadded");
     slidenote.parseneu();
+    setTimeout('slidenoteguardian.saveNote("cms");',500);
 
     var uploadmode = this.uploadmode;
     if(uploadmode==="imagegallery"){
@@ -397,6 +412,8 @@ slidenote.base64images = {
       if(this.base64images[x].base64url===base64url)this.base64images.splice(x,1);
     }
     this.rebuildOldImages();
+    slidenote.parseneu();
+    setTimeout('slidenoteguardian.saveNote("cms");',500);
   },
   deleteImageByName:function(name){
     for(var x=this.base64images.length-1;x>=0;x--){
@@ -406,6 +423,7 @@ slidenote.base64images = {
     }
     this.rebuildOldImages();
     slidenote.parseneu();
+    setTimeout('slidenoteguardian.saveNote("cms");',500);
   },
   deleteAllImages: function(){
     this.base64images.length = 0;
@@ -432,8 +450,14 @@ slidenote.base64images = {
     return JSON.stringify(allimages);
   },
   loadImageString: function(jsonstring){
-    let loadimages = JSON.parse(jsonstring);
-    if(!loadimages.length)return; //something went wrong
+    let loadimages;
+    try{
+      loadimages = JSON.parse(jsonstring);
+    } catch(e){
+      console.log("failed to load imagestring:"+jsonstring);
+      return; //something went wrong
+    }
+    //if(!loadimages.length)return; //something went wrong
     for(var x=0;x<loadimages.length;x++){
         let loadi = loadimages[x];
         let existingimage = this.imageBySource(loadi.base64url);

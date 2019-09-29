@@ -175,8 +175,19 @@ function slidenoteGuardian(slidenote){
   this.restObject.combine = function(uploadobj){
     for(var key in uploadobj){
       if(uploadobj.hasOwnProperty(key)){
-        if(key==="encimages"){
-            this[key].push(uploadobj[key]);
+        if(key==="deletedencimages"){
+          var dell = uploadobj[key];
+          if(dell && dell.length>0){
+            for(var dx=0;dx<dell.length;dx++){
+              this.encimages.splice(this.encimages.indexOf(dell[dx]),1);
+            }
+          }
+        } else if(key==="encimages"){
+            var newimages = uploadobj[key];
+            for(var nx=0;nx<newimages.length;nx++){
+              this.encimages.push(newimages[nx]);
+            }
+            //this[key].push(uploadobj[key]);
         }else{
           this[key]=uploadobj[key];
         }
@@ -237,8 +248,7 @@ function slidenoteGuardian(slidenote){
   if(location.protocol!="file:"){
     setTimeout("slidenoteguardian.initLoad()",10);
     console.log("get all css from static webserver");
-    setTimeout("slidenoteguardian.getCSSFromStaticWebserver();"+
-    "slidenoteguardian.getJSFromStaticWebserver();",100);
+    setTimeout("slidenoteguardian.getCSSFromStaticWebserver(); slidenoteguardian.getJSFromStaticWebserver();",100);
 
   }else{
     setTimeout("slidenoteguardian.init()",10);
@@ -292,6 +302,7 @@ slidenoteGuardian.prototype.initLoad = async function(){
     slidenoteguardian.init();
     //start midstate animation:
     document.getElementById("slidenoteloadingscreenwrapper").classList.add("midstate");
+    document.getElementById("slidenotediv").classList.add("midstate");
   });
 }
 
@@ -299,6 +310,11 @@ slidenoteGuardian.prototype.init = function(){
   //init will be called once the slidenote has been loaded from cms
   //this.getCMSFields();
   this.localstorage.init();
+  if(this.localstorage.getItem("config")!=null){
+    //slidenoteguardian is loaded after editor is ready to use so load Config:
+    this.loadConfig("local");
+    //slidenote.extensions.addAfterLoadingThemesHook(function(){slidenoteguardian.loadConfig("local")});
+  }
   var notetitle = this.restObject.title;
   this.notetitle = this.restObject.title;
   //set notetitle into menus etc.:
@@ -422,13 +438,6 @@ slidenoteGuardian.prototype.init = function(){
       //this.loadConfig("cms");
     }
   }*/
-  if(this.localstorage.getItem("config")!=null){
-    //i cant do it directly because its quite obvious that some themes are not added yet
-    //for testing purpose i should just wait 2 seconds
-    //setTimeout('slidenoteguardian.loadConfig("local")',2000);
-    this.loadConfig("local"); //slidenoteguardian is loaded after editor is ready to use
-      //slidenote.extensions.addAfterLoadingThemesHook(function(){slidenoteguardian.loadConfig("local")});
-  }
   document.getElementById("optionsclose").addEventListener("click",function(event){
       slidenoteguardian.saveConfig("local");
   });
@@ -512,11 +521,15 @@ slidenoteGuardian.prototype.init = function(){
   if(savebutton)savebutton.addEventListener("click",function(e){
     slidenoteguardian.saveNote("cms");
   });
+  var cloudbutton = document.getElementById("cloud");
+  if(cloudbutton)cloudbutton.addEventListener("click",function(e){
+    slidenoteguardian.saveNote("cms");
+  });
     this.savebutton = savebutton;
     this.savebuttontitles = {default:"not in sync with cloud",
                              error:"error while connecting to cloud",
                              sync:" in sync with cloud :)"}
-  this.jsfilesForExport = [];
+
   if(this.hascmsconnection){
     this.loadSlidenotesList();
     this.loadPresentationList();
@@ -552,6 +565,30 @@ slidenoteGuardian.prototype.loadedFromRest = function(jsonstring){
   console.log(loadedObject);
 }
 
+slidenoteGuardian.prototype.deleteFromRest = async function(filepath, responseHandler){
+  var oReq = new XMLHttpRequest();
+  if(responseHandler!=null && responseHandler!=undefined)
+  oReq.responseHandler = responseHandler;
+  else oReq.responseHandler = false;
+  oReq.addEventListener("load", function(){
+    if(this.responseHandler && typeof this.responseHandler==="string"){
+      slidenoteguardian[this.responseHandler](this);
+    }else if(this.responseHandler && typeof this.responseHandler ==="function"){
+      this.responseHandler();
+    }else{
+      //default after delete:
+      console.log("file deleted");
+      console.log(this);
+    }
+  });
+  oReq.open("DELETE", filepath);
+  //oReq.setRequestHeader("CONTENT-TYPE","application/json");
+  oReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
+  oReq.send();
+  testresponse = oReq;
+}
+
+
 slidenoteGuardian.prototype.importSlidenotesList = function(response){
   if(!response.status===200)return;
   var xmlDoc = response.responseXML;
@@ -583,18 +620,21 @@ slidenoteGuardian.prototype.importPresentationList = function(response){
     for(var x=0;x<items.length;x++){
         var title = items[x].getElementsByTagName("title")[0].innerHTML;
         var link = items[x].getElementsByTagName("link")[0].innerHTML;
+        link = decodeURI(decodeURI(link));
         var pubDate = items[x].getElementsByTagName("pubDate")[0].innerHTML;
         var commentstring = items[x].getElementsByTagName("description")[0].innerHTML;
         var nodeid = items[x].getElementsByTagName("dc:creator")[0].innerHTML;
-        nodeid = nodeid*1;
-        if(nodeid===nid){
+        var pnid = items[x].getElementsByTagName("guid")[0].innerHTML;
+        if(nodeid==nid){
             loadedPresentations.push({
                 title:title, url:link, date:pubDate,
-                commentstring:commentstring, slidenote:nodeid
+                commentstring:commentstring, slidenote:nodeid,
+                nid:pnid
             });
         }
     }
     slidenoteguardian.loadedPresentations = loadedPresentations;
+    console.log("presentations loaded");
     if(menumanager)menumanager.buildPublishedMenu();
 }
 slidenoteGuardian.prototype.loadPresentationList = function(){
@@ -627,12 +667,13 @@ slidenoteGuardian.prototype.getCSSFromStaticWebserver = function(){
   basicl.open("GET", slidenote.basepath+"layout.css");
   basicl.send();
   var basepath = slidenote.basepath+"themes/"
-  var themes = slidenote.extensions.themeObjektString.split(";");//slidenote.extensions.themes;
+  var themes = slidenote.extensions.themeCssString.split(";");//slidenote.extensions.themes;
   themes.pop(); //remove last empty entry
   themes.push("slidenoteguardian");
   themes.push("slidenoteplayermini");
   var oReqs = new Array();
   for(var x=0;x<themes.length;x++){
+
     var filename = basepath + themes[x]+".css";//themes[x].classname + ".css";
     oReqs[x] = new XMLHttpRequest();
     oReqs[x].addEventListener("load",function(){
@@ -719,7 +760,7 @@ slidenoteGuardian.prototype.getRestToken = async function(afterwards){
   //should return promise to let saveToRest await
 }
 //@param: payloadobject
-slidenoteGuardian.prototype.saveToRest= async function(path, payload){
+slidenoteGuardian.prototype.saveToRest = async function(path, payload){
   console.log("start saveToRest:"+path);
   if(this.restToken===undefined || this.restToken===null){
     console.log("Rest-Token not set yet... getting Token and try again...");
@@ -736,6 +777,15 @@ slidenoteGuardian.prototype.saveToRest= async function(path, payload){
     slidenoteguardian.savedToRest(this);
   });
   putReq.open("PUT",path);
+  putReq.upload.addEventListener("progress", function(evt){
+      if (evt.lengthComputable) {
+        console.log("Upload in Progress:" + evt.loaded + "/" + evt.total);
+        var cs = document.getElementById("cloudstatus");
+        var ul = Math.floor(evt.loaded / 1024);
+        var tt = Math.floor(evt.total / 1024);
+        cs.innerText = "Uploading in Progress: "+ul+"/"+tt+" kB uploaded";
+      }
+    }, false);
   putReq.setRequestHeader("CONTENT-TYPE","application/json");
   putReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
 
@@ -872,6 +922,7 @@ slidenoteGuardian.prototype.exportPresentation = async function(destination, pre
 }
 
 slidenoteGuardian.prototype.createNewSlidenote = async function(){
+  document.getElementById("slidenotediv").style.display = "none";
   var payloadobj = this.prepareDrupal7Rest("new slidenote");
   console.log(payloadobj);
   var payload=payloadobj.payload;
@@ -937,7 +988,7 @@ slidenoteGuardian.prototype.prepareDrupal7Rest = function(mode){
       }
       payloadobj.field_encimgupload = imgupload;*/
       //payloadobj.field_encimgupload = this.uploadRestObject.uploadImageString;
-      payloadobj.field_encimgupload = this.uploadRestObject.encimages.join("\n")+"\n";
+      if(this.uploadRestObject.encimages)payloadobj.field_encimgupload = this.uploadRestObject.encimages.join("\n")+"\n";
   }else if(mode==="presentation"){
     path = "/node/";
     let options = this.saveConfig();
@@ -1287,10 +1338,12 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
   console.log("encrypting slidenote:"+slidenotetext.substring(0,300));
   let encResult;
   if(destination ==="filesystem"){
+    let exportpw;
+    if(slidenote.editormodus==="basic-mode")exportpw="";
     let exportstring = slidenotetext +
                         "\n||€€imagepart€€||\n" +
                       this.slidenote.base64images.allImagesAsString();
-     encResult = await this.encryptForExport(exportstring);
+     encResult = await this.encryptForExport(exportstring,exportpw);
   }else{
     try{
       encResult = await this.encrypt(slidenotetext);
@@ -1375,7 +1428,32 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
     var drupal7prepare = this.prepareDrupal7Rest("text");
     //TODO: images? new part:
     //check if we have to save:
-    if(b64meta != undefined && restObject.imgmeta != b64meta){
+    if(b64meta && restObject.reencrypt){
+      //reencrypt all images:
+      restObject.reencrypt = undefined;
+      this.uploadRestObject.deleteImageHashes = "all";
+      this.uploadRestObject.encimgmeta = await this.encryptText(b64meta);
+      this.uploadRestObject.deletedencimages =  new Array();
+      for(var dx=0;dx<restObject.encimages.length;dx++)this.uploadRestObject.deletedencimages.push(restObject.encimages[dx]);
+      this.uploadRestObject.encimages = new Array();
+      for(var x=0;x<b64hashes.length;x++){
+          this.uploadRestObject.encimages.push(b64hashes[x]+
+            ">>>"+b64images[x]); //store it into upload Object
+      }
+      drupal7prepare = this.prepareDrupal7Rest("images");
+
+    }else if(b64meta === undefined && restObject.encimages.length>0){
+      //delete all images in rest:
+      this.uploadRestObject.deleteImageHashes = "all";
+      this.uploadRestObject.encimgmeta = "";
+      this.uploadRestObject.imgmeta ="";
+      drupal7prepare = this.prepareDrupal7Rest("images");
+      var deletedimages = [];
+      for(var dx=0;dx<this.restObject.encimages.length;dx++){
+        deletedimages.push(this.restObject.encimages[dx]);
+      }
+      this.uploadRestObject.deletedencimages = deletedimages;
+    }else if(b64meta != undefined && restObject.imgmeta != b64meta){
         this.uploadRestObject.encimgmeta = await this.encryptText(b64meta);
         this.uploadRestObject.imgmeta = b64meta;
         var deletedimages = new Array();
@@ -1383,6 +1461,11 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
         for(var x=restObject.encimages.length-1;x>=0;x--){
             if(restObject.encimages[x]===undefined){
               restObject.encimages.splice(x,1);
+              continue;
+            }
+            console.log(x+": type:"+typeof restObject.encimages[x]);
+            if(typeof restObject.encimages[x]!="string"){
+              console.log(restObject.encimages[x]);
               continue;
             }
             var acthash = restObject.encimages[x].substring(0,restObject.encimages[x].indexOf(">>>"));
@@ -1393,26 +1476,17 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
             }else{
                 deletedimages.push(restObject.encimages[x]);
                 //restObject.encimages[x] = undefined; //deleted on local side
-                restObject.encimages.splice(x,1); //delete on local side
+                //restObject.encimages.splice(x,1); //delete on local side
             }
         }
-        /*
-        for(var x=0;x<restObject.encimages.length;x++){
-            if(restObject.encimages[x]===undefined && b64hashes.length>0){
-                this.uploadRestObject.encimages[x] = b64hashes.pop() + ">>>"+b64images.pop();
-            }
-            if(b64hashes.length===0)break;
-        }*/
-        //this.uploadRestObject.uploadImageString = "";
         this.uploadRestObject.encimages = [];
         for(var x=0;x<b64hashes.length;x++){
-          //this.uploadRestObject.uploadImageString+= b64hashes[x]+
-          //  ">>>"+b64images[x]+"\n";
             this.uploadRestObject.encimages.push(b64hashes[x]+
               ">>>"+b64images[x]); //store it into upload Object
 
         }
         this.uploadRestObject.deleteImageHashes = "";
+        this.uploadRestObject.deletedencimages = deletedimages;
         for(var x=0;x<deletedimages.length;x++){
           this.uploadRestObject.deleteImageHashes += deletedimages[x].substring(0,deletedimages[x].indexOf(">>>"));
           this.uploadRestObject.deleteImageHashes += "\n";
@@ -1421,10 +1495,7 @@ slidenoteGuardian.prototype.saveNote = async function(destination){
         //if(b64hashes.length>0){
             //exception: server-space is full
         //}
-
         drupal7prepare = this.prepareDrupal7Rest("images");
-
-
     }
     //oldpart:
     if(encimgstring!=""){
@@ -1578,8 +1649,8 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
     //loads Config from configarea or from local destination
     //destination is cms or local
     var savedConfigString;
-    if(destination==="cms")savedConfigString = this.cmsConfig.value;
-    if(destination==="local")savedConfigString = this.localstorage.getItem('config');
+    //if(destination==="cms")savedConfigString = this.cmsConfig.value;
+    if(destination==="local")savedConfigString = this.localstorage.getItem('config'); //this means config by slidenote?
     if(slidenote==null){
       setTimeout("slidenoteguardian.loadConfig("+destination+")",2000);
       return;
@@ -1608,7 +1679,7 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
       var toggler = document.getElementById("nightmodetoggle");
       toggler.classList.remove("off");
       toggler.classList.add("on");
-      document.getElementById("slidenoteeditor").classList.add("nightmode");
+      document.body.classList.add("nightmode");
   }
 
   //keyboardshortcuts:
@@ -1623,7 +1694,7 @@ slidenoteGuardian.prototype.loadConfig = async function(destination){
   }
 }
 
-slidenoteGuardian.prototype.saveConfig = async function(destination){
+slidenoteGuardian.prototype.saveConfig = function(destination){
   //if not initialised slidenoteguardian - return:
   if(!this.initialised)return;
   //saveconfig with JSON instead of manual - slower and more overhead, but more flexible for the future:
@@ -1641,7 +1712,7 @@ slidenoteGuardian.prototype.saveConfig = async function(destination){
   }
 
   saveobject.editorchoice = document.getElementById("editorchoice").value;
-  saveobject.nightmode = document.getElementById("slidenoteeditor").classList.contains("nightmode");
+  saveobject.nightmode = document.body.classList.contains("nightmode");
   if(slidenote.keyboardshortcuts){
       saveobject.keyboardmap = slidenote.keyboardshortcuts.configString();
   }
