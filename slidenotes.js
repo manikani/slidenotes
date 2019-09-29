@@ -3365,6 +3365,7 @@ function ExtensionManager(slidenote, options){
 	this.failedThemes = new Array();
 	this.allThemesLoaded = false;
 	this.themeObjektString = "";
+	this.themeCssString = "";
 	this.loadBasicThemes();
 	this.hooksAllThemesLoaded = new Array();
 }
@@ -3412,7 +3413,10 @@ ExtensionManager.prototype.loadTheme = function(themename, nocss){
 		var newtheme = this.slidenote.appendFile('script',themename+".js");
 		newtheme.id = "Theme"+themename;
 		newtheme.onerror = function(){slidenote.extensions.failTheme(this.id.substring(5));};
-		if(!nocss)this.slidenote.appendFile('css',themename+".css");
+		if(!nocss){
+			this.slidenote.appendFile('css',themename+".css");
+			this.themeCssString += themename+";";
+		}
 		this.themeObjektString +=themename+";";
 	}
 	console.log(this.themeObjektString);
