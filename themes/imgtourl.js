@@ -138,7 +138,7 @@ slidenote.base64images = {
     title.innerText = "image gallery";
     imggallery.appendChild(title);
     let uploadbutton = document.createElement("button");
-    uploadbutton.innerHTML = '<img src="images/buttons/+.png">add image';
+    uploadbutton.innerHTML = '<img src="images/buttons/+.png"><span>add image</span>';
     uploadbutton.classList.add("plusbutton");
     uploadbutton.title="add image to imagegallery";
     uploadbutton.onclick = function(){

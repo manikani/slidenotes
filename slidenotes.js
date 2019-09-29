@@ -1174,37 +1174,50 @@ emdparser.prototype.setDropDownMenu = function (){
 	var sidebar = document.getElementById("sidebar");
 	//var newtop = carretsymbol.offsetTop + sidebar.offsetTop;
 	var carret = document.getElementById("carret");
-	if(!nicesymbol || !sidebar || !carret)return;
-	//look out for attached menu:
-	var insertmenu = document.getElementById("insertarea");
-	if(insertmenu && insertmenu.style.visibility==="visible"){
-		//setTimeout("slidenote.presentation.showInsertMenu(); document.getElementById('insertarea').getElementsByTagName('button')[0].focus();",1);
-		//insertmenu.style.visibility==="hidden";
+	if(!nicesymbol || !sidebar || !carret){
+		if(nicesymbol){
+			nicesymbol.style.top="10px";
+			document.getElementById("insertarea").style.visibility = "hidden";
+		}else{
+			return;
+		}
+	} else {
+		//look out for attached menu:
+		var insertmenu = document.getElementById("insertarea");
+		if(insertmenu && insertmenu.style.visibility==="visible"){
+			//setTimeout("slidenote.presentation.showInsertMenu(); document.getElementById('insertarea').getElementsByTagName('button')[0].focus();",1);
+			//insertmenu.style.visibility==="hidden";
+		}
+
+		var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
+		newtop -=3;
+		newtop -= slidenote.textarea.scrollTop;
+		nicesymbol.classList.remove("out")
+		nicesymbol.style.opacity=null;
+		if(newtop<slidenote.textarea.offsetTop-20){
+			var diff = slidenote.textarea.offsetTop - 20 - newtop;
+			diff = diff / 2000;
+			if(diff>1)diff=1;
+			diff=1-diff;
+			nicesymbol.style.opacity = diff;
+			newtop=slidenote.textarea.offsetTop-20;
+			nicesymbol.classList.add("out");
+
+		}else if(newtop>slidenote.textarea.offsetHeight + slidenote.textarea.offsetTop - (nicesymbol.offsetHeight/2)){
+			var diff = newtop - (slidenote.textarea.offsetHeight + slidenote.textarea.offsetTop - (nicesymbol.offsetHeight/2));
+			diff = diff / 2000;
+			if(diff>1)diff=1;
+			diff=1-diff;
+			nicesymbol.style.opacity = diff;
+			newtop = slidenote.textarea.offsetHeight + slidenote.textarea.offsetTop - (nicesymbol.offsetHeight/2);
+			nicesymbol.classList.add("out");
+		}
+
+		nicesymbol.style.top = newtop +"px";
+		//hack für safari:
+		var sidebar = document.getElementById("sidebar");
+		nicesymbol.style.left = sidebar.offsetLeft + "px";
 	}
-
-	var newtop = carret.parentElement.offsetTop + sidebar.offsetTop;
-	newtop -=3;
-	newtop -= slidenote.textarea.scrollTop;
-	nicesymbol.classList.remove("out")
-	nicesymbol.style.opacity=null;
-	if(newtop<slidenote.textarea.offsetTop-20){
-		var diff = slidenote.textarea.offsetTop - 20 - newtop;
-		diff = diff / 1000;
-		if(diff>1)diff=1;
-		diff=1-diff;
-		nicesymbol.style.opacity = diff;
-		newtop=slidenote.textarea.offsetTop-20;
-		nicesymbol.classList.add("out");
-
-	}else if(newtop>slidenote.textarea.offsetHeight + slidenote.textarea.offsetTop - (nicesymbol.offsetHeight/2)){
-		newtop = slidenote.textarea.offsetHeight + slidenote.textarea.offsetTop - (nicesymbol.offsetHeight/2);
-		nicesymbol.classList.add("out");
-	}
-
-	nicesymbol.style.top = newtop +"px";
-	//hack für safari:
-	var sidebar = document.getElementById("sidebar");
-	nicesymbol.style.left = sidebar.offsetLeft + "px";
 
 	nicesymbol.style.position="absolute";
 	var celement = slidenote.parser.CarretOnElement();
@@ -3061,7 +3074,8 @@ pagegenerator.prototype.showInsertMenu = function(){
 	}
 	//slidenote.textarea.blur();
 	//slidenote.textarea.focus(); //get focus on slidenote again to regain cursor
-	document.getElementById("carret").classList.add("show");
+	var carretdiv = document.getElementById("carret");
+	if(carretdiv)carretdiv.classList.add("show");
 	//insertmenu.focus();
 	if(carretline)carretline.style.visibility="hidden";
 	//symbol.style.visibility = "hidden";
@@ -3084,12 +3098,12 @@ pagegenerator.prototype.showInsertMenu = function(){
 			var carretline = document.getElementsByClassName("carretline")[0]
 			if(carretline)carretline.style.visibility="visible";
 			slidenote.textarea.focus();
-		},200);
+		},2);
 
 	}
-		//insertmenu.onclick = this.closeMenu;
+	//insertmenu.onclick = this.closeMenu;
 		slidenote.textarea.addEventListener("click", this.closeMenu);
-		slidenote.textarea.addEventListener("keydown",this.closeMenu);
+		slidenote.textarea.addEventListener("keyup",this.closeMenu);
 		slidenote.textarea.addEventListener("scroll",this.closeMenu);
 		for(var x=0;x<slidenote.extensions.themes.length;x++){
 			if(slidenote.extensions.themes[x].active)slidenote.extensions.themes[x].styleThemeMDCodeEditor("insertAreaVisible"); //Hook-Funktion
@@ -3807,19 +3821,31 @@ slidenotes.prototype.initHistoryHack = function(){
 
 slidenotes.prototype.choseEditor = function(editor){
 	this.editormodus=editor;
+	var sldiv = document.getElementById("slidenotediv");
+	sldiv.className = editor;
 	 if(editor=="md-texteditor"){
 		this.texteditorerroractivated = true;
-		this.texteditorerrorlayer.classList.remove("hidden");
-		//document.getElementById("nicesidebarsymbol").style.display="unset";
+		//this.texteditorerrorlayer.classList.remove("hidden");
+		//document.getElementById("nicesidebarsymbol").style.display=null;
 	}else if(editor=="focus"){
 		this.texteditorerroractivated = true;
-		this.texteditorerrorlayer.classList.remove("hidden");
-		document.getElementById("sidebar").innerHTML="";
+		//this.texteditorerrorlayer.classList.remove("hidden");
+		//document.getElementById("sidebar").innerHTML="";
 		//document.getElementById("nicesidebarsymbol").style.display="none";
+	}else if(editor==="raw-text"){
+		this.texteditorerroractivated = false;
+		//this.texteditorerrorlayer.classList.add("hidden");
+		//document.getElementById("nicesidebarsymbol").style.display=null;
+	}else if(editor==="big-mode"){
+		this.texteditorerroractivated=true;
+	} else if(editor==="basic-mode"){
+		this.texteditorerroractivated=true;
+		sldiv.classList.add("big-mode"); //big-mode as css-design
+	}else if(editor==="audio-mode"){
+		this.texteditorerroractivated=false;
 	}else {
 		this.texteditorerroractivated = false;
 		this.texteditorerrorlayer.classList.add("hidden");
-		document.getElementById("nicesidebarsymbol").style.display="none";
 	}
 
 	document.getElementById("editorchoice").value = editor;
@@ -3908,10 +3934,12 @@ slidenotes.prototype.parseneu = function(){
 		//warum musste ich an dieser stelle den rahmen neu setzen???
 		//this.texteditorrahmensetzen();
 		rahmensetzenzeit = new Date();
-		for(var x=0;x<this.extensions.themes.length;x++){
+		if(this.texteditorerroractivated)for(var x=0;x<this.extensions.themes.length;x++){
 			if(this.extensions.themes[x].active)
 				this.extensions.themes[x].styleThemeMDCodeEditor(); //Hook-Funktion
 		}
+	}else if(slidenote.editormodus==="raw-text"){
+		this.parser.setDropDownMenu();
 	}
 
 	var endzeit = new Date();
@@ -3998,6 +4026,10 @@ slidenotes.prototype.keypressdown = function(event, inputobject){
 		}
 	}*/
 	//mdcode-editor-part:
+	if(key.indexOf("Page")>-1){
+		event.preventDefault();//does not work for some reason i dont know...
+		this.parser.map.lastcursor = {selectionStart:this.textarea.selectionStart, selectionEnd:this.textarea.selectionEnd, selectionDirection:this.textarea.selectionDirection};
+	}
 	if(this.texteditorerroractivated){
 		//var renderkeys = "*_#"
 		if(key==="Enter"){// || key==="Backspace" || renderkeys.indexOf(key)>-1){
@@ -4046,7 +4078,6 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 	this.lastcarretpos = carretpos;*/
 	if(key=="undefined")key=getKeyOfKeyCode(event.keyCode);//key=String.fromCharCode(event.keyCode);
 	if(this.texteditorerroractivated){
-		var renderkeys = "*_#]:\\";
 		if(key==="Enter" || key==="Backspace" || key==="Delete" || renderkeys.indexOf(key)>-1){
 			console.log("parseneu forced after key "+key);
 
@@ -4145,9 +4176,9 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 				console.log("scroll to:"+oftop);
 				this.scroll();
 			}
-			console.log("from "+currentline+"go to line:"+gotoline +" page:"+gotopage + "from"+this.parser.map.pagestart.length);
+			//console.log("from "+currentline+"go to line:"+gotoline +" page:"+gotopage + "from"+this.parser.map.pagestart.length);
 			return;
-		}
+		}//end of pageup-down
 		if(key==="Escape"){
 			var imguploadscreen = document.getElementById("imagesblock");
 			if(imguploadscreen && imguploadscreen.classList.contains("visible")){
@@ -4166,6 +4197,58 @@ slidenotes.prototype.keypressup = function(event, inputobject){
 		}
 		if(this.lastpressedkey ==="Dead" && key ==="Shift")this.lastpressedkey = "Dead";
 			else	this.lastpressedkey = key;
+	} //end of if texteditoractivated
+	if(!this.texteditorerroractivated && this.editormodus ==="raw-text"){
+		if(key==="ArrowUp"||key==="ArrowDown")this.parser.setDropDownMenu();
+		if(key==="Enter" || key==="Backspace" || key==="Delete" || renderkeys.indexOf(key)>-1)this.parseneu();
+		if(key==="PageUp" || key==="PageDown"){
+			this.textarea.selectionStart = this.parser.map.lastcursor.selectionStart;
+			this.textarea.selectionEnd = this.parser.map.lastcursor.selectionEnd;
+			//this.textarea.selectionDirection = this.
+		}
+		if(key==="PageUp"){
+			event.preventDefault();
+			var gotopos = slidenote.textarea.selectionEnd;
+			if(this.textarea.selectionDirection==="backward")gotopos=slidenote.textarea.selectionStart;
+			//gotopos=slidenote.textarea.value.lastIndexOf("\n",gotopos);
+			gotopos=slidenote.textarea.value.lastIndexOf("\n",gotopos-2);
+			gotopos = slidenote.textarea.value.lastIndexOf("\n---",gotopos-1);
+			if(gotopos>=0)gotopos = slidenote.textarea.value.indexOf("\n",gotopos+1)+1;
+			if(gotopos<0)gotopos=0;
+			if(event.shiftKey){
+				if(this.textarea.selectionDirection==="backward")this.textarea.selectionStart = gotopos;
+				if(this.textarea.selectionDirection === "forward"){
+					if(gotopos>=this.textarea.selectionStart)this.textarea.setSelectionRange(this.textarea.selectionStart, gotopos,"forward");
+					if(gotopos<this.textarea.selectionStart)this.textarea.setSelectionRange(gotopos, this.textarea.selectionStart,"backward");
+				}
+			}else{
+				slidenote.textarea.selectionEnd = gotopos;
+				slidenote.textarea.selectionStart = gotopos;
+			}
+
+		}else if(key==="PageDown"){
+			event.preventDefault();
+			var gotopos = this.textarea.selectionStart;
+			if(this.textarea.selectionDirection==="forward")gotopos=slidenote.textarea.selectionEnd;
+			gotopos = slidenote.textarea.value.indexOf("\n---",gotopos);
+			if(gotopos>=0)gotopos = slidenote.textarea.value.indexOf("\n",gotopos+1)+1;
+			if(gotopos<0)gotopos=slidenote.textarea.value.length-1;
+			if(event.shiftKey){
+				if(this.textarea.selectionDirection==="forward")this.textarea.selectionEnd = gotopos;
+				if(this.textarea.selectionDirection==="backward"){
+					if(gotopos<=this.textarea.selectionEnd)this.textarea.setSelectionRange(gotopos,this.textarea.selectionEnd,"backward");
+					if(gotopos>selend)this.textarea.setSelectionRange(this.textarea.selectionEnd, gotopos,"forward");
+				}
+			} else{
+				slidenote.textarea.selectionEnd = gotopos;
+				slidenote.textarea.selectionStart = gotopos;
+			}
+		}
+		if(key==="PageDown"||key==="PageUp"){
+			this.textarea.blur();
+			this.textarea.focus();
+			this.parser.setDropDownMenu();
+		}
 	}
 
 };

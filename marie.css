@@ -1614,6 +1614,334 @@ div#nicesidebarsymbol.out #nicesidebarsymbolcontainer {
 	font-style:italic;
 }
 
+/*texteditor modi*/
+/*standard:*/
+#menuimportexport button img,
+#menuoptionseditor .menuitem img{
+  display: none;
+}
+.md-texteditor #slidenoteeditor {
+
+}
+/*focus-mode*/
+.focus #slidenoteeditor #nicesidebarsymbol,
+.focus #slidenoteeditor .fluidbutton,
+.focus #slidenoteeditor #optionarea button,
+.focus #slidenoteeditor #cloud,
+.focus #slidenoteeditor #loadnote,
+.focus #slidenoteeditor #shadowelleft,
+.focus #slidenoteeditor #shadowelright {
+  display:none;
+}
+
+.focus #slidenoteeditor #playbutton,
+.focus #slidenoteeditor #optionarea #optionsbutton{
+  display:unset;
+}
+.focus #slidenoteeditor #optionarea{
+  grid-column-start:1;
+  background:url("images/borderfocusmode.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  width:6.38vh;
+  height:17vh;
+  display:grid;
+  align-content:center;
+  justify-content: start;
+  grid-template-columns:auto;
+}
+.focus #slidenoteeditor #optionsbutton span{
+  display: none;
+}
+.focus #menuoptionseditor {
+    grid-column-start: 1;
+    grid-column-end:5;
+    margin-left: 7vh;
+    max-width: 25ch;
+}
+
+
+.focus #menuoptionseditor .arrow_box:after,
+.focus #menuoptionseditor .arrow_box:before {
+  left:unset;
+	right: 100%;
+	top: 4vh;
+}
+
+.focus #menuoptionseditor .arrow_box:after {
+	border-color: rgba(255, 255, 255, 0);
+	border-right-color: white;
+	border-width: 1.4vh;
+	margin-top: -1.4vh;
+}
+.focus #menuoptionseditor .arrow_box:before {
+	border-color: rgba(194, 225, 245, 0);
+	border-right-color: rgba(100,100,100,0.2);
+	border-width: 1.6vh;
+	margin-top: -1.6vh;
+}
+
+/*raw-text-mode*/
+.raw-text #slidenoteeditor #texteditorerrorlayer{
+  display:none;
+}
+.raw-text #slidenoteeditor #quelltext{
+  color:unset;
+}
+
+/*big-mode*/
+.big-mode #slidenoteeditor {
+  display:grid;
+grid-template-rows: 3.5vh 3em 3em 3em 1fr 42vh 22vh;
+grid-template-columns: 25vh auto auto auto 12.5vh 1fr;
+grid-template-areas:
+". sidebar editor topright . ."
+"noteareacloud sidebar editor . buttonright ."
+"noteareaload sidebar editor . buttonright ."
+"noteareaoutlet sidebar editor . buttonright ."
+". sidebar editor . buttonright ."
+"buttonleft sidebar editor . sidebarright ."
+"playbutton sidebar editor . sidebarright .";
+}
+
+.big-mode #shadowelleft{
+  grid-column:1;
+  grid-row-start: 6;
+  grid-row-end:last;
+}
+.big-mode div#menupublish, .big-mode #menuimportexport, .big-mode #menuoptionseditor {
+    grid-row-start: 6;
+    grid-column-start: 2;
+    grid-row-end: last;
+    max-width:28ch;
+}
+
+.big-mode #optionarea {
+    grid-template-columns: 100%;
+    grid-template-rows: 6vh 6vh 6vh;
+    grid-gap: 1vh;
+    justify-items: end;
+    align-items: center;
+}
+
+.big-mode #optionarea button svg {
+    height: 100%;
+}
+.big-mode #nicesidebarsymbol {
+    width: 10ch;
+}
+.big-mode #sidebarcontainer {
+    width: 10ch;
+    font-size: xx-large;
+}
+
+.big-mode #shadowelright {
+    grid-column: 4;
+}
+.big-mode #imagegallery.active {
+    grid-column-start: 4;
+    grid-column-end: last;
+    grid-row-start: 3;
+    grid-row-end: 6;
+    margin-top: 1vh;
+}
+
+.big-mode div#toolbar {
+    grid-column-start: 4;
+    grid-column-end: last;
+    grid-row-start: 6;
+    grid-row-end: last;
+}
+.big-mode #quelltext, .big-mode #texteditorerrorlayer,
+.big-mode button span , .big-mode #menucloud button,
+.big-mode .autohidemenu button, .big-mode .separator,
+.big-mode .menuitem,
+.big-mode #menupublish button, .big-mode #menupublish .loadnotebutton,
+.big-mode .dialogbox, .big-mode .dialogtitle{
+    font-size: xx-large;
+}
+.big-mode div#menuload {
+    grid-column: 1;
+    grid-row: 4;
+}
+
+.big-mode div#menucloud {
+    grid-column: 1;
+    grid-row: 3;
+}
+.big-mode #menupublish button {
+    padding: 0;
+    overflow: hidden;
+}
+
+.big-mode #loadnote div{
+  font-size:x-large;
+}
+.big-mode #menuload #actnotearea button.minibutton{
+  font-size:medium;
+}
+.big-mode #cloud{
+  font-size: large;
+  margin-top:-0.5em;
+}
+.big-mode #menucloud .arrow_box:before, .big-mode #menucloud .arrow_box:after {
+    left: 15%;
+}
+.big-mode #toolbarbuttons button {
+    height: 8vh;
+}
+.big-mode .plusbutton span{
+  height: 0;
+  width:0;
+  overflow: hidden;
+  display:block;
+}
+.big-mode #toolbar span{
+  display:none;
+}
+.big-mode #toolbar img{
+  display:block;
+}
+.big-mode #presentationoptionsbutton {
+    height: 11vh;
+    width: 12vh;
+}
+.big-mode #imageselectionlist li, .big-mode .import-file-image-preview-block li {
+    height: auto;
+    width:13ch;
+}
+.big-mode #imageselectionlist button.imagegallery-image {
+    width: 12ch;
+    height: 21vh;
+    font-size: xx-large;
+}
+.big-mode .importfile-image-preview-block ul, .big-mode #slidenoteGuardianCodePreview ul {
+    max-height: 18vh;
+}
+
+.big-mode .imagegallery-usedslides {
+    display: none;
+}
+
+.big-mode #imageselectionlist li,.big-mode .importfile-image-preview-block li {
+    width: 30vh;
+    height: 6em;
+    overflow: hidden;
+}
+
+.big-mode #insertarea button {
+    font-size: large;
+}
+
+.big-mode #insertarea {
+    width: 9.1ch;
+}
+.big-mode #menuoptionseditor .arrow_box:after,
+.big-mode #menuoptionseditor .arrow_box:before,
+.big-mode #menuimportexport .arrow_box:after,
+.big-mode #menuimportexport .arrow_box:before,
+.big-mode #menupublish .arrow_box:after,
+.big-mode #menupublish .arrow_box:before {
+  left:unset;
+	right: 100%;
+	top: 2em;
+}
+.big-mode #menupublish .arrow_box:after,
+.big-mode #menupublish .arrow_box:before{
+  top:6em;
+}
+.big-mode #menuoptionseditor .arrow_box:after,
+.big-mode #menuoptionseditor .arrow_box:before{
+  top:10em;
+}
+
+.big-mode #menuoptionseditor .arrow_box:after,
+.big-mode #menuimportexport .arrow_box:after,
+.big-mode #menupublish .arrow_box:after {
+	border-color: rgba(255, 255, 255, 0);
+	border-right-color: white;
+	border-width: 1.4vh;
+	margin-top: -1.4vh;
+}
+.big-mode #menuoptionseditor .arrow_box:before,
+.big-mode #menuimportexport .arrow_box:before,
+.big-mode #menupublish .arrow_box:before {
+	border-color: rgba(194, 225, 245, 0);
+	border-right-color: rgba(100,100,100,0.2);
+	border-width: 1.6vh;
+	margin-top: -1.6vh;
+}
+.big-mode div#optionarea button span,
+.big-mode #menuoptionseditor .menuitem span,
+.big-mode #menuimportexport button span {
+  height: 0;
+  width:0;
+  overflow: hidden;
+  display: block;
+}
+
+.big-mode #menuimportexport button img,
+.big-mode #menuoptionseditor .menuitem img,
+.big-mode #optionarea button img {
+    display: inline-block;
+    width: 3ch;
+    height: unset;
+}
+
+.big-mode #menuimportexport .separator {
+    display: none;
+}
+.big-mode #searchbuttonarea {
+    grid-column-start: 5;
+}
+
+.big-mode #menusearchbox {
+    grid-column-start: 4;
+    grid-column-end: 7;
+}
+.big-mode #menusearchbox .arrow_box {
+    max-width: 17vh;
+}
+
+button#importbutton .importpng {
+    transform: rotate(180deg);
+}
+
+/*basic-mode*/
+.basic-mode #toolbarbuttons button,
+.basic-mode #exportasenchtmlbutton,
+.basic-mode #exportasmdfilebutton,
+.basic-mode #menucloud,
+.basic-mode #actnotearea,
+.basic-mode #menuoptionseditor a.menuitem,
+.basic-mode #menuoptionseditor button,
+.basic-mode #menuoptionseditor .separator:nth-of-type(4),
+.basic-mode #menuoptionseditor .separator:nth-of-type(5),
+.basic-mode #imagegallerybutton{
+  display:none;
+}
+
+
+.basic-mode button#nightmodetoggle {
+    display: unset;
+}
+
+
+
+.basic-mode #toolbarbuttons button.basicbutton{
+  display: unset;
+}
+
+/*audio-mode*/
+.audio-mode #texteditorerrorlayer{
+  display:none;
+}
+.audio-mode #quelltext{
+  overflow-x: auto;
+  overflow-y: auto;
+  white-space: pre;
+}
+
 /*loading screen*/
 #slidenoteLoadingScreen{
 	position:fixed;

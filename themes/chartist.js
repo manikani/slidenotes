@@ -790,8 +790,10 @@ newtheme.afterStyle = function(){
 }
 
 newtheme.styleThemeMDCodeEditor = function(){
+  if(slidenote.texteditorerroractivated===false)return;
   var dataobjects = slidenote.parser.dataobjects;
   var lines = slidenote.texteditorerrorlayer.getElementsByClassName("backgroundline");
+
   for(var x=0;x<dataobjects.length;x++)if(dataobjects[x].type==="chart"){
     var start = dataobjects[x].startline+1;
     var olines = dataobjects[x].raw;
