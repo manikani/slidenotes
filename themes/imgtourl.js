@@ -113,21 +113,23 @@ slidenote.base64images = {
     }
     dialogoptions.content = dialogcontent;
     dialoger.buildDialog(dialogoptions);
-    //finish sceleton:
-    /*
-    dialogbox.appendChild(dialogcontent);
-    container.appendChild(dialogbox);
-    document.getElementsByTagName("body")[0].appendChild(container);
-    */
   },
   buildImageSelectionDialog: function(){
     var oldfiles = document.getElementById("imageselectionlist");
+    if(!oldfiles){
+      console.log("no imageuploaddialog found - abort");
+      return;
+    }
     var newlist = this.buildImageList(false);
     oldfiles.innerHTML = "";
     oldfiles.appendChild(newlist);
   },
   buildImageGallery: function(){
     var imggalleryparent = document.getElementById("imagegallery");
+    if(!imggalleryparent){
+      console.log("no image-gallery found - aborting");
+      return;
+    }
     imggalleryparent.innerHTML = "";
     var imggallery = document.createElement("div");
     imggallery.classList.add("arrow_box");
@@ -255,7 +257,7 @@ slidenote.base64images = {
     }else{
       var emptydiv = document.createElement("div");
       emptydiv.classList.add("imagegallery-empty");
-      emptydiv.innerText = "<p>Your image gallery is empty. </p> <p>Press the button above to upload an image into the image gallery.</p> <p>Or type in an image tag in the text input field.</p>";
+      emptydiv.innerHTML = "<p>Your image gallery is empty. </p> <p>Press the button above to upload an image into the image gallery.</p> <p>Or type in an image tag in the text input field.</p>";
       return emptydiv;
     }
   },
@@ -402,8 +404,7 @@ slidenote.base64images = {
     }
     this.uploadmode=undefined;
 
-    //old stuff - delete in future:
-    this.preselectedname=null;
+    this.preselectedname=null; //old stuff - delete in future
     this.rebuildOldImages(); //rebuild old images for further use
     return;
   },
@@ -612,8 +613,9 @@ newtheme.init = function(){
   console.log("imgtourl wird initialisiert");
   //add imagebutton to texteditorbuttons
   var texteditorbuttons = document.getElementById("texteditorbuttons");
-  var button = document.createElement("BUTTON");
+  var button = document.createElement("button");
   button.title ="add image";
+  button.classList.add("basicbutton");
   var buttonimage = new Image();
   buttonimage.src=slidenote.imagespath+"buttons/image.png";
   buttonimage.title = "Image";

@@ -20,8 +20,11 @@ h1 img{
 }
 
 #insertarea img.insertmenu-preview-image {
-    height: 6em;
+    width: 80%;
     display: block;
+    margin-top:1em;
+    margin-left:auto;
+    margin-right:auto;
 }
 
 #imagesuploadblock{
@@ -109,6 +112,9 @@ button.imagegallery-delbutton {
 
 .imagegallery-usedslides {
     grid-area: usedslides;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .imagegallery-unnamed, .imagegallery-unconnected{
@@ -206,7 +212,7 @@ button.imagegallery-image {
     overflow-x: hidden;
 }
 
-#imageselectionlist li {
+#imageselectionlist li, .importfile-image-preview-block li {
     display: inline-block;
     width: 12.7vh;
     height: 12.7vh;
