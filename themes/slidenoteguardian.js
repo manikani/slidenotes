@@ -406,6 +406,21 @@ slidenoteGuardian.prototype.init = function(){
 
   }else if(notehash===undefined && cachednote.notehash != undefined){
     setTimeout("slidenoteguardian.loadNote('local')",1);
+  } else if(window.location.protocol==="file:"){
+    //local-start for marie, delete in final version:
+    slidenoteguardian.passwordPrompt("You are using the slidenote-editor localy. please choose a password to encrypt your slidenote","encrypt").then(
+      function(resolve){
+        slidenoteguardian.password = resolve;
+        slidenoteguardian.saveNote('cms');
+        slidenoteguardian.startEditorAnimation();
+        //setTimeout("slidenoteguardian.saveNote('cms')",1);
+
+      },
+      function(error){
+        slidenoteguardian.password = "";
+        slidenoteguardian.startEditorAnimation();
+      }
+    );
   }else{
     if(cachednote.url === window.location.href){
       //var confirmtext = "You have an unsaved Version of this slidenote in Cache. Show Diff?";
