@@ -167,11 +167,12 @@ var slidenoteguardian = {
 	ivlength: 12,
 	decText: null,
 	crypto: window.crypto,
+    options:'<?php print($field_optionstring[0]["value"]);?>',
 	iv:null,
-	options: "<?php print($field_optionstring[0]['value']);?>",
 	encBufferString : "<?php print($field_encryptednote[0]['value']);?>",
-				
+	notetitle: "<?php print($title);?>"			
 }
+
 slidenoteguardian.extensionoptions = {
 	basicThemes: [
 		{name:"hiddenobjects"},
@@ -179,8 +180,8 @@ slidenoteguardian.extensionoptions = {
 		{name:"stickytitles", css:true},
 		{name:"azul"},
 		{name:"redalert"},
-		{name:"tufte"},
-		{name:"prototyp"},
+		{name:"luminoso"},
+//		{name:"prototyp"},
 		{name:"highlight"},
 		{name:"transition"},
 		{name:"chartist"},
@@ -203,6 +204,32 @@ slidenoteguardian.loadConfigString = function(){
 	//disable texteditor:
 	slidenote.texteditorerroractivated=false;
 	//load Themes-Config:
+    var saveobject;
+  try {
+  saveobject = JSON.parse(this.options);
+  }catch{
+  //load old config style? naa, just delete it...
+    console.log("old config found");
+//    this.loadConfigOld(destination);
+    return;
+  }
+
+  //activate and disable Themes depending on config:
+  for(var x=0;x<slidenote.extensions.themes.length;x++){
+      var act=slidenote.extensions.themes[x];
+      if(saveobject.activethemes.indexOf(act.classname)>-1){
+          act.changeThemeStatus(true);
+      }else{
+          act.changeThemeStatus(false);
+      }
+  }
+  
+  //load themes-config:
+  for(var x=0;x<saveobject.themeConfigs.length;x++){
+      var theme = slidenote.extensions.getThemeByName(saveobject.activethemes[x]);
+      theme.loadConfigString(saveobject.themeConfigs[x]);
+  }
+    /*
   var savedConfigString = this.options;
   var savedThemeString = savedConfigString.substring(0,savedConfigString.indexOf("$$"));
   var themes = new Array();
@@ -232,7 +259,7 @@ slidenoteguardian.loadConfigString = function(){
   console.log(savedConfigStrings);
   for(var x=0;x<savedConfigStrings.length;x++){
     savedConfigStrings[x].theme.loadConfigString(savedConfigStrings[x].data);
-  }
+  }*/
 }
 
 slidenoteguardian.decryptPresentation = async function(){
