@@ -275,3 +275,15 @@ and all other options unavailable*/
 .abortedDecryption #publishbutton {
     grid-column: 2;
 }
+
+/*loading process*/
+#initialLoadingProgress {
+    position: absolute;
+    color: black;
+    z-index: 1501;
+    top: 50%;
+    left: 35%;
+}
+.midstate #initialLoadingProgress{
+  display:none;
+}

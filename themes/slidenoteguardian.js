@@ -305,6 +305,18 @@ slidenoteGuardian.prototype.initLoad = async function(){
     //start midstate animation:
     document.getElementById("slidenoteloadingscreenwrapper").classList.add("midstate");
     document.getElementById("slidenotediv").classList.add("midstate");
+  },
+  //progressHandler:
+  function(evt){
+        if(evt.timeStamp<25000)return; //miliseconds to wait before showing progress
+        console.log("Download in Progress:" + evt.loaded + "/" + evt.total);
+          var cs = document.getElementById("initialLoadingProgress");
+          var ul = Math.floor(evt.loaded / 1024);
+          var tt = Math.floor(evt.total / 1024);
+          if(tt>0)tt=" / "+tt; else tt="";
+          cs.innerHTML = "It seems your Download is kind of slow<br> or your Slidenote kind of big:<br>"+ul+tt+" kB downloaded";
+
+
   });
 }
 
@@ -556,7 +568,7 @@ slidenoteGuardian.prototype.init = function(){
 }
 
 var testresponse;
-slidenoteGuardian.prototype.loadFromRest = async function(filepath, responseHandler){
+slidenoteGuardian.prototype.loadFromRest = async function(filepath, responseHandler, loadingHandler){
   var oReq = new XMLHttpRequest();
   if(responseHandler!=null && responseHandler!=undefined)
   oReq.responseHandler = responseHandler;
@@ -569,6 +581,9 @@ slidenoteGuardian.prototype.loadFromRest = async function(filepath, responseHand
     }else
     slidenoteguardian.loadedFromRest(this.response);
   });
+  if(loadingHandler){
+    oReq.addEventListener("progress",loadingHandler);
+  }
   oReq.open("GET", filepath);
   oReq.setRequestHeader("CONTENT-TYPE","application/json");
   oReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
