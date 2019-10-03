@@ -263,9 +263,12 @@ slidenoteGuardian.prototype.initLoad = async function(){
   var searchurl = location.search;
   var nid = searchurl.substring(searchurl.lastIndexOf("=")+1);
   if(nid*1!=nid){ this.init();return;}
-  this.loadFromRest("/node/"+nid+".json", function(){
+  this.loadFromRest("/node/"+nid+".json",
+    //loadHandler:
+    function(){
     if(this.status===403){
-
+      //it seems you are not logged in, so push to user-login:
+      window.location.href="/user/login?destination="+window.location.pathname+window.location.search;
     }else if(this.status===404){
 
     }else if(this.status===200){
