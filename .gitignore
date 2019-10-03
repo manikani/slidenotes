@@ -2,5 +2,9 @@ themes/chartjs
 themes/et-book
 themes/katex
 themes/sequencediagram
+themes/chartist/*.js
 localtest
-
+drupal7/mayo-templates/unused
+themes/filesaver
+testnotes/*.slidenote
+themes/unused
