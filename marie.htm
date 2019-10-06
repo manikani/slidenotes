@@ -359,7 +359,8 @@ menumanager.init = function(){
                 menu.classList.add("active");
                 this.classList.add("active");
             }
-            var firstbutton = menu.getElementsByClassName("menuitem");
+            var firstbutton = menu.getElementsByClassName("focusitem");
+            if(firstbutton.length<1)firstbutton = menu.getElementsByClassName("menuitem");
             if(firstbutton.length<1)firstbutton = menu.getElementsByTagName("button");
             if(firstbutton.length<1)return;
             firstbutton[0].focus();
@@ -430,13 +431,16 @@ menumanager.init = function(){
         end:slidenote.textarea.selectionEnd
       };
       var sc = slidenote.textarea.value;
-      if(searchtext.charAt(0)==="/"&&searchtext.indexOf("/",1)>-1){
-        //regex
-        //parse regex and searchtext should only be the pattern-part
-        var tmpsearchflag = searchtext.substring(searchtext.indexOf("/",1)+1);
-        searchtext = searchtext.substring(1,searchtext.indexOf("/",1));
-        var allowedflags = ['i','m'];
-        for(var fx=0;fx<allowedflags.length;fx++)if(tmpsearchflag.indexOf(allowedflags[fx])>-1)searchflag+=allowedflags[fx];
+      var searchmode = document.getElementById("searchinputchoice").value;
+      if(searchmode ==="regex"){
+        if(searchtext.charAt(0)==="/"&&searchtext.indexOf("/",1)>-1){
+          //regex
+          //parse regex and searchtext should only be the pattern-part
+          var tmpsearchflag = searchtext.substring(searchtext.indexOf("/",1)+1);
+          searchtext = searchtext.substring(1,searchtext.indexOf("/",1));
+          var allowedflags = ['i','m'];
+          for(var fx=0;fx<allowedflags.length;fx++)if(tmpsearchflag.indexOf(allowedflags[fx])>-1)searchflag+=allowedflags[fx];
+        }
         nextresult.searchtext = searchtext;
         var findregex = new RegExp(searchtext,searchflag);
         let scshort = sc.substring(selstart+1);
@@ -458,7 +462,9 @@ menumanager.init = function(){
         if(resultcount)resultcount = resultcount.length; else resultcount =0;
       }else{
         //standard search
-        searchtext = searchtext.replace(/\\n/g,"\n");
+        if(searchmode==="normal"){
+          searchtext = searchtext.replace(/\\n/g,"\n");
+        }
         nextresult = {
           startpos: sc.indexOf(searchtext,actcursor.end),
           searchtext:searchtext
@@ -526,11 +532,14 @@ menumanager.init = function(){
       var replinput = document.getElementById("replaceinput").value;
       var searchpattern = findinput;
       var searchflag = "g";
-      if(findinput.charAt(0)==="/" && findinput.indexOf("/",1)>-1){
-        searchpattern = findinput.substring(1,findinput.indexOf("/",1));
-        let parsedsearchflag = findinput.substring(searchpattern.length+2);
-        var allowedflags = ['i','m'];
-        for(var fx=0;fx<allowedflags.length;fx++)if(parsedsearchflag.indexOf(allowedflags[fx])>-1)searchflag+=allowedflags[fx];
+      var searchmode = document.getElementById("searchinputchoice").value;
+      if(searchmode ==="regex"){
+        if(findinput.charAt(0)==="/" && findinput.indexOf("/",1)>-1){
+          searchpattern = findinput.substring(1,findinput.indexOf("/",1));
+          let parsedsearchflag = findinput.substring(searchpattern.length+2);
+          var allowedflags = ['i','m'];
+          for(var fx=0;fx<allowedflags.length;fx++)if(parsedsearchflag.indexOf(allowedflags[fx])>-1)searchflag+=allowedflags[fx];
+        }
         var rex = new RegExp(searchpattern,searchflag);
         var matchcount = text.match(rex);
         if(matchcount)matchcount = matchcount.length;
@@ -1068,8 +1077,15 @@ end test-data-->
 		</ul>
     </div></div>
     <div id="menusearchbox"><div class="arrow_box"><div class="arrow_box_content">
-      <div class="separator">Search</div>
-      <input type="text" name="find" id="findinput" class="menuitem">
+      <!--<div class="separator">Search</div>-->
+      <div class="separator">
+        <select class="menuitem" name="searchinputchoice" id="searchinputchoice">
+          <option value="normal" selected title="normal search. You can use '\n' for line-break">Normal Search</option>
+          <option value="regex" title="Use a Regular Expression like /myRegex/flags . Allowed Flags are: i,m">Search Regular Expression</option>
+          <option value="raw" title="Search for Text 'as it is'">Raw-Text Search</option>
+        </select>
+      </div>
+      <input type="text" name="find" id="findinput" class="menuitem focusitem">
       <div class="buttonarea">
         <button id="findbutton" class="menuitem">Find</button>
       </div>

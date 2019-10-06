@@ -1050,7 +1050,7 @@ a.menuitem {
     background:white;
 }
 
-#editorchoice {
+select.menuitem {
     width: 90%;
     margin-left: 5%;
     background: #90c1c8;
