@@ -284,6 +284,7 @@ and all other options unavailable*/
     top: 50%;
     left: 35%;
 }
-.midstate #initialLoadingProgress{
+.midstate #initialLoadingProgress,
+.endstate #initialLoadingProgress{
   display:none;
 }
