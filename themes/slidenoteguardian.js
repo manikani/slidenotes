@@ -426,7 +426,7 @@ slidenoteGuardian.prototype.init = function(){
     slidenoteguardian.passwordPrompt("You are using the slidenote-editor localy. please choose a password to encrypt your slidenote","encrypt").then(
       function(resolve){
         slidenoteguardian.password = resolve;
-        slidenoteguardian.saveNote('cms');
+        slidenoteguardian.saveNote('local');
         slidenoteguardian.startEditorAnimation();
         //setTimeout("slidenoteguardian.saveNote('cms')",1);
 
