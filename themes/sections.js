@@ -123,20 +123,21 @@ newtheme.styleThemeSpecials = function(){
       function checkforgridbuild(data){
         //checks if we have to build a grid in the section:
         var childs = data.children;
-        console.log(childs);
         var result=false;
         for(var x=0;x<childs.length;x++){
           var child=childs[x];
-          console.log(child);
-          //on bgimage:
-          if(child.classList.contains("bgimg"))result=true;
+          //on bgimage: build grid
+          if(child.classList.contains("bgimg")||
           //on charts: build grid
-          if(child.classList.contains("chart"))result=true;
+          child.classList.contains("chart")){
+            result=true;
+            break;
+          }
         }
         return result;
       }
 
-      if(checkforgridbuild(sectiondata)){
+      if(checkforgridbuild(sectiondata) && dataobject.head.indexOf("inline")==-1){
         var blocktheme = slidenote.extensions.getThemeByName("blocks");
         if(blocktheme && blocktheme.active){
           blocktheme.buildgrid(sectiondata);
@@ -153,6 +154,12 @@ newtheme.styleThemeSpecials = function(){
           sectiondata.classList.add("head");
       }else if(dataobject.head.indexOf("inline")>-1){
           sectiondata.classList.add("inline");
+          if(sectiondata.childNodes[1].classList.contains("bgimg")){
+            var bgimg = sectiondata.childNodes[1];
+            sectiondata.removeChild(bgimg);
+            sectiondata.style.backgroundImage = "url("+bgimg.src+")";
+            sectiondata.style.backgroundSize = "cover";
+          }
       }
 
 
