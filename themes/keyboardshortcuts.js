@@ -878,6 +878,24 @@ keyboardshortcuts.closeAutomagic = function(event){
         slidenote.textarea.selectionStart = selstart+key.length;
         slidenote.parseneu();
   }
+  if(key==="+"){
+    if(selend-selstart!=0){
+      txt = txt.substring(0,selstart)+
+            "\n+++\n"+txt.substring(selstart,selend)+
+            "\n+++\n"+txt.substring(selend);
+      slidenote.textarea.value = txt;
+      slidenote.textarea.selectionStart = selstart+1; //put selectionstart right after new line
+      slidenote.textarea.selectionEnd = selend+9; //put selectionend to end of inputted line
+      slidenote.parseneu();
+    }else if(txt.substring(selstart-3,selstart)==="\n++"){
+      txt = txt.substring(0,selstart-1)+
+            "+\n\n+++\n"+txt.substring(selstart);
+      slidenote.textarea.value=txt;
+      slidenote.textarea.selectionStart = selstart;
+      slidenote.textarea.selectionEnd = selstart;
+      slidenote.parseneu();
+    }
+  }
 }
 
 keyboardshortcuts.attachShortcuts = function(){
