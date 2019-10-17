@@ -729,7 +729,7 @@ div#menucloud {
 }
 
 #menucloud .arrow_box:before, #menucloud .arrow_box:after {
-    left: 27%;
+    left: 15%;
 }
 
 #menucloud button {
@@ -903,7 +903,7 @@ div#menupublish,
 }
 
 #menupublish .arrow_box:before, #menupublish .arrow_box:after {
-    left: 42.5%;
+    left: 38.5%;
 }
 
 #publishedlist {
@@ -997,7 +997,7 @@ div#linkcopyalert {
 
 /*menu import export*/
 #menuimportexport .arrow_box:before, #menuimportexport .arrow_box:after {
-    left: 14%;
+    left: 12%;
 }
 
 input#importfile {
@@ -1022,7 +1022,7 @@ input#importfile {
 
 
 #menuoptionseditor .arrow_box:before, #menuoptionseditor .arrow_box:after {
-    left: 71%;
+    left: 65%;
 }
 
 a.menuitem {
