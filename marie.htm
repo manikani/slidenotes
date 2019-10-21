@@ -745,7 +745,8 @@ function insertbutton(code){
 </head><body onload="testinit()">
   <script>
   //load nightmode as fast as possible
-  if(localStorage.getItem("config").indexOf('nightmode":true')>-1)document.body.classList.add("nightmode");
+  var cfg = localStorage.getItem("config");
+  if(cfg && cfg.indexOf('nightmode":true')>-1)document.body.classList.add("nightmode");
   </script>
 <div id="slidenotediv" class="initial">
 <div id="slidenoteeditor">
