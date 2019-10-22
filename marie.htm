@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
 <title>Slidenote-Editor</title>
 <link rel="stylesheet" href="marie.css">
 <link rel="stylesheet" href="themes/slidenoteguardian.css">
@@ -742,13 +743,18 @@ function insertbutton(code){
 }
 </script>
 
-</head><body onload="testinit()">
+</head>
+
+
+<body onload="testinit()">
   <script>
   //load nightmode as fast as possible
   var cfg = localStorage.getItem("config");
   if(cfg && cfg.indexOf('nightmode":true')>-1)document.body.classList.add("nightmode");
   </script>
+
 <div id="slidenotediv" class="initial">
+
 <div id="slidenoteeditor">
         <button id="cloud">
         <!--  <img id="savestatus" src="images/buttons/cloud.svg"> -->
@@ -807,18 +813,29 @@ function insertbutton(code){
     <div id="toolbar"><div class="arrow_box" id="texteditorbuttons">
         <div class="screenreader-only">Toolbar</div>
         <ul id="toolbarbuttons">
-			<li><button class="basicbutton" onclick="insertbutton('---')" title="new slide"><img src="images/buttons/newslide.png" alt="new slide"><span class="buttonmdcode">---</span><span class="toolbarbuttontitle"> new slide</span></button></li>
-			<li><button class="basicbutton" onclick="insertbutton('%head1')" title="title"><img src="images/buttons/h1.png" alt="Title"><span class="buttonmdcode">#</span> <span class="toolbarbuttontitle"> headline</span></button></li>
-			<li><button class="basicbutton" onclick="insertbutton('*')" title="italic"><img src="images/buttons/italic.png" alt="italic"><span class="buttonmdcode">*</span><span class="toolbarbuttontitle">italic</span><span class="buttonmdcode">*</span></button></li>
-			<li><button class="basicbutton" onclick="insertbutton('**')" title="bold"><img src="images/buttons/bold.png" alt="bold"><span class="buttonmdcode">**</span><span class="toolbarbuttontitle">bold</span><span class="buttonmdcode">**</span></button></li>
-			<li><button onclick="insertbutton('~~')" title="crossed"><img src="images/buttons/stroke.png" alt="stroke"><span class="buttonmdcode">~~</span><span class="toolbarbuttontitle">deleted</span><span class="buttonmdcode">~~</span></button></li>
-			<li><button class="basicbutton" onclick="insertbutton('%list')" title="unordered list"><img src="images/buttons/ul.png" alt="list"><span class="buttonmdcode">- </span><span class="toolbarbuttontitle">list</span></button></li>
-			<li><button onclick="insertbutton('%nrlist')" title="ordered list"><img src="images/buttons/ol.png" alt="ordered list"><span class="buttonmdcode">1. </span><span class="toolbarbuttontitle">ordered list</span></button></li>
-			<li><button class="basicbutton" onclick="insertbutton('%quote')" title="quote"><img src="images/buttons/quote.png" alt="quote"><span class="buttonmdcode">&gt; </span><span class="toolbarbuttontitle">quote</span></button></li>
-			<li><button onclick="insertbutton('%footnote')" title="footnote"><img src="images/buttons/quote.png" alt="footnote"><span class="buttonmdcode">[^*]</span><span class="toolbarbuttontitle"> footnote</span></button></li>
-			<li><button onclick="insertbutton('%comment')" title="comment"><img src="images/buttons/comment.png" alt="comment"><span class="buttonmdcode">//</span> <span class="toolbarbuttontitle">comment</span></button></li>
-			<li><button onclick="insertbutton('%code')" title="code"><img src="images/buttons/code.png" alt="code"><span class="buttonmdcode">`</span><span class="toolbarbuttontitle">code</span><span class="buttonmdcode">`</span></button></li>
-			<li><button onclick="insertbutton('%link')" title="hyperlink"><img src="images/buttons/link.png" alt="link"><span class="buttonmdcode">[</span><span class="toolbarbuttontitle">link</span><span class="buttonmdcode">](url)</span></button></li>
+			<li><button class="basicbutton" onclick="insertbutton('---')" title="new slide"><img src="images/buttons/newslide.svg" alt="new slide"><span class="buttonmdcode">---</span><span class="toolbarbuttontitle"> new slide</span></button></li>
+
+			<li><button class="basicbutton" onclick="insertbutton('%head1')" title="title"><img src="images/buttons/hash-h1.svg" alt="Title"><span class="buttonmdcode">#</span> <span class="toolbarbuttontitle"> headline</span></button></li>
+
+			<li><button class="basicbutton" onclick="insertbutton('*')" title="italic"><img src="images/buttons/italic.svg" alt="italic"><span class="buttonmdcode">*</span><span class="toolbarbuttontitle">italic</span><span class="buttonmdcode">*</span></button></li>
+
+			<li><button class="basicbutton" onclick="insertbutton('**')" title="bold"><img src="images/buttons/bold.svg" alt="bold"><span class="buttonmdcode">**</span><span class="toolbarbuttontitle">bold</span><span class="buttonmdcode">**</span></button></li>
+
+			<li><button onclick="insertbutton('~~')" title="crossed"><img src="images/buttons/stroke.svg" alt="stroke"><span class="buttonmdcode">~~</span><span class="toolbarbuttontitle">deleted</span><span class="buttonmdcode">~~</span></button></li>
+
+			<li><button class="basicbutton" onclick="insertbutton('%list')" title="unordered list"><img src="images/buttons/ul.svg" alt="list"><span class="buttonmdcode">- </span><span class="toolbarbuttontitle">list</span></button></li>
+
+			<li><button onclick="insertbutton('%nrlist')" title="ordered list"><img src="images/buttons/ol.svg" alt="ordered list"><span class="buttonmdcode">1. </span><span class="toolbarbuttontitle">ordered list</span></button></li>
+
+			<li><button class="basicbutton" onclick="insertbutton('%quote')" title="quote"><img src="images/buttons/quote.svg" alt="quote"><span class="buttonmdcode">&gt; </span><span class="toolbarbuttontitle">quote</span></button></li>
+
+			<li><button onclick="insertbutton('%footnote')" title="footnote"><img src="images/buttons/footnote.svg" alt="footnote"><span class="buttonmdcode">[^*]</span><span class="toolbarbuttontitle"> footnote</span></button></li>
+
+			<li><button onclick="insertbutton('%comment')" title="comment"><img src="images/buttons/comment.svg" alt="comment"><span class="buttonmdcode">//</span> <span class="toolbarbuttontitle">comment</span></button></li>
+
+			<li><button onclick="insertbutton('%code')" title="code"><img src="images/buttons/code.svg" alt="code"><span class="buttonmdcode">`</span><span class="toolbarbuttontitle">code</span><span class="buttonmdcode">`</span></button></li>
+
+			<li><button onclick="insertbutton('%link')" title="hyperlink"><img src="images/buttons/link.svg" alt="link"><span class="buttonmdcode">[</span><span class="toolbarbuttontitle">link</span><span class="buttonmdcode">](url)</span></button></li>
 
         </ul>
     </div></div>
@@ -1107,7 +1124,7 @@ end test-data-->
     <div id="noteareaempty"><img src="images/borderleft.png"></div>
     <div id="cornerright"></div>
 -->
-  <div id="topright"><svg viewBox="0 0 40 40" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <!-- <div id="topright"><svg viewBox="0 0 40 40" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
 			    <g transform="matrix(1,0,0,1,-1190.49,-3479)">
 			        <g transform="matrix(1,0,0,1,0,3479)">
 			            <g transform="matrix(1,0,0,1,0,-3479)">
@@ -1126,9 +1143,8 @@ end test-data-->
   						</feComponentTransfer>
         			</filter>
 			    </defs>
-			</svg></div>
+			</svg></div> -->
     <div id="shadowelleft"></div>
-    <div id="shadowelright"><img src="images/rahmenrechts.png"></div>
     <div id="rahmenright"></div>
 </div><!--end of slidenoteeditor-div-->
 	<div id="praesentationrahmen">
@@ -1139,6 +1155,7 @@ end test-data-->
 				<input type="button" onclick="presentation.showpresentation()" value="hide presentation">
 		</div>
 	</div>
+	
 	<div id="options">
 		<h1>Options<button id="optionsclose" onclick="slidenote.extensions.hideThemes()" value="close">close</button></h1>
 		<div class="tabbar">
