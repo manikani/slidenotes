@@ -68,7 +68,7 @@ newtheme.changeSectionType = function(type){
   slidenote.textarea.focus();
 }
 
-newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/layout.png" title="layout/section">'+
+newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/layout.svg" title="layout/section">'+
   '<span class="buttonmdcode">+++</span>'+
   '<span class="buttonmdtext">layout</span>'+
   '<span class="buttonmdcode">+++</span>',"+++layout","+++");

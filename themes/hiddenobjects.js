@@ -13,7 +13,7 @@ newtheme.helpText = function(dataobject){
           "Listcontent inside ||hidden||bullet will be used as Bulletpoints."
   return result;
 }
-var buttonhtml = '<img src="'+slidenote.imagespath+'buttons/hidden.png" title="Hidden Element">';
+var buttonhtml = '<img src="'+slidenote.imagespath+'buttons/hidden.svg" title="Hidden Element">';
 buttonhtml += '<span class="buttonmdcode">+++</span>';
 buttonhtml += '<span class="buttonmdtext">hidden</span>';
 buttonhtml += '<span class="buttonmdcode">+++</span>';
