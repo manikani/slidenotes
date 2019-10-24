@@ -10,7 +10,7 @@ newtheme.helpText = function(head){
   return result;
 }
 
-newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/table.png" title="Table">'+
+newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/table.svg" title="Table">'+
   '<span class="buttonmdcode">+++</span>'+
   '<span class="buttonmdtext">table</span>'+
   '<span class="buttonmdcode">+++</span>'

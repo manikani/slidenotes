@@ -617,7 +617,7 @@ newtheme.init = function(){
   button.title ="add image";
   button.classList.add("basicbutton");
   var buttonimage = new Image();
-  buttonimage.src=slidenote.imagespath+"buttons/image.png";
+  buttonimage.src=slidenote.imagespath+"buttons/image.svg";
   buttonimage.title = "Image";
   //var buttontext = document.createTextNode("Image");
   var fileInput = document.getElementById('fileInput');
