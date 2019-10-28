@@ -16,7 +16,7 @@ document.getElementsByTagName("head")[0].appendChild(cssfile);
 newtheme.loadingFiles = new Array();
 newtheme.loadingFiles.push(slidenote.appendFile("script","katex/katex.js"));
 slidenote.appendFile("css","katex/katex.min.css");
-newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/latex.svg" title="LaTeX">',"+++latex","+++"); //TODO: add function to body?
+newtheme.addEditorbutton('<img src="'+slidenote.imagespath+'buttons/latex.svg" title="LaTeX"><span class="buttonmdcode">+++</span><span class="buttonmdtext">latex</span> <span class="buttonmdcode">+++</span>',"+++latex","+++"); //TODO: add function to body?
 slidenote.datatypes.push({type:"latex",mdcode:false,theme:newtheme});
 
 newtheme.styleThemeSpecials = function(){
