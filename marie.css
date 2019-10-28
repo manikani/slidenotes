@@ -2292,6 +2292,7 @@ button#importbutton .importpng {
   justify-items: center;
   max-width:80vw;
   max-height:82vh;
+  overflow-y:auto;
 }
 .dialogbox .buttonarea {
     width: 100%;

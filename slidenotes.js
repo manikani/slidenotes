@@ -3499,6 +3499,131 @@ ExtensionManager.prototype.enableKeyboardShortcuts = function(){
 ExtensionManager.prototype.getThemeByName = function(name){
 	for(var x=0;x<this.themes.length;x++)if(this.themes[x].classname ===name)return this.themes[x];
 }
+//initial dialog for advanced menu:
+ExtensionManager.prototype.showAdvancedMenu = function(){
+	var dialognode = document.createElement("div");
+	var editoroptions = document.createElement("button");
+	editoroptions.title = "Open Editor Options";
+	editoroptions.innerText = "Advanced Editor Options";
+	editoroptions.onclick = function(){slidenote.extensions.showEditorMenu()};
+	dialognode.appendChild(editoroptions);
+	var keyboardoptions = document.createElement("button");
+	keyboardoptions.title = "Open Keyboard Configuration";
+	keyboardoptions.innerText = "Keyboard Configuration";
+	keyboardoptions.onclick = function(){slidenote.extensions.showKeyboardConfig()};
+	dialognode.appendChild(keyboardoptions);
+	var extensionsbutton = document.createElement("button");
+	extensionsbutton.title = "Open Extensions Option";
+	extensionsbutton.innerText = "Extensions";
+	extensionsbutton.onclick = function(){slidenote.extensions.showExtensionMenu()};
+	dialognode.appendChild(extensionsbutton);
+	var dialogoptions = {
+		type:"dialog",
+		title: "Advanced Options",
+		content: dialognode,
+		closebutton: true
+	}
+	var dialog = dialoger.buildDialog(dialogoptions);
+}
+//dialog for Editormenu / ex global options:
+ExtensionManager.prototype.showEditorMenu = function(){
+	var parent = document.createElement("div");
+	for(var x=0;x<this.themes.length;x++){
+		var acttheme = this.themes[x];
+		if(acttheme.globaloptions!=null && acttheme.active){
+			var actp = document.createElement("div");
+			var acttitle = document.createElement("h3");
+			acttitle.innerText = acttheme.classname;
+			actp.appendChild(acttitle);
+			var actplist = document.createElement("ul");
+			actp.appendChild(actplist);
+			for(var glop=0;glop<acttheme.globaloptions.length;glop++){
+				var actopt = acttheme.globaloptions[glop];
+				var actoptli = document.createElement("li");
+				actoptli.classList.add("globaloption");
+				if(actopt.type==="checkbox"){
+					var actinp = document.createElement("input");
+					actinp.type="checkbox";
+					actinp.nr = glop;
+					actinp.name = acttheme.classname;
+					actinp.classList.add("menuitem");
+					if(actopt.values)actinp.checked = true;
+					actinp.onclick = function(){
+						slidenote.extensions.getThemeByName(this.name).changeGlobalOption(this.nr,this.checked);
+						if(slidenoteguardian)slidenoteguardian.saveConfig("local");
+						console.log("parseneu forced by config-change");
+						slidenote.parseneu();
+					}
+					var actlabel = document.createElement("label");
+					actlabel.innerText = actopt.description;
+					actoptli.appendChild(actinp);
+					actoptli.appendChild(actlabel);
+					actplist.appendChild(actoptli);
+				}
+			}
+			parent.appendChild(actp);
+		}
+	}
+	var dialogoptions = {
+		type:"dialog",
+		title:"Advanced Editor Configuration",
+		content:parent,
+		closebutton:true
+	};
+	dialoger.buildDialog(dialogoptions);
+}
+
+//dialog for keyboard-config:
+ExtensionManager.prototype.showKeyboardConfig = function(focusOnOptionName){
+	var dialogoptions = {
+		type:"dialog",
+		title:"Keyboard Configuration",
+		closebutton:true
+	};
+	dialogoptions.content = slidenote.keyboardshortcuts.buildOptionsMenu();
+	var inputs = dialogoptions.content.getElementsByTagName("input");
+	for(var x=0;x<inputs.length;x++)inputs[x].classList.add("menuitem");
+	var buttons = dialogoptions.content.getElementsByTagName("button");
+	for(var x=0;x<buttons.length;x++){
+		buttons[x].classList.add("menuitem");
+		if(buttons[x].name === focusOnOptionName)dialogoptions.focuson = buttons[x];
+	}
+	dialoger.buildDialog(dialogoptions);
+}
+//dialog activate/deactivate Extensions:
+ExtensionManager.prototype.showExtensionMenu = function(){
+	var parent = document.createElement("div");
+	var plist = document.createElement("ul");
+	for(var x=0;x<this.themes.length;x++){
+		var acttheme = this.themes[x];
+		if(acttheme.themetype==="css")continue;
+		var actli = document.createElement("li");
+		var actinp = document.createElement("input");
+		actinp.classname = acttheme.classname;
+		actinp.type = "checkbox";
+		actinp.classList.add("menuitem");
+		actinp.onclick = function(){
+			slidenote.extensions.changeThemeStatusByClassname(this.classname, this.checked);
+			if(slidenoteguardian)slidenoteguardian.saveConfig("local");
+			slidenote.parseneu();
+		}
+		if(acttheme.active)actinp.checked = true;
+		var label = document.createElement("label");
+		label.innerText = acttheme.description;
+		if(!acttheme.description)label.innerText = acttheme.classname;
+		actli.appendChild(actinp);
+		actli.appendChild(label);
+		plist.appendChild(actli);
+	}
+	parent.appendChild(plist);
+	var dialogoptions = {
+		type:"dialog",
+		title:"Extensions",
+		closebutton:true,
+		content:parent
+	}
+	dialoger.buildDialog(dialogoptions);
+}
 	/*showThemes zeigt die Themes in einem Div an und lässt sie dort aktivieren etc.
 	*/
 ExtensionManager.prototype.showThemes = function(tabnr){

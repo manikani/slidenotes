@@ -126,24 +126,8 @@ keyboardshortcuts.shortcutByName = function(shortcutname){
 }
 
 keyboardshortcuts.buildOptionsMenu = function(){
-    if(!this.optionsmenu)this.optionsmenu = document.getElementById("keyboardshortcutstab");
     if(!this.optionsmenu){
         this.optionsmenu = document.createElement("div");
-        this.optionsmenu.classList.add("optiontab");
-        this.optionsmenu.id = "keyboardshortcutstab";
-        document.getElementById("options").appendChild(this.optionsmenu);
-        var opentabbutton = document.createElement("a");
-        opentabbutton.href="#";
-        opentabbutton.innerText="Keyboard Shortcuts";
-        opentabbutton.onclick=function(){
-            var tabs = document.getElementsByClassName("optiontab");
-            for(var t=0;t<tabs.length;t++){
-                tabs[t].classList.remove("active");
-                if(tabs[t].id==="keyboardshortcutstab")tabs[t].classList.add("active");
-            }
-
-        }
-        document.getElementById("options").getElementsByClassName("tabbar")[0].appendChild(document.createElement("h2").appendChild(opentabbutton));
     }
     this.optionsmenu.innerHTML = "";
     var allinone = document.createElement("ul"); //change later with different groups
@@ -219,10 +203,12 @@ keyboardshortcuts.buildOptionsMenu = function(){
           this.focus();
         }
         changebutton.onkeydown = function(e){
+          if(!this.changingactive)return;
           if(e.key===undefined)e.key=getKeyOfKeyCode(e.keyCode);
           slidenote.keyboardshortcuts.tempkeydowns.push(e.key);
         };
         changebutton.onkeyup = function(e){
+          if(!this.changingactive)return;
           var shortcut = slidenote.keyboardshortcuts.shortcutByName(this.name);
           var pressedkeys = slidenote.keyboardshortcuts.pressedkeys;
           var objindex = Object.keys(pressedkeys);
@@ -236,16 +222,15 @@ keyboardshortcuts.buildOptionsMenu = function(){
           if(pressedkeyarray.indexOf(metakey)>-1)pressedkeyarray.splice(pressedkeyarray.indexOf(metakey),1);
           if(shortcut.metakey)previewtext+=metakey + " + ";
           previewtext += pressedkeyarray.join(" + ");
-          if(this.changingactive){
             this.changingactive=false;
             if(confirm("set "+this.name+" to "+previewtext)){
               if(shortcut.standardkeys===undefined)shortcut.standardkeys = shortcut.keys;
               shortcut.keys = pressedkeyarray;
-              slidenote.keyboardshortcuts.buildOptionsMenu();
+              slidenote.extensions.showKeyboardConfig(this.name);
             }
             this.classList.remove("changingactive");
             slidenote.keyboardshortcuts.tempkeydowns = new Array();
-          }
+
         }
         /*old:
         changebutton.onclick = function(){
@@ -262,7 +247,7 @@ keyboardshortcuts.buildOptionsMenu = function(){
             if(shortcut.standardkeys){
               shortcut.keys = shortcut.standardkeys;
               shortcut.standardkeys = undefined;
-              slidenote.keyboardshortcuts.buildOptionsMenu();
+              slidenote.extensions.showKeyboardConfig(this.name);
             }
           }
           li.appendChild(revertbutton);
@@ -285,80 +270,8 @@ keyboardshortcuts.buildOptionsMenu = function(){
     amli.appendChild(amlabel);
     allinone.appendChild(amli);
     this.optionsmenu.appendChild(allinone);
+    return this.optionsmenu;
 }
-/*old:
-keyboardshortcuts.changeKeyByUserInput = function(shortcuttochange){
-  var wrapper = document.createElement("div");
-  var changearea = document.createElement("div");
-  var preview = document.createElement("div");
-  var oldview = document.createElement("div");
-  var shortcut = shortcuttochange;
-  var title= document.createElement("h1");
-  title.innerText = "change key for shortcut "+ shortcut.name;
-  wrapper.id = "keyboardshortcutprompt";
-  changearea.classList.add("keyboardshortcutchange");
-  preview.classList.add("preview-keyboardshortcuts");
-  preview.id = "keyboardshortcutpromptpreview";
-  var changebutton = document.createElement("button");
-  var cancelbutton = document.createElement("button");
-  cancelbutton.innerText = "cancel";
-  var okbutton = document.createElement("button");
-  okbutton.innerText = "ok";
-  okbutton.name = shortcut.name;
-  var buttontext = "";
-  if(shortcut.metakey)buttontext += this.metakey+" + ";
-  buttontext+=shortcut.keys.join(" + ");
-  if(shortcut.keys[0]===" ")buttontext+='Space';
-  preview.innerText = buttontext;
-  oldview.innerHTML = "Old Combo: "+buttontext;
-  changebutton.innerHTML="<span>navigate here and </span>click buttons to use";
-  changebutton.id="keyboardshortcutpromptchangebutton";
-  changebutton.onkeyup = function(e){
-    var key = e.key+"";
-    if(key==="undefined")e.key=getKeyOfKeyCode(e.keyCode);
-    var metakey = keyboardshortcuts.metakey;
-    if(e.key==="Escape"||e.key==="ArrowLeft"||e.key==="ArrowRight" || e.key==="Shift")return;
-    var preview = document.getElementById("keyboardshortcutpromptpreview");
-    var pressedkeys = slidenote.keyboardshortcuts.pressedkeys;
-    var objindex = Object.keys(pressedkeys);
-    var pressedkeyarray = new Array();
-    for(var x=0;x<objindex.length;x++){
-      if(objindex[x]===metakey)continue;
-      if(pressedkeys[objindex[x]])pressedkeyarray.push(objindex[x]);
-    }
-    var previewtext = "";
-    if(shortcut.metakey)previewtext+=metakey + " + ";
-    previewtext += pressedkeyarray.join(" + ");
-    preview.innerText = previewtext;
-    slidenote.keyboardshortcuts.UserInputResolveToChange = pressedkeyarray;
-  };
-  okbutton.onclick = function(){
-    if(slidenote.keyboardshortcuts.UserInputResolveToChange){
-      var shortcut = slidenote.keyboardshortcuts.shortcutByName(this.name);
-      if(shortcut.standardkeys===undefined)shortcut.standardkeys=shortcut.keys;
-      shortcut.keys = slidenote.keyboardshortcuts.UserInputResolveToChange;
-      slidenote.keyboardshortcuts.UserInputResolveToChange=null;
-      slidenote.keyboardshortcuts.buildOptionsMenu();
-    }
-    var prompt = document.getElementById("keyboardshortcutprompt");
-    prompt.parentNode.removeChild(prompt);
-  };
-  cancelbutton.onclick = function(){
-    slidenote.keyboardshortcuts.UserInputResolveToChange = null;
-    var prompt = document.getElementById("keyboardshortcutprompt");
-    prompt.parentNode.removeChild(prompt);
-  };
-  changearea.appendChild(title);
-  changearea.appendChild(oldview);
-  changearea.appendChild(preview);
-  changearea.appendChild(changebutton);
-  changearea.appendChild(cancelbutton);
-  changearea.appendChild(okbutton);
-  wrapper.appendChild(changearea);
-  document.getElementById("slidenotediv").appendChild(wrapper);
-
-}
-*/
 
 keyboardshortcuts.selectCurrentElement = function(){
   var el = slidenote.parser.CarretOnElement();
