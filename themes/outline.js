@@ -25,10 +25,16 @@ newtheme.speakTimeActivated = true; //generate Speaktime or not
 newtheme.addGlobalOption("checkbox", "Calculate Speak Time", "Calculate Speak Time", this.speakTimeActivated);
 newtheme.changeGlobalOption = function(optionnr, value){
   this.speakTimeActivated = value; //!this.speakTimeActivated;
+  var outlineblock = document.getElementById("outlineblock");
+  if(this.speakTimeActivated)outlineblock.classList.remove("withoutSpeakTime");
+  else outlineblock.classList.add("withoutSpeakTime");
   console.log("changed outline speaktime to: "+this.speakTimeActivated + "value:"+value);
 }
 newtheme.saveConfigString = function(){return this.speakTimeActivated};
-newtheme.loadConfigString= function(data){this.speakTimeActivated = data};
+newtheme.loadConfigString= function(data){
+  this.speakTimeActivated = data;
+  if(!this.speakTimeActivated)document.getElementById("outlineblock").classList.add("withoutSpeakTime");
+};
 newtheme.changeThemeStatus = function(status){
   this.active = status;
   var ol = document.getElementById("outlineblock");
@@ -36,8 +42,11 @@ newtheme.changeThemeStatus = function(status){
     console.log("generate Outline Block")
     this.generateOutlineBlock();
   }else{
-    if(ol)ol.parentElement.removeChild(ol);
+    if(!this.active && ol)ol.parentElement.removeChild(ol);
   }
+}
+newtheme.init = function(){
+  //if(this.active)this.generateOutlineBlock();
 }
 
 newtheme.generateOutlineBlock = function(){
