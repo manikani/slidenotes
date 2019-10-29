@@ -44,6 +44,8 @@ slidenote.base64images = {
   rebuildOldImages: function(){
     this.buildImageGallery();
     this.buildImageSelectionDialog();
+    var insertmenu = document.getElementById("insertarea");
+    if(insertmenu && insertmenu.style.visibility==="visible")slidenote.presentation.showInsertMenu();
   },
   sizeDialog: function(options){
     var img = options.origimage;
