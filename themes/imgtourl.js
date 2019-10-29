@@ -602,6 +602,9 @@ newtheme.insideFinalizeHtml = function(template){
     if(b64image!=null){
       console.log("image in datenbank gefunden. b64code:"+b64image.base64url);
       imgtags[x].src=b64image.base64url;
+    } else {
+      //no image-tag found - replace image-src with error-image:
+      imgtags[x].src = slidenote.imagespath + "imageupload.png";
     }
   }
 };
