@@ -825,6 +825,14 @@ slidenoteGuardian.prototype.saveToRest = async function(path, payload){
   putReq.setRequestHeader('X-CSRF-TOKEN', this.restToken);
 
   //putReq.withCredentials = true;
+  putReq.addEventListener("error",function(evt){
+    if(slidenoteguardian.uploadRestObject.inprogress)slidenoteguardian.uploadRestObject.inprogress=false;
+    if(slidenoteguardian.savingtoDestination)slidenoteguardian.savingtoDestination=undefined;
+    var cloudbutton = document.getElementById("cloud");
+    cloudbutton.classList.add("cloud-error");
+    var statustext = document.getElementById("cloudstatus");
+    statustext.innerText = "an error occured - network seems unreachable. Please try again later or check your internet connection.";
+  });
   putReq.send(payload);
   console.log("sending payload");
   console.log(putReq);
