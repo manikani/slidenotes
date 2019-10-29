@@ -354,7 +354,7 @@ slidenote.base64images = {
     name = name.replace(/[<\"\']/g,"")
 
     var activeimage =slidenote.parser.CarretOnElement();
-    if(!activeimage||activeimage.typ!="image" )activeimage=false;
+    if(!activeimage||activeimage.typ!="image" || this.uploadmode==="imagegallery")activeimage=false;
     var nombre = name;
     //if(this.preselectedname!=null)nombre=this.preselectedname;
     if(activeimage)nombre = activeimage.src;
