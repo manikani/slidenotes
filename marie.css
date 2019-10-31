@@ -292,7 +292,7 @@ div#cloud-undefined div {
 }
 #menusearchbox .arrow_box::after,
 #menusearchbox .arrow_box::before{
-  left:7vh;
+  left:4ch;
 }
 
 
@@ -1493,7 +1493,7 @@ button#outlet {
 #circle-colorful{
   display:none;
 }
-#slidenoteloadingscreenwrapper.endstate #circle-colorful{
+.endstate #circle-colorful{
       display:block;
 			position: absolute;
 			left:50%;
