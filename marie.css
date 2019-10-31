@@ -101,7 +101,7 @@ body{
     ". . . sidebar editor . sidebarright ."
     "playbutton playbutton playbutton sidebar editor . sidebarright ."
     "playbutton playbutton playbutton sidebar editor . cornerbottomright .";
-    grid-template-columns: 4fr 0px 15.4vw auto auto auto 5.2vw 5fr;
+    grid-template-columns: 4fr 0px 15.4vw auto auto 7px 5.2vw 5fr;
 /*  compare with:
 
     grid-template-columns: 1fr 0px 200px auto auto 50px 200px 1fr;
@@ -675,7 +675,7 @@ div#shadowelright {
 div#rahmenright {
   grid-row-start: 1;
   grid-row-end: last;
-  grid-column-start: 6;
+  grid-column-start: 7;
   grid-column-end: last;
   z-index: 10;
   background: #FCFCFC;
@@ -1861,7 +1861,7 @@ div#nicesidebarsymbol.out #nicesidebarsymbolcontainer {
 .big-mode #slidenoteeditor {
   display:grid;
 grid-template-rows: 3.5vh 3em 3em 3em 1fr 42vh 22vh;
-grid-template-columns: 25vh auto auto auto 12.5vh 1fr;
+grid-template-columns: 25vh auto auto 7px 12.5vh 1fr;
 grid-template-areas:
 ". sidebar editor topright . ."
 "noteareacloud sidebar editor . buttonright ."
@@ -1876,6 +1876,10 @@ grid-template-areas:
   grid-column:1;
   grid-row-start: 6;
   grid-row-end:last;
+}
+
+.big-mode #rahmenright{
+  grid-column-start:5;
 }
 .big-mode div#menupublish, .big-mode #menuimportexport, .big-mode #menuoptionseditor {
     grid-row-start: 6;
@@ -1969,6 +1973,7 @@ grid-template-areas:
 }
 .big-mode #toolbar img{
   display:block;
+  width:100%;
 }
 .big-mode #presentationoptionsbutton {
     height: 11vh;
