@@ -5,6 +5,9 @@ p code.hljs{
 code {
 	white-space:pre;
 }
+span code{
+	white-space:pre-line;
+}
 
 #texteditorerrorlayer .specialline{
 	text-decoration:underline;
