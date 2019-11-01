@@ -1979,7 +1979,9 @@ emdparser.prototype.parseMap = function(){
 				for(var blocktype=0;blocktype<slidenote.datatypes.length;blocktype++)if(head.indexOf(slidenote.datatypes[blocktype].type)>-1)datablocktypefound = slidenote.datatypes[blocktype];
 				//datablocktypefound is now either null for default or the datatype
 				//check for default:
-				if(datablocktypefound===null && slidenote.standarddatablocktype){
+				if(datablocktypefound===null && dtsymbol==="```"){
+					datablocktypefound==="code";
+				}else if(datablocktypefound===null && slidenote.standarddatablocktype){
 					datablocktypefound=slidenote.standarddatablocktype;
 				}
 				if(datablocktypefound && datablocktypefound.type!="code"){
