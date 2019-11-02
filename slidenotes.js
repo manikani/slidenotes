@@ -327,6 +327,9 @@ emdparser.prototype.renderCodeeditorBackground = function(){
 	 	mdcode:'',
 	 	typ:'cursor'
 	 };
+	 if(slidenote.textarea.value.charAt(cursorposinall-1)==="-"){
+		 cursorchange.html = '<span id="carret"></span>';
+	 }
 	 changes.push(cursorchange);
 	 /*
 	 if(slidenote.textarea.selectionEnd-
@@ -742,6 +745,9 @@ emdparser.prototype.renderNewCursorInCodeeditor = function(){
 	 mdcode:'',
 	 typ:'cursor'
 	};
+	if(slidenote.textarea.value.charAt(cursorposinall-1)==="-"){
+		cursorchange.html = '<span id="carret"></span>';
+	}
 	changes.push(cursorchange);
   	var issel = false;
 	var ismlsel = false;
