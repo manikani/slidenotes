@@ -303,6 +303,7 @@ keyboardshortcuts.init = function(){
       this.metakey = "Meta";
     }
     //add basic shortcuts:
+    //start presentation
     this.addShortcut(new keyboardshortcuts.shortcut("Start Presentation","global", "Enter", function(){
       //slidenote.parseneu();slidenote.presentation.showpresentation();
       document.getElementById("playbutton").click();
@@ -415,6 +416,7 @@ keyboardshortcuts.init = function(){
         slidenote.keyboardshortcuts.pressedkeys=pressedkeys;
       }
     }));
+    /*
     //automatic closure on dead key:
 
     this.addShortcut(new this.shortcut("automatic closure for (deadkey)", "textarea",{multipleChoiceKeys:["Dead","`"],metakey:false},function(e){
@@ -442,6 +444,7 @@ keyboardshortcuts.init = function(){
       slidenote.textarea.focus();
       slidenote.parseneu();
     }));
+    */
     //insertmenu:
     this.addShortcut(new this.shortcut("open insertmenu", "global", "ContextMenu", function(){
         slidenote.presentation.showInsertMenu();
