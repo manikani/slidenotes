@@ -274,7 +274,7 @@ newtheme.insertMenuArea = function(dataobject){
 
 newtheme.parseStyledBlockOptions = function(block){
 	var text = block.innerHTML;
-	if(text.indexOf("\n---\n")===-1)return;
+	if(text.indexOf("\n---\n")===-1)return new slidenotecodeblockoptions();
 	text = text.substring(0,text.indexOf("\n---\n"));
 	var optionlines = text.split("\n");
 	var options = new slidenotecodeblockoptions();
