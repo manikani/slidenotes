@@ -467,7 +467,10 @@ keyboardshortcuts.init = function(){
       if(!toolbar.classList.contains("active"))toolbar.classList.add("active");
       document.getElementById("imagegallery").classList.remove("active");
       document.getElementById("menusearchbox").classList.remove("active");
-      setTimeout("document.getElementById('toolbar').getElementsByTagName('button')[0].focus()",20);
+      //setTimeout("document.getElementById('toolbar').getElementsByTagName('button')[0].focus()",20);
+      slidenote.keyboardshortcuts.delayTillKeyUp(function(){
+        setTimeout("document.getElementById('toolbar').getElementsByTagName('button')[0].focus();",20);
+      });
     }));
     /*this.addShortcut(new this.shortcut("arrownavigate toolbar", "toolbar", {multipleChoiceKeys:["ArrowUp","ArrowDown"],metakey:false}, function(e){
       var toolbar = document.getElementById("texteditorbuttons");
@@ -831,7 +834,20 @@ keyboardshortcuts.attachShortcuts = function(){
     //document.getElementById("optionmenu").addEventListener("keyup",function(e){slidenote.keyboardshortcuts.reactOn(e,"options");console.log("shortcut options");console.log(e);});
 
 //    window.addEventListener("keyup", function(e){slidenote.keyboardshortcuts.reactOn(e,"global");});
-    window.addEventListener("keyup", function(e){slidenote.keyboardshortcuts.releaseKey(e);});
+    window.addEventListener("keyup", function(e){
+      slidenote.keyboardshortcuts.runDelayedKeyUpFunctions();
+      slidenote.keyboardshortcuts.releaseKey(e);
+    });
+}
+keyboardshortcuts.delayedKeyUpFunctions = [];
+keyboardshortcuts.delayTillKeyUp = function(delayFunction){
+  this.delayedKeyUpFunctions.push(delayFunction);
+}
+keyboardshortcuts.runDelayedKeyUpFunctions = function(){
+  while(this.delayedKeyUpFunctions.length>0){
+    var actfunc = this.delayedKeyUpFunctions.pop();
+    actfunc();
+  }
 }
 
 slidenote.keyboardshortcuts = keyboardshortcuts;
