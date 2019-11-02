@@ -257,8 +257,9 @@ newtheme.insertMenuArea = function(dataobject){
 			var cursorpos = insertPos + key.length+1;
 			if(!metablockhead){
 				var newhead = "code:"+theme.metablockSymbol+"\n";
+				//magic number 3 is the length of either "+++" or "´´´" so we dont delete it but keep it as it is to not mix up
 				tx.value = tx.value.substring(0,celement.posinall+3)+newhead+tx.value.substring(codeblockstart);
-				cursorpos+= newhead.length - (codeblockstart-celement.posinall);
+				cursorpos+= newhead.length - (codeblockstart-(celement.posinall+3));
 			}
 			slidenote.textarea.selectionEnd = cursorpos;
 			slidenote.textarea.selectionStart = cursorpos;
