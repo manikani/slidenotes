@@ -109,6 +109,7 @@ newtheme.highlighteditor = function(){
 }
 
 newtheme.findHighlightLines = function(block){
+	this.findHighlightInline(block);
 	var text = block.innerHTML;
 	console.log("find highlightlines in:\n"+text+
 							"\n linemarker:"+this.options.speciallinemarker + "eol");
@@ -124,6 +125,39 @@ newtheme.findHighlightLines = function(block){
 	if(this.options.linehighlight===null)this.options.linehighlight = foundlines.toString();
 	else this.options.linehighlight += ","+foundlines.toString();
 	console.log("found highlightlines:"+foundlines.toString());
+	block.innerHTML = lines.join("\n");
+}
+
+newtheme.findHighlightInline = function(block){
+	var text = block.innerHTML;
+	console.log("find highlighted Inline");
+	var lines = text.split("\n");
+	var foundlines = new Array();
+	var stm = this.options.specialstartmarker;
+	var endm = this.options.specialendmarker;
+	var startreplace = "o͈˒˔˒˔˒";
+	var endreplace = "o͈˓˔˓˔˓";
+	var lengthdiff = startreplace.length + endreplace.length - stm.length - endm.length;
+	for(var x=0;x<lines.length;x++){
+		var actl = lines[x];
+		var spos = actl.indexOf(stm);
+		var epos = actl.indexOf(endm);
+		var foundparts = undefined;
+		while(spos>-1 && epos>-1 && spos<epos){
+			//foundparts.push({start:spos,end:epos});
+			foundparts = {startreplace:startreplace,endreplace:endreplace};
+			actl = actl.substring(0,spos)+
+								startreplace +
+								actl.substring(spos+stm.length,epos)+
+								endreplace+
+								actl.substring(epos+endm.length);
+			spos = actl.indexOf(stm,epos+1+lengthdiff);
+			epos = actl.indexOf(endm,epos+1+lengthdiff);
+		}
+		lines[x]=actl;
+		foundlines[x]=foundparts;
+	}
+	this.options.inlineHighlights = foundlines;
 	block.innerHTML = lines.join("\n");
 }
 
@@ -152,6 +186,14 @@ newtheme.highlightLines = function(block){
 			specialLinesFound = true;
 			textarr[x]='<span class="specialline">'+textarr[x]+"</span>";
 		}else{
+			if(this.options.inlineHighlights[x]!=undefined){
+				specialLinesFound = true;
+				var actlinechanges = this.options.inlineHighlights[x];
+				while(textarr[x].indexOf(actlinechanges.startreplace)>-1)
+					textarr[x] = textarr[x].replace(actlinechanges.startreplace, '</span><span class="specialinline">');
+				while(textarr[x].indexOf(actlinechanges.endreplace)>-1)
+					textarr[x] = textarr[x].replace(actlinechanges.endreplace, '</span><span class="codeline">');
+			}
 			textarr[x]='<span class="codeline">'+textarr[x]+"</span>";
 		}
 	}
