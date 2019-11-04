@@ -298,7 +298,7 @@ newtheme.parseStyledBlockOptions = function(block){
 		var pospoint = optionlines[x].indexOf(":");
 		if(poseq + pospoint <0)continue; //no valid pos found
 		if(pospoint>0 &&
-			pospoint<poseq){
+			(pospoint<poseq || poseq===-1)){
 				sign=":";
 				signpos = pospoint;
 			}
